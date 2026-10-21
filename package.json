@@ -1,0 +1,11 @@
+{
+  "name": "mediatheque-publique",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "build": "node --experimental-strip-types scripts/build-github-pages.mjs"
+  }
+}
