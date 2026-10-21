@@ -17,6 +17,10 @@ Le site ne devient accessible qu’après activation de GitHub Pages et réussit
 
 La publication utilise l’authentification GitHub et les droits d’écriture sur ce dépôt. Le formulaire prépare les fichiers localement ; il ne les envoie pas avant votre validation sur GitHub. Aucun identifiant ou mot de passe de l’application de travail n’est transféré dans cette version.
 
+## Vidéo à la une
+
+L’encadré de l’accueil affiche la dernière vidéo de la chaîne officielle https://www.youtube.com/@Matnuhpv. Le flux public est vérifié automatiquement aux minutes 13 et 43 de chaque heure. Un nouveau déploiement est lancé uniquement si la vidéo ou ses informations ont changé. Les horaires de lancement peuvent être décalés par GitHub Actions. La dernière vidéo connue est conservée si YouTube est temporairement indisponible.
+
 ## Corriger ou retirer un contenu
 
 Chaque événement possède sa fiche `publications/nom-du-dossier/publication.json`. Modifier cette fiche pour corriger ses informations. Passer `status` de `published` à `draft` retire le dossier du site après le prochain déploiement.

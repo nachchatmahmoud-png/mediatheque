@@ -3,6 +3,8 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: '13,43 * * * *'
 permissions:
   contents: read
 concurrency:
@@ -11,18 +13,26 @@ concurrency:
 jobs:
   construire:
     runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.latest.outputs.changed == 'true' || github.event_name != 'schedule' }}
     steps:
       - uses: actions/checkout@v6
+      - name: Actualiser la dernière vidéo de la chaîne officielle
+        id: latest
+        run: python3 scripts/refresh-ministry-video.py --output site/latest-video.json --current-url https://nachchatmahmoud-png.github.io/mediatheque/latest-video.json
       - uses: actions/setup-node@v4
+        if: steps.latest.outputs.changed == 'true' || github.event_name != 'schedule'
         with:
           node-version: '22'
       - name: Valider et indexer les publications
+        if: steps.latest.outputs.changed == 'true' || github.event_name != 'schedule'
         run: node --experimental-strip-types scripts/build-github-pages.mjs
       - uses: actions/upload-pages-artifact@v3
+        if: steps.latest.outputs.changed == 'true' || github.event_name != 'schedule'
         with:
           path: _site
   publier:
-    if: github.event.repository.has_pages == true || github.event_name == 'workflow_dispatch'
+    if: (github.event.repository.has_pages == true || github.event_name == 'workflow_dispatch') && needs.construire.outputs.publish == 'true'
     needs: construire
     runs-on: ubuntu-latest
     permissions:
