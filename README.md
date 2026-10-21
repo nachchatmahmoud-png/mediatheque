@@ -9,8 +9,8 @@ Le site ne devient accessible qu’après activation de GitHub Pages et réussit
 ## Publier un événement
 
 1. Dans le site, ouvrir **Espace de gestion**.
-2. Saisir le titre, la date, la présentation et les mots-clés. La rubrique est proposée selon les mots-clés choisis ; le choix manuel reste possible.
-3. Sélectionner les photographies, la vidéo et le communiqué à réunir dans l’événement. Renseigner les légendes et les textes à rechercher.
+2. Choisir **Vidéothèque**, **Photothèque** ou **Espace médias**, puis sélectionner les fichiers à importer.
+3. Saisir le titre, la date et les mots-clés. La rubrique est proposée selon les mots-clés choisis ; le choix manuel reste possible. Les descriptions, légendes et transcriptions sont facultatives, dans **Informations complémentaires**.
 4. Télécharger le dossier ZIP, puis l’extraire sur l’ordinateur.
 5. Ouvrir [publications](https://github.com/nachchatmahmoud-png/mediatheque/tree/main/publications), puis **Add file → Upload files**. Déposer le dossier extrait entier et valider **Commit changes**.
 6. Attendre la réussite du workflow **Publication GitHub Pages** dans l’onglet Actions.

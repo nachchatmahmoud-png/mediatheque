@@ -21,7 +21,7 @@ export function publicationToCatalogue(raw:unknown,id:string){
  if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('Fiche de publication non valide.');
  const v=raw as Record<string,unknown>;
  if(v.version!==1||!['draft','published'].includes(String(v.status)))throw new Error('Version ou état de la publication non valide.');
- const event:MediaEvent={...validateEvent(v),id};
+ const event:MediaEvent={...validateEvent(v,{requireDescription:false}),id};
  if(v.language!==undefined&&!['fr','ar'].includes(String(v.language)))throw new Error('Langue non valide.');
  const credit=text(v.credit,200,'Crédit'),language=v.language==='ar'?'ar':'fr',assets=new Set<string>();
  const file=(value:unknown,kind:'photo'|'video'|'press'|'captions')=>{const path=assetPath(value,kind);assets.add(path);return './medias/'+id+'/'+path;};

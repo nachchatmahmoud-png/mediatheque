@@ -53,12 +53,12 @@ export function validateMedia(input:unknown):MediaItem{
 export function filterMedia(items:MediaItem[],f:{type:string;query:string;year:string;topic:string;sort:string;language?:string}){
  const terms=normalize(f.query.trim()).match(/[\p{L}\p{N}]+/gu)||[];return items.filter(i=>(f.type==='all'||i.type===f.type)&&(!f.year||i.date.startsWith(f.year))&&(!f.topic||i.topic===f.topic)&&(!f.language||i.language===f.language)&&terms.every(q=>normalize([mediaIndexText(i),i.eventTitle].join(' ')).includes(q))).sort((a,b)=>f.sort==='oldest'?a.date.localeCompare(b.date):f.sort==='title'?a.title.localeCompare(b.title,'fr'):b.date.localeCompare(a.date));
 }
-export function validateEvent(input:unknown):MediaEvent{
+export function validateEvent(input:unknown,{requireDescription=true}:{requireDescription?:boolean}={}):MediaEvent{
  if(!input||typeof input!=='object')throw new Error('Événement non valide.');const v=input as Record<string,unknown>;
  const date=bounded(v.date,'Date',10,true);if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(Date.parse(date))||new Date(date).toISOString().slice(0,10)!==date)throw new Error('La date de l’événement est non valide.');
  const topic=bounded(v.topic,'Classification',100,true);if(!topics.includes(topic))throw new Error('Choisissez une rubrique de la classification.');
  const tags=keywords(v.keywords);if(!tags.length)throw new Error('Renseignez au moins un mot-clé pour l’événement.');
- return {id:'',title:bounded(v.title,'Titre',180,true),description:bounded(v.description,'Présentation de l’événement',2000,true),date,topic,location:bounded(v.location,'Lieu',150),keywords:tags};
+ return {id:'',title:bounded(v.title,'Titre',180,true),description:bounded(v.description,'Présentation de l’événement',2000,requireDescription),date,topic,location:bounded(v.location,'Lieu',150),keywords:tags};
 }
 export const formatDate=(s:string)=>new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(s+'T12:00:00Z'));
 export function parseByteRange(value:string|null,size:number):{offset:number;length:number}|null{
