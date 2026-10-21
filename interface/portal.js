@@ -271,14 +271,8 @@ function rf() {
         children: (0, d.jsxs)("div", {
           className: "container top-inner",
           children: [
-            (0, d.jsx)("span", { children: "Royaume du Maroc" }),
             (0, d.jsxs)("div", {
               children: [
-                (0, d.jsx)("span", {
-                  className: "portal-caption",
-                  children: T.subtitle,
-                }),
-                (0, d.jsx)("span", { className: "top-divider" }),
                 (0, d.jsxs)("button", {
                   onClick: Mg,
                   children: [

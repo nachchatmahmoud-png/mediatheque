@@ -194,7 +194,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 :root { --mx-ink:#163c34; --mx-gold:#b39a5b; --mx-muted:#62756e; --mx-paper:#f5f6f2; }
 body { background:#fcfdfb; color:var(--mx-ink); }
 .top-strip { background:#103d34; }
-.top-inner { font-size:12px; min-height:35px; }
+.top-inner { font-size:12px; min-height:35px; justify-content:flex-end; }
 .site-header { box-shadow:0 5px 24px #173d3305; }
 .header-inner { height:104px; gap:22px; }
 .main-nav button { position:relative; padding:13px 0; color:#405a51; }
