@@ -38,7 +38,7 @@ function rf() {
         let D = await Ho("/api/auth/session");
         a(D);
         let j = await Ho(
-          "/api/library" + (b && D.authenticated ? "?manage=1" : ""),
+          "/api/library" + (b && D.authenticated && !D.requiresPasswordChange ? "?manage=1" : ""),
         );
         (C(j.items), l(j.events || []), m(j.settings), g(j.isAdmin));
       } catch (D) {
@@ -936,26 +936,7 @@ function rf() {
           (0, d.jsxs)("div", {
             className: "container footer-main",
             children: [
-              (0, d.jsxs)("div", {
-                className: "footer-brand",
-                children: [
-                  (0, d.jsxs)("div", {
-                    className: "brand institution",
-                    children: [
-                      (0, d.jsx)(du, {}),
-                      (0, d.jsx)("span", {
-                        children: (0, d.jsx)("strong", {
-                          children: T.ministryName,
-                        }),
-                      }),
-                    ],
-                  }),
-                  (0, d.jsx)("p", {
-                    children:
-                      "Les vidéos, les photographies et les communiqués de presse, réunis dans un espace de consultation.",
-                  }),
-                ],
-              }),
+              mxElement('div',{className:'footer-brand mx-footer-wordmark'},mxElement('span',{className:'eyebrow'},'PORTAIL INSTITUTIONNEL'),mxElement('strong',null,'Médiathèque')),
               (0, d.jsxs)("div", {
                 className: "footer-links",
                 children: [
@@ -1010,9 +991,7 @@ function rf() {
                 children: [
                   "© ",
                   new Date().getFullYear(),
-                  " · ",
-                  T.ministryName,
-                  " — Médiathèque",
+                  " · Médiathèque",
                 ],
               }),
               (0, d.jsxs)("div", {

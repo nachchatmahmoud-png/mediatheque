@@ -6,7 +6,7 @@ Le portail public est hébergé sur GitHub Pages : https://nachchatmahmoud-png.g
 
 ## Accès et publication
 
-**Espace de gestion** ouvre le service d’administration. L’identifiant et le mot de passe sont contrôlés par ce serveur. Les visiteurs ne peuvent ni transférer un fichier ni publier. Le propriétaire active le premier compte avec son compte propriétaire vérifié et choisit lui-même ses identifiants. Aucun mot de passe n’est conservé dans ce dépôt ou dans le navigateur.
+**Espace de gestion** ouvre le service d’administration. L’identifiant et le mot de passe sont contrôlés par ce serveur. Les visiteurs ne peuvent ni transférer un fichier ni publier. Quatre comptes nominatifs disposent de mots de passe initiaux distincts. Le propriétaire consulte ces accès une seule fois depuis son espace protégé. Chaque utilisateur choisit son mot de passe personnel à la première connexion ; le propriétaire peut réinitialiser les autres comptes. Aucun mot de passe n’est conservé dans ce dépôt ou dans le navigateur.
 
 Après connexion :
 

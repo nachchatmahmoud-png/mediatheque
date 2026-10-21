@@ -32,7 +32,7 @@ export async function buildInterface(root, output) {
     if(from<0||until<from)throw new Error('Limite du service introuvable : '+start);
     bundle=bundle.slice(0,from)+replacement+'\n'+bundle.slice(until);
   }
-  const helpers = await readFile(join(root, 'interface/components.js'), 'utf8');
+  const helpers = await readFile(join(root, 'interface/components.js'), 'utf8')+'\n'+await readFile(join(root,'interface/accounts.js'),'utf8');
   const config=JSON.parse(await readFile(join(root,'interface/service-config.json'),'utf8'));
   const configuration='const MX_SERVICE='+JSON.stringify(config)+'; const MX_ON_SERVICE=document.querySelector(\'meta[name="mediatheque-service"]\')?.content==="enabled"||window.location.origin===new URL(MX_SERVICE.origin).origin; const MX_API_ORIGIN=MX_ON_SERVICE?window.location.origin:MX_SERVICE.origin;\n';
   bundle = bundle.replace('function rf()', configuration+helpers + '\nfunction rf()');

@@ -18,8 +18,8 @@ function MxAdminLogin({auth,onAuthenticated}) {
       setPassword('');setConfirmation('');await onAuthenticated();
     }catch(exception){setError(exception.message);}finally{setBusy(false);}
   };
-  return h('div',{className:'mx-admin-login'},
-    h('div',{className:'mx-login-intro'},h('span',{className:'mx-login-lock'},h(Wi,{size:30})),h('div',{className:'eyebrow'},'ACCÈS RÉSERVÉ'),h('h2',null,'Espace administrateur'),h('p',null,'Connectez-vous pour ajouter et publier les contenus de la médiathèque.'),h('p',{className:'mx-login-note'},'Les visiteurs peuvent consulter l’accueil. La publication est réservée aux administrateurs authentifiés.')),
+  return h(O.Fragment,null,h('div',{className:'mx-admin-login'},
+    h('div',{className:'mx-login-intro'},h('span',{className:'mx-login-lock'},h(Wi,{size:30})),h('div',{className:'eyebrow'},'ACCÈS RÉSERVÉ'),h('h2',null,'Espace administrateur'),h('p',null,'Connectez-vous pour ajouter et publier les contenus de la médiathèque.'),h('ul',{className:'mx-login-features'},h('li',null,h(zl,{size:16}),'Un accès nominatif pour chaque administrateur'),h('li',null,h(zl,{size:16}),'Des supports regroupés dans un même espace'),h('li',null,h(zl,{size:16}),'Une publication après votre validation')),h('p',{className:'mx-login-note'},'Service de communication · Médiathèque')),
     !auth.configured&&!auth.canSetup?h('div',{className:'mx-login-panel'},h('h3',null,'Activer le compte administrateur'),h('p',null,'Le propriétaire doit d’abord définir l’identifiant et le mot de passe de gestion.'),h('a',{className:'button primary',href:'/signin-with-chatgpt?return_to=%2F%3Fview%3Dmanage',target:'_top'},'Accéder avec le compte propriétaire',h(wl,{size:17})))
     :h('form',{className:'mx-login-panel',onSubmit:submit},h('h3',null,create?'Créer le compte administrateur':recover?'Réinitialiser l’accès':'Connexion'),
       h('label',{className:'field'},'Identifiant',h('input',{name:'username',autoComplete:'username',autoCapitalize:'none',spellCheck:false,required:true,maxLength:60,minLength:3,value:username,onChange:event=>setUsername(event.target.value)})),
@@ -27,11 +27,12 @@ function MxAdminLogin({auth,onAuthenticated}) {
       newPassword&&h('label',{className:'field'},'Confirmer le mot de passe',h('input',{name:'confirmPassword',type:'password',autoComplete:'new-password',required:true,minLength:15,maxLength:128,value:confirmation,onChange:event=>setConfirmation(event.target.value)})),
       error&&h('p',{className:'gh-error',role:'alert'},error),
       h('button',{className:'button primary mx-auth-submit',type:'submit',disabled:busy},h(Wi,{size:16}),busy?'Connexion en cours…':create?'Créer le compte et se connecter':recover?'Enregistrer le nouvel accès':'Se connecter'),
-      auth.canRecover&&h('button',{className:'mx-recover',type:'button',disabled:busy,onClick:()=>{setRecover(!recover);setPassword('');setConfirmation('');setError('');}},recover?'Revenir à la connexion':'Réinitialiser mon accès propriétaire')));
+      auth.canRecover&&h('button',{className:'mx-recover',type:'button',disabled:busy,onClick:()=>{setRecover(!recover);setPassword('');setConfirmation('');setError('');}},recover?'Revenir à la connexion':'Réinitialiser mon accès propriétaire'))),auth.canRevealInitialCredentials&&h(MxInitialAccess,{onRefresh:onAuthenticated}));
 }
 
 function nf({auth,isAdmin,loading,error,onBack,onLogout,onRefresh,onToast,onPublished,items=[],onPreview}) {
   const h=mxElement;
+  const [workspace,setWorkspace]=O.useState('publish');
   const [type,setType]=O.useState('video');
   const [title,setTitle]=O.useState('');
   const [date,setDate]=O.useState(SL);
@@ -92,10 +93,13 @@ function nf({auth,isAdmin,loading,error,onBack,onLogout,onRefresh,onToast,onPubl
   const attachmentLabel=type==='photo'?'Sélectionner les photos':type==='video'?'Sélectionner la vidéo':'Sélectionner le PDF';
   return h('section',{className:'container gh-management mx-simple-management'},
     h('button',{className:'button secondary',onClick:onBack},h(Xi,{size:17}),'Retour à la médiathèque'),
-    h('div',{className:'gh-heading mx-management-heading'},h('div',null,h('div',{className:'eyebrow'},'SERVICE DE COMMUNICATION'),h('h1',null,'Gestion des contenus'),h('p',null,isAdmin?'Ajoutez votre support et publiez-le directement dans l’accueil.':'Authentification requise pour accéder à la publication.')),isAdmin&&h('button',{className:'button secondary',disabled:busy,onClick:()=>onLogout().catch(exception=>onToast(exception.message))},h(Wi,{size:15}),'Se déconnecter')),
-    loading?h('p',{role:'status'},'Chargement de l’espace de gestion…'):error?h('div',{className:'gh-error',role:'alert'},error,h('button',{className:'button secondary',onClick:onRefresh},'Réessayer')):!auth.authenticated||!isAdmin?h(MxAdminLogin,{auth,onAuthenticated:onRefresh}):h(O.Fragment,null,
+    h(MxManagementHero,{auth,items,onLogout,busy,onToast}),
+    loading?h('p',{role:'status'},'Chargement de l’espace de gestion…'):error?h('div',{className:'gh-error',role:'alert'},error,h('button',{className:'button secondary',onClick:onRefresh},'Réessayer')):auth.authenticated&&auth.requiresPasswordChange?h(MxPasswordChange,{auth,onSaved:onRefresh}):!auth.authenticated||!isAdmin?h(MxAdminLogin,{auth,onAuthenticated:onRefresh}):h(O.Fragment,null,
+      auth.canRevealInitialCredentials&&auth.role==='owner'&&h(MxInitialAccess,{onRefresh}),
+      h('nav',{className:'mx-workspace-nav','aria-label':'Administration'},h('button',{type:'button',disabled:busy,className:workspace==='publish'?'active':'','aria-current':workspace==='publish'?'page':undefined,onClick:()=>setWorkspace('publish')},h(Ta,{size:17}),'Publications'),auth.role==='owner'&&h('button',{type:'button',disabled:busy,className:workspace==='accounts'?'active':'',onClick:()=>setWorkspace('accounts')},h(Wi,{size:17}),'Comptes administrateurs'),h('button',{type:'button',disabled:busy,className:workspace==='password'?'active':'',onClick:()=>setWorkspace('password')},'Mon mot de passe')),
+      workspace==='accounts'&&auth.role==='owner'?h(MxAccountsManager,{}):workspace==='password'?h(MxPasswordChange,{auth,onSaved:async()=>{await onRefresh();setWorkspace('publish');onToast('Votre mot de passe a été mis à jour.');},onCancel:()=>setWorkspace('publish')}):h(O.Fragment,null,
       h('div',{className:'transfer-shortcuts gh-type-choices',role:'group','aria-label':'Type de support'},...yL.map(({type:kind,Icon,label})=>h('button',{key:kind,type:'button',disabled:busy,className:'transfer-shortcut gh-type-card '+kind+(type===kind?' selected':''),'aria-pressed':type===kind,onClick:()=>setKind(kind)},h('span',{className:'transfer-shortcut-icon'},h(Icon,{size:26})),h('strong',null,label),type===kind&&h(zl,{size:20})))),
-      h('form',{className:'gh-form mx-simple-form',onSubmit:publish},
+      h('div',{className:'mx-publication-workspace'},h('form',{className:'gh-form mx-simple-form',onSubmit:publish},
         h('fieldset',{disabled:busy},h('legend',null,'Nouvelle publication'),
           h('div',{className:'gh-fields'},input('Titre *',title,setTitle,{required:true,maxLength:180,placeholder:'Titre de la vidéo, de l’album ou du communiqué',dir:'auto'}),input('Date *',date,setDate,{type:'date',required:true}),
             h('label',{className:'field gh-wide'},'Rubrique *',h('select',{required:true,value:topic,onChange:event=>setTopic(event.target.value)},...el.map(value=>h('option',{key:value,value},value))))),
@@ -109,6 +113,7 @@ function nf({auth,isAdmin,loading,error,onBack,onLogout,onRefresh,onToast,onPubl
         formError&&h('p',{className:'gh-error',role:'alert'},formError),
         h('div',{className:'mx-publish-footer'},h('button',{className:'button secondary',type:'button',disabled:busy,onClick:()=>setPreview(true)},h(au,{size:17}),'Aperçu'),h('button',{className:'button primary mx-publish-button',type:'submit',disabled:busy},h(zl,{size:20}),busy?'Publication en cours…':'Valider et publier')),
         busy&&h('p',{className:'mx-publishing-status',role:'status','aria-live':'polite'},progress)),
+      h('aside',{className:'mx-publication-guide'},h('div',{className:'eyebrow'},'VOTRE PUBLICATION'),h('span',{className:'mx-guide-format'},h(Oo,{type,size:22}),nu[type]),h('h2',{dir:'auto'},title.trim()||'Un nouveau contenu à partager'),h('dl',null,h('div',null,h('dt',null,'Date'),h('dd',null,date?Ya(date):'À renseigner')),h('div',null,h('dt',null,'Rubrique'),h('dd',null,topic)),h('div',null,h('dt',null,'Support'),h('dd',null,type==='video'&&videoMode==='link'?'Lien vidéo HTTPS':files.length?mxPlural(files.length,'fichier'):type==='press'&&pressText?'Texte du communiqué':'À sélectionner'))),h('div',{className:'mx-guide-note'},h(Wi,{size:17}),h('p',null,'Vérifiez votre contenu dans l’aperçu. Le bouton « Valider et publier » confirme sa mise en ligne.')))),
       preview&&h(MxPublicationPreview,{title,date,topic,description,language:finalLanguage,photos:type==='photo'?files:[],captions,video:type==='video'&&videoMode==='file'?files[0]||null:null,videoUrl:type==='video'&&videoMode==='link'?videoUrl:'',press:type==='press'?files[0]||null:null,pressText:type==='press'?pressText:'',onClose:()=>setPreview(false)}),
-      h(MxPublishedList,{items,onOpen:onPreview})));
+      h(MxPublishedList,{items,onOpen:onPreview}))));
 }
