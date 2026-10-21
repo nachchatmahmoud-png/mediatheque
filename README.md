@@ -10,12 +10,24 @@ Le site ne devient accessible qu’après activation de GitHub Pages et réussit
 
 1. Dans le site, ouvrir **Espace de gestion**.
 2. Choisir **Vidéothèque**, **Photothèque** ou **Espace médias**, puis sélectionner les fichiers à importer.
-3. Saisir le titre, la date et les mots-clés. La rubrique est proposée selon les mots-clés choisis ; le choix manuel reste possible. Les descriptions, légendes et transcriptions sont facultatives, dans **Informations complémentaires**.
+3. Saisir le titre, la date et les mots-clés. La rubrique est proposée selon les mots-clés choisis ; le choix manuel reste possible. Les légendes sont saisies sous les photos. Les descriptions et transcriptions sont facultatives, dans **Informations complémentaires**.
 4. Télécharger le dossier ZIP, puis l’extraire sur l’ordinateur.
 5. Ouvrir [publications](https://github.com/nachchatmahmoud-png/mediatheque/tree/main/publications), puis **Add file → Upload files**. Déposer le dossier extrait entier et valider **Commit changes**.
 6. Attendre la réussite du workflow **Publication GitHub Pages** dans l’onglet Actions.
 
 La publication utilise l’authentification GitHub et les droits d’écriture sur ce dépôt. Le formulaire prépare les fichiers localement ; il ne les envoie pas avant votre validation sur GitHub. Aucun identifiant ou mot de passe de l’application de travail n’est transféré dans cette version.
+
+Les photographies sont prévisualisées dès leur sélection. Les commandes **Monter** et **Descendre** permettent de choisir leur ordre ; la première photographie devient la couverture de l’album. Chaque légende est saisie sous sa photographie et accompagne celle-ci lors d’un déplacement.
+
+Avant l’export, le récapitulatif indique les supports choisis, le nombre et le poids des fichiers. **Aperçu de la publication** permet de vérifier les textes et les supports. **Enregistrer le brouillon** conserve la saisie et les légendes dans le stockage de session de l’onglet ; après rechargement, **Reprendre le brouillon** restaure ces informations. Les fichiers doivent être sélectionnés à nouveau. Le brouillon dépend de la session du navigateur et ne constitue pas une sauvegarde durable.
+
+La rubrique **Publications en ligne** permet de retrouver un contenu, de le consulter et d’ouvrir sa fiche dans GitHub pour la corriger. Un nouvel export d’une même fiche conserve le nom du dossier pendant la saisie ; une correction peut ainsi remplacer ce dossier sans créer une nouvelle publication.
+
+## Consulter et rechercher
+
+La recherche est accessible dès l’accueil. Les dernières publications et les supports d’un événement sont mis en avant dès que le catalogue contient des publications.
+
+Les filtres par rubrique, année et langue sont regroupés dans **Affiner**. Le bouton **Partager la recherche** copie un lien qui conserve les mots-clés, les filtres, le type de contenu et le tri. Ces critères sont restaurés à l’ouverture du lien ou après rechargement. La recherche prend en compte les accents français et les variantes courantes des lettres arabes, ainsi que les textes et transcriptions saisis.
 
 ## Vidéo à la une
 
@@ -40,8 +52,8 @@ Chaque événement possède sa fiche `publications/nom-du-dossier/publication.js
 
 Dans **Settings → Pages**, choisir **GitHub Actions**, puis lancer le workflow **Publication GitHub Pages** depuis Actions. Les modifications suivantes du dépôt reconstruisent automatiquement le site.
 
-Le répertoire `site` contient l’interface compilée. Le script `scripts/build-github-pages.mjs` valide le catalogue et copie uniquement les supports publiés dans `_site`. Le code du serveur de l’application complète n’est pas inclus.
+Le répertoire `site` contient le socle de l’interface et ses ressources. Les composants éditables de l’accueil, du catalogue et de la gestion se trouvent dans `interface/`. Le script `scripts/build-interface.mjs` les assemble avec le runtime et les lecteurs de médias conservés ; il vérifie les limites de remplacement pour signaler toute modification incompatible du socle. Le script `scripts/build-github-pages.mjs` assemble l’interface, valide le catalogue et copie uniquement les supports publiés dans `_site`. Le code du serveur de l’application complète n’est pas inclus.
 
-Vérification locale : Node.js 22, puis `npm run build`. Aucune installation de dépendances n’est requise.
+Vérification locale : Node.js 22.13 ou ultérieur et Python 3, puis `npm test` et `npm run build`. Aucune installation de dépendances n’est requise. Les vérifications contrôlent notamment la lisibilité des archives ZIP et leur compatibilité avec le catalogue ; elles sont exécutées avant le déploiement GitHub Pages.
 
 Documentation officielle : https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages

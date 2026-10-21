@@ -24,6 +24,9 @@ jobs:
         if: steps.latest.outputs.changed == 'true' || github.event_name != 'schedule'
         with:
           node-version: '22'
+      - name: Vérifier l’interface et les dossiers de publication
+        if: steps.latest.outputs.changed == 'true' || github.event_name != 'schedule'
+        run: npm test
       - name: Valider et indexer les publications
         if: steps.latest.outputs.changed == 'true' || github.event_name != 'schedule'
         run: node --experimental-strip-types scripts/build-github-pages.mjs
