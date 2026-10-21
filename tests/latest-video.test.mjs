@@ -10,7 +10,7 @@ test('the official video is visible on both pages with labels in the page langua
  for(const language of ['fr','ar']){
   const jsx=(type,props)=>({type,...props});
   const result=vm.runInNewContext(source+';af()',{
-   No:{useState:value=>[value,()=>{}],useEffect:()=>{}},ar:video,ge:{jsx,jsxs:jsx},MX_LOCALE:language,
+   No:{useState:value=>[value,()=>{}],useEffect:()=>{}},ar:video,ge:{jsx,jsxs:jsx},MX_LOCALE:language,MX_ON_SERVICE:false,
    mxDetectedLanguage:()=>'ar',mxT:value=>language==='ar'?'أحدث فيديو للوزارة':value,je:value=>value,Ya:()=>'',Oe:'icon',Tl:'play',
   });
   assert.equal(result.className,'hero-visual ministry-video');

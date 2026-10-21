@@ -87,7 +87,7 @@ function MxThumbnailField({source, pending, custom, note, onChange, onReset}) {
   return h('section', {className: 'mx-thumbnail-field', 'aria-labelledby': 'thumbnail-heading'},
     h('div', {className: 'mx-thumbnail-heading'}, h('div', null, h('h3', {id: 'thumbnail-heading'}, 'Miniature de la vidéo *'), h('p', null, 'L’image qui présentera votre vidéo dans la médiathèque.')), source && !pending && h('span', {className: 'mx-thumbnail-status'}, h(zl, {size: 13}), custom ? 'Personnalisée' : 'Automatique')),
     h('div', {className: 'mx-thumbnail-layout'}, h(MxThumbnailImage, {source}),
-      h('div', {className: 'mx-thumbnail-options'}, h('p', {role: pending ? 'status' : undefined}, pending ? 'Création de la miniature…' : note || 'Importez une image pour présenter cette vidéo.'),
+      h('div', {className: 'mx-thumbnail-options'}, h('p', {role: pending ? 'status' : undefined}, pending ? 'Création de la miniature…' : custom ? 'Votre image personnalisée sera utilisée dans l’accueil.' : note || 'Importez une image pour présenter cette vidéo.'),
         h('label', {className: 'button secondary mx-thumbnail-upload'}, h(pa, {size: 16}), source ? 'Changer la miniature' : 'Importer une miniature', h('input', {type: 'file', accept: 'image/jpeg,image/png,image/webp', 'aria-label': 'Importer une miniature de la vidéo', onChange: event => {onChange(event.target.files?.[0]); event.target.value = '';}})),
         h('small', null, 'JPG, PNG ou WebP · 12 Mio maximum'), custom && h('button', {type: 'button', className: 'mx-thumbnail-reset', onClick: onReset}, 'Revenir à la miniature automatique'))));
 }

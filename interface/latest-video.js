@@ -6,7 +6,7 @@ function af() {
   ((0, No.useEffect)(() => {
     let i = new AbortController(),
       u = () =>
-        fetch(je("/latest-video.json"), {
+        fetch(MX_ON_SERVICE?new URL('latest-video.json',MX_SERVICE.publicHome).href:je("/latest-video.json"), {
           cache: "no-cache",
           signal: i.signal,
         })
@@ -27,7 +27,7 @@ function af() {
     (0, No.useEffect)(() => { l(!1); setImageFailed(false); }, [e.videoId]));
   let o = "https://www.youtube.com/watch?v=" + e.videoId;
   const displayTitle=mxDetectedLanguage(e.title)===MX_LOCALE?e.title:mxT('Dernière vidéo du ministère');
-  const localThumbnail=typeof e.thumbnailUrl==='string'&&e.thumbnailUrl==='/images/youtube-'+e.videoId+'.jpg'?je(e.thumbnailUrl):'';
+  const localThumbnail=typeof e.thumbnailUrl==='string'&&e.thumbnailUrl==='/images/youtube-'+e.videoId+'.jpg'?(MX_ON_SERVICE?new URL('.'+e.thumbnailUrl,MX_SERVICE.publicHome).href:je(e.thumbnailUrl)):'';
   return (0, ge.jsxs)("div", {
     className: "hero-visual ministry-video",
     "aria-label":
