@@ -6,7 +6,7 @@ import {readFile} from 'node:fs/promises';
 const source=await readFile(new URL('../interface/service-api.js',import.meta.url),'utf8');
 function client(onService,reply){
   const requests=[];
-  const context=vm.createContext({URL,Event,er:undefined,MX_ON_SERVICE:onService,MX_SERVICE:{publicFeedEnabled:true},MX_API_ORIGIN:'https://admin.example.test',document:{baseURI:'https://public.example.test/mediatheque/'},$n:{authenticated:false},window:{dispatchEvent(){}},fetch:async(url,options)=>{requests.push({url:String(url),options});return reply?reply():{ok:true,json:async()=>({items:[],events:[]})};}});
+  const context=vm.createContext({URL,Event,er:undefined,MX_LOCALE:'fr',mxLocaleCatalogue:value=>value,mxT:value=>value,MX_ON_SERVICE:onService,MX_SERVICE:{publicFeedEnabled:true},MX_API_ORIGIN:'https://admin.example.test',document:{baseURI:'https://public.example.test/mediatheque/'},$n:{authenticated:false},window:{dispatchEvent(){}},fetch:async(url,options)=>{requests.push({url:String(url),options});return reply?reply():{ok:true,json:async()=>({items:[],events:[]})};}});
   vm.runInContext(source,context);
   return {context,requests};
 }
@@ -15,7 +15,7 @@ test('public consultation never requests an administrator session or sends crede
   assert.equal((await context.Ho('/api/auth/session')).authenticated,false);
   assert.equal(requests.length,0);
   await context.Ho('/api/library');
-  assert.equal(requests[0].url,'https://admin.example.test/api/library');
+  assert.equal(requests[0].url,'https://admin.example.test/api/library?lang=fr');
   assert.equal(requests[0].options.credentials,'omit');
   await assert.rejects(context.Ho('/api/publications',{method:'POST'}),/Connectez-vous/);
   assert.equal(requests.length,1);

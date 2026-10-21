@@ -17,7 +17,7 @@ function rf() {
     [te, tl] = (0, O.useState)(""),
     [ke, ql] = (0, O.useState)(""),
     [ye, El] = (0, O.useState)(""),
-    [Ae, Ol] = (0, O.useState)(""),
+    [Ae, Ol] = (0, O.useState)(MX_LOCALE),
     [Ja, yt] = (0, O.useState)("newest"),
     [Oa, ll] = (0, O.useState)("grid"),
     [Ze, He] = (0, O.useState)(6),
@@ -50,7 +50,7 @@ function rf() {
   ((0, O.useEffect)(() => {
     let b = new URLSearchParams(window.location.search),
       D = b.get("view") === "manage";
-    if(D&&!MX_ON_SERVICE){window.location.replace(new URL('/?view=manage',MX_SERVICE.origin));return;}
+    if(D&&(!MX_ON_SERVICE||MX_LOCALE==='ar')){window.location.replace(mxManagementUrl());return;}
     return (
       z(D),
       ["video", "photo", "press", "event"].includes(b.get("type") || "") &&
@@ -59,7 +59,7 @@ function rf() {
       ll(mxStorage.get("media-view") === "list" ? "list" : "grid"),
       ql(/^\d{4}$/.test(b.get("year") || "") ? b.get("year") : ""),
       El(el.includes(b.get("topic")) ? b.get("topic") : ""),
-      Ol(["fr", "ar"].includes(b.get("lang")) ? b.get("lang") : ""),
+      Ol(MX_LOCALE),
       yt(["oldest", "title"].includes(b.get("sort")) ? b.get("sort") : "newest"),
       Da(D),
       () => {
@@ -84,7 +84,7 @@ function rf() {
   O.useEffect(() => {
     if (R || L) return;
     const url = new URL(window.location.href);
-    const values = {type: k === 'all' ? '' : k, q: te, year: ke, topic: ye, lang: Ae, sort: Ja === 'newest' ? '' : Ja};
+    const values = {type: k === 'all' ? '' : k, q: te, year: ke, topic: ye, lang: '', sort: Ja === 'newest' ? '' : Ja};
     for (const [name, value] of Object.entries(values)) value ? url.searchParams.set(name, value) : url.searchParams.delete(name);
     url.searchParams.delete('view');
     history.replaceState(null, '', url);
@@ -103,7 +103,7 @@ function rf() {
         await Da(!0),
         St("Vous êtes déconnecté de l’espace de gestion."));
     },
-    pu = (0, O.useMemo)(() => S.filter((b) => b.status === "published"), [S]),
+    pu = (0, O.useMemo)(() => S.filter((b) => b.status === "published" && b.language === MX_LOCALE), [S]),
     mu = !1,
     Se = pu,
     ga = (0, O.useMemo)(
@@ -172,7 +172,7 @@ function rf() {
           Ja === "oldest"
             ? D.date.localeCompare(j.date)
             : Ja === "title"
-              ? D.title.localeCompare(j.title, "fr")
+              ? D.title.localeCompare(j.title, MX_LOCALE)
               : j.date.localeCompare(D.date),
         );
     }, [ga, Se, ke, ye, Ae, te, r, Ja]),
@@ -242,7 +242,7 @@ function rf() {
         history.replaceState(null, "", b));
     },
     Mg = () => {
-      if(!MX_ON_SERVICE){window.location.assign(new URL('/?view=manage',MX_SERVICE.origin));return;}
+      if(!MX_ON_SERVICE||MX_LOCALE==='ar'){window.location.assign(mxManagementUrl());return;}
       (z(!0), B(!1), Ha(null), i(null));
       let b = new URL(window.location.href);
       ((b.search = "?view=manage"),
@@ -251,9 +251,9 @@ function rf() {
         Da(!0));
     },
     ff = () => {
-      (_e("all"), tl(""), ql(""), El(""), Ol(""), yt("newest"), He(6));
+      (_e("all"), tl(""), ql(""), El(""), Ol(MX_LOCALE), yt("newest"), He(6));
     },
-    xu = !!(te || ke || ye || Ae),
+    xu = !!(te || ke || ye),
     cf = {
       video: Se.filter((b) => b.type === "video").length,
       photo: Se.filter((b) => b.type === "photo").length,
@@ -263,7 +263,7 @@ function rf() {
     children: [
       (0, d.jsx)("a", {
         className: "skip-link",
-        href: "#main",
+        href: window.location.pathname+window.location.search+"#main",
         children: "Aller au contenu",
       }),
       (0, d.jsx)("div", {
@@ -271,6 +271,7 @@ function rf() {
         children: (0, d.jsxs)("div", {
           className: "container top-inner",
           children: [
+            mxElement(MxLanguageSwitch, {}),
             (0, d.jsxs)("div", {
               children: [
                 (0, d.jsxs)("button", {
@@ -375,7 +376,7 @@ function rf() {
                 onToast: St,
                 onPreview: Ha,
                 onSettings: m,
-                onPublished: async () => { er=undefined; await Da(false); ff(); Fe('all',false); window.scrollTo({top:0,behavior:'smooth'}); },
+                onPublished: async (id,language) => { if(language!==MX_LOCALE){window.location.assign(mxPageUrl(language));return;} er=undefined; await Da(false); ff(); Fe('all',false); window.scrollTo({top:0,behavior:'smooth'}); },
               },
               e.authenticated ? "connected" : "disconnected",
             )
@@ -437,7 +438,7 @@ function rf() {
                               }),
                             ],
                           }),
-                          (0, d.jsx)(af, {}),
+                          (0, d.jsx)(af, {onExplore: () => Fe("all")}),
                         ],
                       }),
                     ],
@@ -584,16 +585,6 @@ function rf() {
                             (0, d.jsxs)("button", {
                               onClick: () => ql(""),
                               children: [ke, (0, d.jsx)(xa, { size: 12 })],
-                            }),
-                          Ae &&
-                            (0, d.jsxs)("button", {
-                              onClick: () => Ol(""),
-                              children: [
-                                Ae === "ar"
-                                  ? "العربية"
-                                  : "Français",
-                                (0, d.jsx)(xa, { size: 12 }),
-                              ],
                             }),
                           (0, d.jsx)("button", {
                             className: "clear-filters",

@@ -44,14 +44,14 @@ function nf({auth,isAdmin,loading,error,onBack,onLogout,onRefresh,onToast,onPubl
   const [pressText,setPressText]=O.useState('');
   const [description,setDescription]=O.useState('');
   const [credit,setCredit]=O.useState('');
-  const [language,setLanguage]=O.useState('auto');
+  const [language,setLanguage]=O.useState('');
   const [busy,setBusy]=O.useState(false);
   const [progress,setProgress]=O.useState('');
   const [formError,setFormError]=O.useState('');
   const [preview,setPreview]=O.useState(false);
   const requestId=O.useRef('');
   const uploaded=O.useRef(new Map());
-  const finalLanguage=language==='auto'?(/[\u0600-\u06ff]/u.test(title)?'ar':'fr'):language;
+  const finalLanguage=language;
   const setKind=value=>{if(busy)return;setType(value);setFiles([]);setCaptions([]);setFormError('');requestId.current='';uploaded.current.clear();};
   const addFiles=list=>{
     const chosen=Array.from(list||[]);if(!chosen.length)return;
@@ -74,6 +74,7 @@ function nf({auth,isAdmin,loading,error,onBack,onLogout,onRefresh,onToast,onPubl
     event.preventDefault();if(busy)return;setFormError('');
     try{
       if(!title.trim())throw new Error('Renseignez le titre de la publication.');
+      if(!['fr','ar'].includes(language))throw new Error('Choisissez la langue de publication.');
       if(type==='photo'&&!files.length)throw new Error('Sélectionnez au moins une photographie.');
       if(type==='video'&&(videoMode==='file'?!files.length:!mxHttps(videoUrl)))throw new Error(videoMode==='file'?'Sélectionnez une vidéo.':'Renseignez une adresse vidéo HTTPS valide.');
       if(type==='press'&&!files.length&&!pressText.trim())throw new Error('Sélectionnez un PDF ou saisissez le texte du communiqué.');
@@ -85,7 +86,7 @@ function nf({auth,isAdmin,loading,error,onBack,onLogout,onRefresh,onToast,onPubl
       const result=await Ho('/api/publications',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId:requestId.current,type,title:title.trim(),date,topic,language:finalLanguage,description,credit,status:'published',keywords:[topic],location:'',duration:'',thumbnailUrl:type==='photo'?paths[0]:'',mediaUrl:type==='video'?(videoMode==='link'?videoUrl.trim():paths[0]):'',fileUrl:type==='press'?paths[0]||'':'',captionsUrl:'',photos:type==='photo'?paths.map((url,index)=>({url,caption:captions[index]||''})):[],content:type==='press'?pressText:'',transcript:''})});
       if(!result.published)throw new Error('La publication n’a pas été confirmée.');
       setProgress('Publication effectuée.');onToast('La publication est en ligne et visible dans l’accueil.');
-      await onPublished(result.id);
+      await onPublished(result.id,finalLanguage);
     }catch(exception){setFormError(exception.message);}finally{setBusy(false);setProgress('');}
   };
   const move=(index,destination)=>{const next=[...files],notes=[...captions];next.splice(destination,0,next.splice(index,1)[0]);notes.splice(destination,0,notes.splice(index,1)[0]);setFiles(next);setCaptions(notes);};
@@ -102,6 +103,7 @@ function nf({auth,isAdmin,loading,error,onBack,onLogout,onRefresh,onToast,onPubl
       h('div',{className:'mx-publication-workspace'},h('form',{className:'gh-form mx-simple-form',onSubmit:publish},
         h('fieldset',{disabled:busy},h('legend',null,'Nouvelle publication'),
           h('div',{className:'gh-fields'},input('Titre *',title,setTitle,{required:true,maxLength:180,placeholder:'Titre de la vidéo, de l’album ou du communiqué',dir:'auto'}),input('Date *',date,setDate,{type:'date',required:true}),
+            h('label',{className:'field'},'Langue de publication *',h('select',{value:language,required:true,onChange:event=>setLanguage(event.target.value)},h('option',{value:'',disabled:true},'Choisir la langue…'),h('option',{value:'fr'},'Français'),h('option',{value:'ar'},'العربية'))),
             h('label',{className:'field gh-wide'},'Rubrique *',h('select',{required:true,value:topic,onChange:event=>setTopic(event.target.value)},...el.map(value=>h('option',{key:value,value},value))))),
           type==='video'&&h('div',{className:'mx-video-mode',role:'group','aria-label':'Source de la vidéo'},h('button',{type:'button','aria-pressed':videoMode==='file',onClick:()=>setVideoMode('file')},'Importer un fichier'),h('button',{type:'button','aria-pressed':videoMode==='link',onClick:()=>setVideoMode('link')},'Utiliser un lien vidéo')),
           type==='video'&&videoMode==='link'?input('Adresse HTTPS de la vidéo *',videoUrl,setVideoUrl,{type:'url',required:true,maxLength:2000,placeholder:'https://…'}):h('div',{className:'mx-support-upload'},
@@ -109,7 +111,7 @@ function nf({auth,isAdmin,loading,error,onBack,onLogout,onRefresh,onToast,onPubl
             h('small',null,type==='photo'?'JPG, PNG ou WebP · 30 photos maximum · 12 Mio par photo':type==='video'?'MP4 ou WebM · 25 Mio maximum':'PDF · 20 Mio maximum')),
           files.length>0&&!(type==='video'&&videoMode==='link')&&h('div',{className:'mx-selected-files'},type==='photo'?h('div',{className:'mx-photo-grid'},...files.map((file,index)=>h(MxPhotoPreview,{key:file.name+'-'+file.lastModified,file,caption:captions[index]||'',index,total:files.length,onCaption:value=>setCaptions(captions.map((note,position)=>position===index?value:note)),onRemove:()=>{setFiles(files.filter((_,position)=>position!==index));setCaptions(captions.filter((_,position)=>position!==index));},onMove:destination=>move(index,destination)}))):h('div',null,h('strong',null,files[0].name),h('small',null,mxSize(files[0].size)),h('button',{type:'button',className:'mx-remove',onClick:()=>setFiles([])},'Retirer'))),
           type==='press'&&h('label',{className:'field mx-press-text'},'Texte du communiqué'+(!files.length?' *':' (facultatif)'),h('textarea',{rows:5,maxLength:40000,value:pressText,required:!files.length,onChange:event=>setPressText(event.target.value),dir:'auto',placeholder:'Saisissez le texte si vous ne joignez pas de PDF.'}))),
-        h('details',{className:'mx-optional-fields'},h('summary',null,'Informations complémentaires',h('small',null,'Facultatif')),h('div',{className:'gh-fields'},h('label',{className:'field gh-wide'},'Courte description',h('textarea',{rows:3,maxLength:1200,value:description,disabled:busy,onChange:event=>setDescription(event.target.value)})),input('Crédits / auteur',credit,setCredit,{maxLength:200,disabled:busy}),h('label',{className:'field'},'Langue',h('select',{value:language,disabled:busy,onChange:event=>setLanguage(event.target.value)},h('option',{value:'auto'},'Selon le titre'),h('option',{value:'fr'},'Français'),h('option',{value:'ar'},'العربية'))))),
+        h('details',{className:'mx-optional-fields'},h('summary',null,'Informations complémentaires',h('small',null,'Facultatif')),h('div',{className:'gh-fields'},h('label',{className:'field gh-wide'},'Courte description',h('textarea',{rows:3,maxLength:1200,value:description,disabled:busy,onChange:event=>setDescription(event.target.value)})),input('Crédits / auteur',credit,setCredit,{maxLength:200,disabled:busy}))),
         formError&&h('p',{className:'gh-error',role:'alert'},formError),
         h('div',{className:'mx-publish-footer'},h('button',{className:'button secondary',type:'button',disabled:busy,onClick:()=>setPreview(true)},h(au,{size:17}),'Aperçu'),h('button',{className:'button primary mx-publish-button',type:'submit',disabled:busy},h(zl,{size:20}),busy?'Publication en cours…':'Valider et publier')),
         busy&&h('p',{className:'mx-publishing-status',role:'status','aria-live':'polite'},progress)),

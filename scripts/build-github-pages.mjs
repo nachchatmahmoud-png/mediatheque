@@ -3,6 +3,7 @@ import {resolve,dirname,join,relative} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {publicationToCatalogue,validateAsset,emptyCatalogue} from '../github-pages/catalogue.ts';
 import {buildInterface} from './build-interface.mjs';
+import {buildLanguagePages} from './build-language-pages.mjs';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 export async function buildCatalogue(source,output){
  const result=emptyCatalogue();await mkdir(output,{recursive:true});
@@ -32,6 +33,7 @@ export async function buildPages(){
  const output=join(root,'_site');await rm(output,{force:true,recursive:true});
  await cp(join(root,'site'),output,{recursive:true});
  await buildInterface(root,output);
+ await buildLanguagePages(root,output);
  const catalogue=await buildCatalogue(join(root,'publications'),output);
  console.log(JSON.stringify({directory:output,events:catalogue.events.length,publications:catalogue.items.length}));
 }

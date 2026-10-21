@@ -1,5 +1,5 @@
 // Source de l’interface publique ; assemblée par scripts/build-interface.mjs.
-function af() {
+function af({onExplore}) {
   let [e, a] = (0, No.useState)(ar),
     [t, l] = (0, No.useState)(!1),
     [imageFailed, setImageFailed] = (0, No.useState)(false);
@@ -26,6 +26,7 @@ function af() {
   }, []),
     (0, No.useEffect)(() => { l(!1); setImageFailed(false); }, [e.videoId]));
   let o = "https://www.youtube.com/watch?v=" + e.videoId;
+  if(mxDetectedLanguage(e.title)!==MX_LOCALE)return mxElement(MxLanguageFeature,{onExplore});
   return (0, ge.jsxs)("div", {
     className: "hero-visual ministry-video",
     "aria-label":
@@ -43,6 +44,7 @@ function af() {
           }),
           (0, ge.jsxs)("a", {
             href: e.channelUrl,
+            dir: "ltr",
             target: "_blank",
             rel: "noreferrer",
             children: ["@Matnuhpv", (0, ge.jsx)(Oe, { size: 15 })],
@@ -71,7 +73,7 @@ function af() {
               children: [
                 (0, ge.jsx)("img", {
                   src:
-                    imageFailed ? je('/images/cover.svg') : "https://i.ytimg.com/vi/" + e.videoId + "/hqdefault.jpg",
+                    imageFailed ? je(MX_LOCALE==='ar'?'/images/cover-ar.svg':'/images/cover.svg') : "https://i.ytimg.com/vi/" + e.videoId + "/hqdefault.jpg",
                   onError: () => setImageFailed(true),
                   alt: "",
                   width: 480,

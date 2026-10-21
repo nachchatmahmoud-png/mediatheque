@@ -6,7 +6,7 @@ const mxStorage = {
   set(key, value) { try { localStorage.setItem(key, value); } catch {} },
 };
 const mxSize = bytes => new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 }).format(bytes / 1048576) + ' Mio';
-const mxPlural = (count, singular, plural = singular + 's') => count + ' ' + (count > 1 ? plural : singular);
+const mxPlural = (count, singular, plural = singular + 's') => count + ' ' + (MX_LOCALE==='ar'?(MX_MESSAGES[singular]||singular):(count > 1 ? plural : singular));
 function mxValidateFile(file, kind) {
   const extensions = { photo: /\.(jpe?g|png|webp)$/i, video: /\.(mp4|webm)$/i, press: /\.pdf$/i };
   const limits = { photo: 12, video: 25, press: 20 };
@@ -59,7 +59,7 @@ function MxLatestPublications({ items, events, onOpen, onEvent, onExplore }) {
 function MxCatalogueFilters({ query, onQuery, topic, onTopic, year, onYear, language, onLanguage, years, inputRef }) {
   const h = mxElement;
   const [expanded, setExpanded] = O.useState(true);
-  const active = [topic, year, language].filter(Boolean).length;
+  const active = [topic, year].filter(Boolean).length;
   const select = (label, value, onChange, options) => h('label', { className: 'mx-filter-field' }, h('span', null, label),
     h('select', { value, onChange: event => onChange(event.target.value), 'aria-label': 'Filtrer par ' + label.toLowerCase() },
       options.map(([id, text]) => h('option', { key: id, value: id }, text))));
@@ -71,8 +71,7 @@ function MxCatalogueFilters({ query, onQuery, topic, onTopic, year, onYear, lang
       h('button', { className: 'button secondary mx-refine', 'aria-expanded': expanded, 'aria-controls': 'advanced-filters', onClick: () => setExpanded(!expanded) }, h(lu, { size: 17 }), 'Affiner', active > 0 && h('span', { className: 'mx-count' }, active), h(Zi, { size: 16 }))),
     h('div', { className: 'mx-advanced-filters', id: 'advanced-filters', hidden: !expanded },
       select('Rubrique', topic, onTopic, [['', 'Toutes les rubriques'], ...el.map(value => [value, value])]),
-      select('Année', year, onYear, [['', 'Toutes les années'], ...years.map(value => [value, value])]),
-      select('Langue', language, onLanguage, [['', 'Toutes les langues'], ['fr', 'Français'], ['ar', 'العربية']])));
+      select('Année', year, onYear, [['', 'Toutes les années'], ...years.map(value => [value, value])])));
 }
 
 function MxPhotoPreview({ file, caption, index, total, onCaption, onRemove, onMove }) {
@@ -117,10 +116,12 @@ function MxPublicationPreview({ title, date, topic, description, language, photo
 function MxPublishedList({ items, onOpen }) {
   const h = mxElement;
   const [query, setQuery] = O.useState('');
-  const published = items.filter(item => item.status === 'published');
+  const [contentLanguage,setContentLanguage]=O.useState('fr');
+  const published = items.filter(item => item.status === 'published'&&item.language===contentLanguage);
   const filtered = published.filter(item => Ea([item.title, item.topic, ...item.keywords].join(' ')).includes(Ea(query)));
   return h('section', { className: 'mx-published', 'aria-labelledby': 'published-heading' },
     h('div', { className: 'mx-section-title' }, h('div', null, h('div', { className: 'eyebrow' }, 'SUIVI DES CONTENUS'), h('h2', { id: 'published-heading' }, 'Publications en ligne')), h('span', { className: 'mx-count' }, mxPlural(published.length, 'publication'))),
+    h('div',{className:'mx-management-languages',role:'group','aria-label':'Langue des publications'},h('button',{type:'button','aria-pressed':contentLanguage==='fr',onClick:()=>setContentLanguage('fr')},'Français'),h('button',{type:'button','aria-pressed':contentLanguage==='ar',onClick:()=>setContentLanguage('ar')},'العربية')),
     published.length ? h(O.Fragment, null,
       h('label', { className: 'mx-management-search' }, 'Rechercher une publication en ligne', h('input', { type: 'search', value: query, onChange: event => setQuery(event.target.value), placeholder: 'Titre, thème ou mot-clé…' })),
       h('div', { className: 'mx-published-list' }, filtered.slice(0, 30).map(item => h('article', { key: item.id },

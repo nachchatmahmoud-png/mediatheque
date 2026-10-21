@@ -194,7 +194,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 :root { --mx-ink:#163c34; --mx-gold:#b39a5b; --mx-muted:#62756e; --mx-paper:#f5f6f2; }
 body { background:#fcfdfb; color:var(--mx-ink); }
 .top-strip { background:#103d34; }
-.top-inner { font-size:12px; min-height:35px; justify-content:flex-end; }
+.top-inner { font-size:12px; min-height:35px; justify-content:space-between; }
 .site-header { box-shadow:0 5px 24px #173d3305; }
 .header-inner { height:104px; gap:22px; }
 .main-nav button { position:relative; padding:13px 0; color:#405a51; }
@@ -335,6 +335,53 @@ body { background:#fcfdfb; color:var(--mx-ink); }
 .mx-credential-grid > article { background:#fff; border:1px solid #dce6d4; border-radius:9px; padding:21px; display:flex; flex-direction:column; gap:15px; }
 .mx-credential-grid label { display:flex; flex-direction:column; gap:7px; color:#6b7b5d; font-size:10px; }
 .mx-credential-grid input { width:100%; font-family:monospace; font-size:13px; color:#2e5032; padding:10px; border:1px solid #e0e8d8; border-radius:5px; background:#f9fbf5; }
+.mx-language-switch { display:flex; gap:12px; align-items:center; }
+.mx-management-languages { display:flex; gap:8px; margin:0 0 22px; }
+.mx-management-languages button { padding:10px 17px; border:1px solid #d6e0ce; border-radius:7px; color:#537044; font-size:12px; }
+.mx-management-languages button[aria-pressed=true] { background:#1b543d; color:#fff; border-color:#1b543d; }
+.mx-language-switch a { font-size:11px; color:#c5d6cb; padding:4px 0; border-bottom:1px solid transparent; }
+.mx-language-switch a[aria-current=page] { color:#fff; border-color:#d7c68d; }
+.mx-language-switch > span { color:#78988a; font-size:10px; }
+.mx-advanced-filters { grid-template-columns:2fr 1fr; }
+.mx-simple-form .gh-wide { grid-column:1/-1; }
+.mx-language-feature { position:relative; isolation:isolate; overflow:hidden; padding:39px; border:1px solid #cbd9c5; background:linear-gradient(135deg,#e6eee0,#f8f9ef); border-radius:16px; box-shadow:0 20px 45px #244d3010; }
+.mx-language-feature:after { content:''; position:absolute; width:300px; height:380px; border:1px solid #9fb18c40; border-radius:160px 160px 0 0; inset-inline-end:-130px; bottom:-80px; z-index:-1; }
+.mx-language-feature .eyebrow { font-size:10px; letter-spacing:1.7px; }
+.mx-feature-symbol { display:flex; align-items:center; gap:14px; margin:32px 0; color:#54794e; }
+.mx-feature-symbol svg { box-sizing:content-box; border:1px solid #cddcc2; background:#fff8; padding:14px; border-radius:12px; }
+.mx-language-feature h2 { font-family:var(--serif); font-size:36px; line-height:1.2; letter-spacing:-.5px; font-weight:400; max-width:400px; margin:0 0 17px; color:#204e36; }
+.mx-language-feature p { font-size:13px; line-height:1.9; color:#647c59; max-width:370px; }
+.mx-language-feature .button { margin-top:18px; font-size:12px; }
+html[dir=rtl] body { font-family:Tahoma,Arial,sans-serif; }
+html[dir=rtl] .brand.institution,html[dir=rtl] .collection-link,html[dir=rtl] .mx-event-spotlight { text-align:right; }
+html[dir=rtl] .brand.institution strong { font-size:14px; line-height:1.9; }
+html[dir=rtl] .main-nav { gap:19px; }
+html[dir=rtl] .main-nav button { font-size:13px; }
+html[dir=rtl] .eyebrow { letter-spacing:0; font-size:12px; }
+html[dir=rtl] h1,html[dir=rtl] h2,html[dir=rtl] h3 { font-family:Tahoma,Arial,sans-serif; letter-spacing:0; }
+html[dir=rtl] .hero-copy h1 { font-size:clamp(33px,3.2vw,44px); font-weight:500; line-height:1.65; margin-top:14px; margin-bottom:14px; }
+html[dir=rtl] .hero-copy > p { font-size:15px; line-height:2.15; }
+html[dir=rtl] .hero-copy h1 em { font-style:normal; }
+html[dir=rtl] .mx-hero-search-box { padding:6px 15px 6px 6px; }
+html[dir=rtl] .mx-hero-search > label { font-size:13px; }
+html[dir=rtl] .hero-footnote { font-size:12px; }
+html[dir=rtl] .ministry-video-meta h2 { font-size:17px; line-height:1.9; }
+html[dir=rtl] .section-heading h2,html[dir=rtl] .mx-section-title h2 { font-size:29px; line-height:1.8; }
+html[dir=rtl] .section-heading p { font-size:13px; line-height:2; }
+html[dir=rtl] .mx-search-row .search-field { padding-left:12px; padding-right:15px; }
+html[dir=rtl] .mx-filter-field select { padding:13px 13px 13px 32px; }
+html[dir=rtl] .mx-event-spotlight small { letter-spacing:0; }
+html[dir=rtl] .press-band h2 { font-size:29px; line-height:1.7; }
+html[dir=rtl] .press-band p { line-height:2; }
+html[dir=rtl] .mx-footer-wordmark > strong { font-family:Tahoma,Arial,sans-serif; font-size:28px; line-height:1.9; }
+html[dir=rtl] .mx-footer-wordmark .eyebrow { font-size:10px; letter-spacing:0; }
+html[dir=rtl] .footer-contact p { line-height:2; }
+html[dir=rtl] .breadcrumb svg,html[dir=rtl] .button > svg:last-child,html[dir=rtl] .collection-link > svg { transform:scaleX(-1); }
+html[dir=rtl] .header-actions { border-left:0; }
+html[dir=rtl] .info-content p { text-align:right; line-height:2.1; }
+html[dir=rtl] .mx-language-feature h2 { font-size:30px; line-height:1.8; }
+html[dir=rtl] .mx-language-feature p { font-size:14px; line-height:2; }
+@media(max-width:680px){ .mx-language-feature{padding:28px;} .mx-language-feature h2{font-size:32px;} .mx-feature-symbol{margin:25px 0;} .mx-language-switch{gap:9px;} html[dir=rtl] .hero-copy h1{font-size:34px;line-height:1.7;} html[dir=rtl] .brand.institution strong{font-size:11px;line-height:1.8;} html[dir=rtl] .section-heading h2,html[dir=rtl] .mx-section-title h2{font-size:25px;} html[dir=rtl] .collection-link > svg{margin-left:0;margin-right:auto;} .mx-advanced-filters{grid-template-columns:1fr 1fr;} }
 @media(max-width:1100px){ .header-inner{gap:18px;} .mx-publication-workspace{grid-template-columns:minmax(0,1fr) 250px;gap:20px;} .collection-link,.collection-link:first-child,.collection-link:last-child{padding:20px 16px;gap:12px;} .collection-label strong{font-size:15px;} }
 @media(max-width:900px){ .mx-management-hero{padding:30px;gap:24px;} .mx-session-card{width:240px;} .mx-management-hero h1{font-size:37px;} .mx-publication-workspace{grid-template-columns:1fr;} .mx-publication-guide{position:static;} .mx-publication-guide dl{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;} .mx-publication-guide h2{font-size:23px;} .mx-guide-note{margin-top:8px;} .mx-login-intro,.mx-login-panel{padding:30px;} .footer-main{gap:35px;} }
 @media(max-width:680px){ .header-inner{height:90px;} .hero-grid{padding-top:24px;gap:30px;} .hero-copy h1{font-size:43px;} .collection-links{grid-template-columns:1fr;gap:12px;padding:20px 0;} .collection-link,.collection-link:first-child,.collection-link:last-child{min-height:86px;padding:16px 20px;} .collection-link+.collection-link{border-left:1px solid #dce4db;} .collection-icon{width:48px;height:48px;} .collection-label strong{font-size:16px;} .collection-link > svg{margin-left:auto;} .footer-main{grid-template-columns:1fr 1fr;gap:27px;padding-top:29px;} .mx-footer-wordmark{grid-column:1/-1;} .footer-bottom{padding:17px 0;gap:15px;flex-wrap:wrap;} .footer-bottom>div{gap:18px;} .mx-management-hero{padding:27px 23px;flex-direction:column;align-items:stretch;gap:22px;border-radius:12px;} .mx-management-hero h1{font-size:35px;} .mx-session-card{width:100%;padding:15px 17px;} .mx-admin-login{grid-template-columns:1fr;} .mx-login-intro,.mx-login-panel{padding:28px 25px;} .mx-login-intro h2{font-size:32px;} .mx-login-features{gap:12px;margin:19px 0;} .mx-login-intro .mx-login-note{margin-top:18px;} .mx-workspace-nav{gap:23px;} .mx-workspace-nav>button{font-size:11px;gap:6px;} .mx-simple-management .gh-type-choices{gap:9px;} .mx-simple-management .gh-type-card{padding:14px 8px;min-height:100px;gap:9px;flex-direction:column;} .mx-simple-management .gh-type-card.selected{padding:13px 7px;} .mx-simple-management .gh-type-card strong{font-size:11px;} .mx-simple-management .gh-type-card>svg{display:none;} .mx-simple-form fieldset{padding:21px 18px;} .mx-simple-form legend{font-size:17px;} .mx-video-mode{width:100%;} .mx-video-mode button{font-size:11px;} .mx-publish-footer{gap:9px;} .mx-publication-guide{padding:22px;} .mx-publication-guide dl{grid-template-columns:1fr;} .mx-initial-access{padding:21px;} .mx-initial-access .button{width:100%;justify-content:center;} .mx-password-card{padding:26px 22px;} .mx-password-card h2{font-size:23px;} .mx-password-actions{flex-direction:column-reverse;} .mx-password-actions .button{width:100%;justify-content:center;} .mx-account-grid,.mx-credential-grid{grid-template-columns:1fr;} .mx-account-card{padding:23px;} .mx-credentials{padding:23px 19px;} }

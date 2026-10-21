@@ -2,7 +2,12 @@
 
 Vidéos, albums photo, communiqués et événements du Ministère de l’Aménagement du Territoire National, de l’Urbanisme, de l’Habitat et de la Politique de la Ville.
 
-Le portail public est hébergé sur GitHub Pages : https://nachchatmahmoud-png.github.io/mediatheque/
+Le portail public est hébergé sur GitHub Pages avec deux pages distinctes :
+
+- Français : https://nachchatmahmoud-png.github.io/mediatheque/fr/
+- العربية : https://nachchatmahmoud-png.github.io/mediatheque/ar/
+
+L’adresse racine redirige vers le français. Le sélecteur de langue ouvre l’autre page. Chaque version dispose de son interface, de ses résultats et de ses événements, limités à sa langue. La version arabe est présentée de droite à gauche. Les textes des publications ne sont pas traduits automatiquement. La vidéo officielle à la une n’est affichée que si la langue de son titre correspond à celle de la page.
 
 ## Accès et publication
 
@@ -11,10 +16,10 @@ Le portail public est hébergé sur GitHub Pages : https://nachchatmahmoud-png.g
 Après connexion :
 
 1. Choisir Vidéothèque, Photothèque ou Espace médias.
-2. Renseigner le titre, la date, la rubrique et le support : vidéo ou lien HTTPS, photos, PDF ou texte du communiqué.
+2. Renseigner le titre, la date, la langue de publication, la rubrique et le support : vidéo ou lien HTTPS, photos, PDF ou texte du communiqué.
 3. Vérifier l’aperçu si nécessaire, puis cliquer sur **✓ Valider et publier**.
 
-Description, crédits, langue et légendes sont facultatifs. La langue est proposée selon le titre. Les photos peuvent être réordonnées ; la première sert de couverture.
+La langue de publication est obligatoire et détermine la version dans laquelle le contenu est classé. Description, crédits et légendes restent facultatifs. Les photos peuvent être réordonnées ; la première sert de couverture.
 
 Les fichiers sont transférés au serveur et restent protégés avant leur publication. Une confirmation n’apparaît qu’après l’enregistrement de l’événement et du support. Une nouvelle tentative après une interruption conserve l’identifiant de publication pour éviter un doublon. La liste des publications permet de les retrouver et de les consulter.
 
@@ -26,7 +31,7 @@ Les sessions et les écritures restent sur l’origine de l’administration. L�
 
 ## Consultation
 
-La recherche depuis l’accueil porte sur les titres, rubriques, textes, légendes et mots-clés, en français et en arabe. **Affiner** regroupe les filtres par rubrique, année et langue. **Partager la recherche** copie une adresse qui conserve les critères et le tri. Les PDF et vidéos ne sont pas transcrits automatiquement.
+La recherche depuis l’accueil porte sur les titres, rubriques, textes, légendes et mots-clés, en français et en arabe. **Affiner** regroupe les filtres par rubrique et année, dans la langue de la page. **Partager la recherche** copie une adresse qui conserve les critères et le tri. Les PDF et vidéos ne sont pas transcrits automatiquement.
 
 La vidéo à la une provient du flux de la chaîne officielle https://www.youtube.com/@Matnuhpv, vérifié par GitHub Actions aux minutes 13 et 43 de chaque heure. La dernière vidéo connue reste disponible si le flux ne répond pas.
 
