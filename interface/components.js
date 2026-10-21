@@ -18,6 +18,80 @@ function mxHttps(value) {
   try { const url = new URL(value); return url.protocol === 'https:' && !url.username && !url.password ? url.href : ''; } catch { return ''; }
 }
 
+function mxYoutubeThumbnail(value) {
+  try {
+    const url = new URL(mxHttps(value));
+    const host = url.hostname.toLowerCase();
+    const parts = url.pathname.split('/').filter(Boolean);
+    const id = host === 'youtu.be' ? parts[0] : ['youtube.com','www.youtube.com','m.youtube.com','youtube-nocookie.com','www.youtube-nocookie.com'].includes(host) ? (url.pathname === '/watch' ? url.searchParams.get('v') : ['embed','shorts','live'].includes(parts[0]) ? parts[1] : '') : '';
+    return /^[\w-]{11}$/.test(id || '') ? 'https://i.ytimg.com/vi/' + id + '/hqdefault.jpg' : '';
+  } catch { return ''; }
+}
+
+function mxUseObjectUrl(source) {
+  const [url, setUrl] = O.useState('');
+  O.useEffect(() => {
+    if (!source || typeof source === 'string') { setUrl(typeof source === 'string' ? source : ''); return; }
+    const next = URL.createObjectURL(source); setUrl(next);
+    return () => URL.revokeObjectURL(next);
+  }, [source]);
+  return url;
+}
+
+// Capture a local video frame; every exit releases the decoder and object URL.
+function mxVideoThumbnail(file, signal) {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video');
+    const url = URL.createObjectURL(file);
+    let settled = false;
+    const finish = (error, result) => {
+      if (settled) return; settled = true;
+      clearTimeout(timer); signal?.removeEventListener('abort', abort);
+      video.onloadedmetadata = video.onloadeddata = video.onseeked = video.onerror = null;
+      video.removeAttribute('src'); video.load(); URL.revokeObjectURL(url);
+      error ? reject(error) : resolve(result);
+    };
+    const abort = () => finish(new DOMException('Opération annulée', 'AbortError'));
+    const timer = setTimeout(() => finish(new Error('Ajoutez une image pour la miniature de cette vidéo.')), 12000);
+    const capture = () => {
+      try {
+        if (!video.videoWidth || !video.videoHeight) throw new Error('Image vidéo indisponible.');
+        const canvas = document.createElement('canvas');
+        const scale = Math.min(1, 1280 / video.videoWidth, 720 / video.videoHeight);
+        canvas.width = Math.max(1, Math.round(video.videoWidth * scale));
+        canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(blob => blob ? finish(null, new File([blob], 'miniature-video.jpg', {type: 'image/jpeg', lastModified: file.lastModified})) : finish(new Error('Ajoutez une image pour la miniature de cette vidéo.')), 'image/jpeg', .88);
+      } catch { finish(new Error('Ajoutez une image pour la miniature de cette vidéo.')); }
+    };
+    video.muted = true; video.playsInline = true; video.preload = 'auto';
+    video.onerror = () => finish(new Error('La miniature automatique est indisponible. Importez une image.'));
+    video.onloadedmetadata = () => { video.currentTime = Number.isFinite(video.duration) && video.duration > .2 ? Math.min(1, video.duration / 10) : 0; };
+    video.onseeked = capture;
+    video.onloadeddata = () => { if (video.currentTime === 0) capture(); };
+    signal?.addEventListener('abort', abort, {once: true});
+    if (signal?.aborted) { abort(); return; }
+    video.src = url; video.load();
+  });
+}
+
+function MxThumbnailImage({source, title, className = ''}) {
+  const h = mxElement, url = mxUseObjectUrl(source);
+  const [failed, setFailed] = O.useState(false);
+  O.useEffect(() => setFailed(false), [url]);
+  return h('div', {className: 'mx-thumbnail-image ' + className}, url && !failed ? h('img', {src: url, alt: title || 'Miniature de la publication', onError: () => setFailed(true)}) : h('span', null, h(pa, {size: 30}), failed ? 'Aperçu indisponible' : 'Votre miniature'));
+}
+
+function MxThumbnailField({source, pending, custom, note, onChange, onReset}) {
+  const h = mxElement;
+  return h('section', {className: 'mx-thumbnail-field', 'aria-labelledby': 'thumbnail-heading'},
+    h('div', {className: 'mx-thumbnail-heading'}, h('div', null, h('h3', {id: 'thumbnail-heading'}, 'Miniature de la vidéo *'), h('p', null, 'L’image qui présentera votre vidéo dans la médiathèque.')), source && !pending && h('span', {className: 'mx-thumbnail-status'}, h(zl, {size: 13}), custom ? 'Personnalisée' : 'Automatique')),
+    h('div', {className: 'mx-thumbnail-layout'}, h(MxThumbnailImage, {source}),
+      h('div', {className: 'mx-thumbnail-options'}, h('p', {role: pending ? 'status' : undefined}, pending ? 'Création de la miniature…' : note || 'Importez une image pour présenter cette vidéo.'),
+        h('label', {className: 'button secondary mx-thumbnail-upload'}, h(pa, {size: 16}), source ? 'Changer la miniature' : 'Importer une miniature', h('input', {type: 'file', accept: 'image/jpeg,image/png,image/webp', 'aria-label': 'Importer une miniature de la vidéo', onChange: event => {onChange(event.target.files?.[0]); event.target.value = '';}})),
+        h('small', null, 'JPG, PNG ou WebP · 12 Mio maximum'), custom && h('button', {type: 'button', className: 'mx-thumbnail-reset', onClick: onReset}, 'Revenir à la miniature automatique'))));
+}
+
 function mxPublicationSuffix() {
   return Array.from(crypto.getRandomValues(new Uint8Array(6)), value => value.toString(16).padStart(2, '0')).join('');
 }
@@ -74,25 +148,27 @@ function MxCatalogueFilters({ query, onQuery, topic, onTopic, year, onYear, lang
       select('Année', year, onYear, [['', 'Toutes les années'], ...years.map(value => [value, value])])));
 }
 
-function MxPhotoPreview({ file, caption, index, total, onCaption, onRemove, onMove }) {
+function MxPhotoPreview({ file, caption, index, total, cover, onCover, onCaption, onRemove, onMove }) {
   const h = mxElement;
   const [url, setUrl] = O.useState('');
   O.useEffect(() => { const next = URL.createObjectURL(file); setUrl(next); return () => URL.revokeObjectURL(next); }, [file]);
-  return h('article', { className: 'mx-photo-preview' },
+  return h('article', { className: 'mx-photo-preview'+(cover?' mx-photo-cover':'') },
     h('div', { className: 'mx-photo-thumb' }, url && h('img', { src: url, alt: caption || file.name }),
-      index === 0 && h('span', null, 'Couverture de l’album')),
+      cover && h('span', null, h(zl,{size:12}), 'Miniature de l’album')),
     h('div', { className: 'mx-photo-info' }, h('strong', { title: file.name }, file.name), h('small', null, mxSize(file.size)),
       h('label', { htmlFor: 'mx-caption-' + index }, 'Légende de la photo ' + (index + 1)),
       h('input', { id: 'mx-caption-' + index, value: caption, onChange: event => onCaption(event.target.value), maxLength: 300, placeholder: 'Décrire brièvement la photographie…' }),
+      h('button', {type:'button',className:'mx-cover-choice','aria-pressed':cover,onClick:onCover},h(cover?zl:pa,{size:15}),cover?'Miniature sélectionnée':'Choisir comme miniature'),
       h('div', { className: 'mx-photo-actions' },
         h('button', { type: 'button', disabled: index === 0, onClick: () => onMove(index - 1), 'aria-label': 'Déplacer la photo ' + (index + 1) + ' vers le début' }, '← Monter'),
         h('button', { type: 'button', disabled: index === total - 1, onClick: () => onMove(index + 1), 'aria-label': 'Déplacer la photo ' + (index + 1) + ' vers la fin' }, 'Descendre →'),
         h('button', { type: 'button', className: 'mx-remove', onClick: onRemove, 'aria-label': 'Retirer ' + file.name }, 'Retirer'))));
 }
 
-function MxPublicationPreview({ title, date, topic, description, language, photos, captions, video, videoUrl, press, pressText, onClose }) {
+function MxPublicationPreview({ title, date, topic, description, language, photos, captions, video, videoUrl, thumbnail, press, pressText, onClose }) {
   const h = mxElement;
   const [urls, setUrls] = O.useState({ photos: [], video: '', press: '' });
+  const poster = mxUseObjectUrl(thumbnail);
   O.useEffect(() => {
     const next = { photos: photos.map(file => URL.createObjectURL(file)), video: video ? URL.createObjectURL(video) : '', press: press ? URL.createObjectURL(press) : '' };
     setUrls(next);
@@ -103,9 +179,10 @@ function MxPublicationPreview({ title, date, topic, description, language, photo
       h('div', { className: 'eyebrow' }, 'APERÇU AVANT PUBLICATION'),
       h('h2', { dir: 'auto' }, title || 'Titre à renseigner'),
       h('p', { className: 'mx-preview-meta' }, date && Ya(date), ' · ', topic),
+      thumbnail && h('div',{className:'mx-preview-cover'},h('span',{className:'eyebrow'},'MINIATURE DANS L’ACCUEIL'),h(MxThumbnailImage,{source:thumbnail,title})),
       description && h('p', { dir: language === 'ar' ? 'rtl' : 'auto' }, description),
       urls.photos.length > 0 && h('div', { className: 'mx-preview-gallery' }, urls.photos.map((url, index) => h('figure', { key: url }, h('img', { src: url, alt: captions[index] || 'Photo ' + (index + 1) }), captions[index] && h('figcaption', null, captions[index])))),
-      urls.video && h('video', { controls: true, preload: 'metadata', src: urls.video, 'aria-label': title || 'Vidéo à publier' }),
+      urls.video && h('video', { controls: true, preload: 'metadata', src: urls.video, poster, 'aria-label': title || 'Vidéo à publier' }),
       mxHttps(videoUrl) && h('a', { className: 'button secondary', href: mxHttps(videoUrl), target: '_blank', rel: 'noreferrer' }, 'Vérifier le lien vidéo', h(Oe, { size: 16 })),
       urls.press && h('a', { className: 'button secondary', href: urls.press, target: '_blank', rel: 'noreferrer' }, 'Ouvrir le PDF sélectionné', h(Oe, { size: 16 })),
       pressText && h('div', { className: 'mx-preview-text', dir: language === 'ar' ? 'rtl' : 'auto' }, pressText),

@@ -1,5 +1,5 @@
 // Source de l’interface publique ; assemblée par scripts/build-interface.mjs.
-function af({onExplore}) {
+function af() {
   let [e, a] = (0, No.useState)(ar),
     [t, l] = (0, No.useState)(!1),
     [imageFailed, setImageFailed] = (0, No.useState)(false);
@@ -26,7 +26,8 @@ function af({onExplore}) {
   }, []),
     (0, No.useEffect)(() => { l(!1); setImageFailed(false); }, [e.videoId]));
   let o = "https://www.youtube.com/watch?v=" + e.videoId;
-  if(mxDetectedLanguage(e.title)!==MX_LOCALE)return mxElement(MxLanguageFeature,{onExplore});
+  const displayTitle=mxDetectedLanguage(e.title)===MX_LOCALE?e.title:mxT('Dernière vidéo du ministère');
+  const localThumbnail=typeof e.thumbnailUrl==='string'&&e.thumbnailUrl==='/images/youtube-'+e.videoId+'.jpg'?je(e.thumbnailUrl):'';
   return (0, ge.jsxs)("div", {
     className: "hero-visual ministry-video",
     "aria-label":
@@ -59,7 +60,7 @@ function af({onExplore}) {
                 "https://www.youtube-nocookie.com/embed/" +
                 e.videoId +
                 "?autoplay=1&rel=0&playsinline=1",
-              title: "Vidéo du Ministère : " + e.title,
+              title: mxT("Vidéo du Ministère : ") + displayTitle,
               allow:
                 "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",
               referrerPolicy: "strict-origin-when-cross-origin",
@@ -69,11 +70,11 @@ function af({onExplore}) {
               className: "ministry-video-cover",
               onClick: () => l(!0),
               "aria-label":
-                "Lire la dernière vidéo du Ministère : " + e.title,
+                mxT("Lire la dernière vidéo du Ministère : ") + displayTitle,
               children: [
                 (0, ge.jsx)("img", {
                   src:
-                    imageFailed ? je(MX_LOCALE==='ar'?'/images/cover-ar.svg':'/images/cover.svg') : "https://i.ytimg.com/vi/" + e.videoId + "/hqdefault.jpg",
+                    imageFailed ? je(MX_LOCALE==='ar'?'/images/cover-ar.svg':'/images/cover.svg') : localThumbnail || "https://i.ytimg.com/vi/" + e.videoId + "/hqdefault.jpg",
                   onError: () => setImageFailed(true),
                   alt: "",
                   width: 480,
@@ -97,7 +98,7 @@ function af({onExplore}) {
       (0, ge.jsxs)("div", {
         className: "ministry-video-meta",
         children: [
-          (0, ge.jsx)("h2", { dir: "auto", children: e.title }),
+          (0, ge.jsx)("h2", { dir: "auto", children: displayTitle }),
           (0, ge.jsxs)("div", {
             children: [
               (0, ge.jsxs)("time", {

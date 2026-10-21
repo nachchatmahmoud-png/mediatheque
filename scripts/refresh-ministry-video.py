@@ -4,6 +4,7 @@ import json
 import os
 import re
 import urllib.request
+import urllib.parse
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
@@ -34,8 +35,11 @@ def record(value):
     if not isinstance(title, str) or not title.strip() or len(title) > 500:
         raise ValueError('Titre vidéo non valide')
     published = timestamp(value['publishedAt'])
-    return {'version': 1, 'channelId': CHANNEL_ID, 'channelUrl': CHANNEL_URL,
-            'videoId': value['videoId'], 'title': title.strip(), 'publishedAt': published.isoformat()}
+    result = {'version': 1, 'channelId': CHANNEL_ID, 'channelUrl': CHANNEL_URL,
+              'videoId': value['videoId'], 'title': title.strip(), 'publishedAt': published.isoformat()}
+    if value.get('thumbnailUrl') == '/images/youtube-' + value['videoId'] + '.jpg':
+        result['thumbnailUrl'] = value['thumbnailUrl']
+    return result
 
 
 def latest_from_feed(data, now=None):
@@ -79,13 +83,34 @@ def refresh(output, current_url=None, fetch=download):
             pass
     try:
         video = latest_from_feed(fetch(FEED_URL))
-        changed = video != previous
         print('YouTube : dernière vidéo ' + video['videoId'])
     except (ValueError, KeyError, TypeError, OSError, ET.ParseError):
         if previous is None:
             raise RuntimeError('Impossible de récupérer une vidéo valide')
-        video, changed = previous, False
+        video = dict(previous)
         print('YouTube : flux indisponible, dernière vidéo connue conservée')
+    # Serve the official thumbnail from this site, including when YouTube's
+    # image domain cannot be loaded by a visitor's browser.
+    thumbnail = '/images/youtube-' + video['videoId'] + '.jpg'
+    destination = output.parent / thumbnail.lstrip('/')
+    if not destination.is_file():
+        sources = ['https://i.ytimg.com/vi/' + video['videoId'] + '/hqdefault.jpg']
+        if current_url and previous and previous.get('thumbnailUrl') == thumbnail:
+            sources.append(urllib.parse.urljoin(current_url, '.' + thumbnail))
+        for source in sources:
+            try:
+                image = fetch(source)
+                if not image.startswith(b'\xff\xd8\xff') or len(image) > 1024 * 1024:
+                    raise ValueError('Miniature JPEG non valide')
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_bytes(image)
+                break
+            except (ValueError, OSError):
+                continue
+    video.pop('thumbnailUrl', None)
+    if destination.is_file():
+        video['thumbnailUrl'] = thumbnail
+    changed = video != previous
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(video, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     if os.environ.get('GITHUB_OUTPUT'):

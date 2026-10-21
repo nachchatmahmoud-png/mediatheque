@@ -21,7 +21,3 @@ function MxLanguageSwitch(){
   h('span',{'aria-hidden':true},'|'),
   h('a',{href:String(mxPageUrl('ar')),lang:'ar',hrefLang:'ar','aria-current':MX_LOCALE==='ar'?'page':undefined},'العربية'));
 }
-function MxLanguageFeature({onExplore}){
- const h=mxElement;
- return h('section',{className:'mx-language-feature'},h('div',{className:'eyebrow'},'VOTRE MÉDIATHÈQUE'),h('div',{className:'mx-feature-symbol','aria-hidden':true},h(Ta,{size:32}),h(pa,{size:30}),h(ma,{size:29})),h('h2',null,'L’information, sous toutes ses formes.'),h('p',null,'Retrouvez les vidéos, les photographies et les communiqués de cette version de la médiathèque.'),h('button',{className:'button primary',onClick:onExplore},'Explorer les publications',h(wl,{size:17})));
-}

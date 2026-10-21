@@ -49,10 +49,27 @@ function nf({auth,isAdmin,loading,error,onBack,onLogout,onRefresh,onToast,onPubl
   const [progress,setProgress]=O.useState('');
   const [formError,setFormError]=O.useState('');
   const [preview,setPreview]=O.useState(false);
+  const [photoCover,setPhotoCover]=O.useState(null);
+  const [customThumbnail,setCustomThumbnail]=O.useState(null);
+  const [automaticThumbnail,setAutomaticThumbnail]=O.useState(null);
+  const [thumbnailBusy,setThumbnailBusy]=O.useState(false);
+  const [thumbnailNote,setThumbnailNote]=O.useState('');
   const requestId=O.useRef('');
   const uploaded=O.useRef(new Map());
   const finalLanguage=language;
-  const setKind=value=>{if(busy)return;setType(value);setFiles([]);setCaptions([]);setFormError('');requestId.current='';uploaded.current.clear();};
+  const coverFile=files.includes(photoCover)?photoCover:files[0]||null;
+  const thumbnail=type==='photo'?coverFile:type==='video'?(customThumbnail||(videoMode==='file'?automaticThumbnail:mxYoutubeThumbnail(videoUrl))):null;
+  const thumbnailPending=type==='video'&&videoMode==='file'&&thumbnailBusy&&!customThumbnail;
+  const thumbnailPreviewUrl=mxUseObjectUrl(thumbnail);
+  O.useEffect(()=>{
+    setAutomaticThumbnail(null);setThumbnailNote('');
+    if(type!=='video'||videoMode!=='file'||!files[0]){setThumbnailBusy(false);return;}
+    const controller=new AbortController();setThumbnailBusy(true);
+    mxVideoThumbnail(files[0],controller.signal).then(file=>{if(!controller.signal.aborted){setAutomaticThumbnail(file);setThumbnailNote('Miniature créée à partir de votre vidéo.');}}).catch(exception=>{if(!controller.signal.aborted)setThumbnailNote(exception.message);}).finally(()=>{if(!controller.signal.aborted)setThumbnailBusy(false);});
+    return ()=>controller.abort();
+  },[type,videoMode,files[0]]);
+  const setKind=value=>{if(busy)return;setType(value);setFiles([]);setCaptions([]);setPhotoCover(null);setCustomThumbnail(null);setFormError('');requestId.current='';uploaded.current.clear();};
+  const chooseThumbnail=file=>{if(!file)return;try{mxValidateFile(file,'photo');setCustomThumbnail(file);setFormError('');}catch(exception){setFormError(exception.message);}};
   const addFiles=list=>{
     const chosen=Array.from(list||[]);if(!chosen.length)return;
     try{
@@ -60,6 +77,7 @@ function nf({auth,isAdmin,loading,error,onBack,onLogout,onRefresh,onToast,onPubl
       const next=type==='photo'?[...files,...chosen.filter(file=>!files.some(other=>other.name===file.name&&other.size===file.size&&other.lastModified===file.lastModified))]:[chosen[0]];
       if(next.length>30)throw new Error('Un album peut contenir au maximum 30 photographies.');
       if(next.reduce((total,file)=>total+file.size,0)>100*1048576)throw new Error('La publication ne peut pas dépasser 100 Mio.');
+      if(type==='video')setCustomThumbnail(null);
       setFiles(next);setCaptions(type==='photo'?[...captions,...next.slice(files.length).map(()=>'')]:[]);setFormError('');
     }catch(exception){setFormError(exception.message);}
   };
@@ -77,13 +95,19 @@ function nf({auth,isAdmin,loading,error,onBack,onLogout,onRefresh,onToast,onPubl
       if(!['fr','ar'].includes(language))throw new Error('Choisissez la langue de publication.');
       if(type==='photo'&&!files.length)throw new Error('Sélectionnez au moins une photographie.');
       if(type==='video'&&(videoMode==='file'?!files.length:!mxHttps(videoUrl)))throw new Error(videoMode==='file'?'Sélectionnez une vidéo.':'Renseignez une adresse vidéo HTTPS valide.');
+      if(type==='video'&&thumbnailPending)throw new Error('La miniature est en cours de création. Patientez quelques instants.');
+      if(type==='video'&&!thumbnail)throw new Error('Ajoutez une miniature pour présenter la vidéo dans l’accueil.');
       if(type==='press'&&!files.length&&!pressText.trim())throw new Error('Sélectionnez un PDF ou saisissez le texte du communiqué.');
       setBusy(true);setProgress('Validation de la publication…');
       const paths=[];
       const activeFiles=type==='video'&&videoMode==='link'?[]:files;
+      const extraThumbnail=type==='video'&&thumbnail&&typeof thumbnail!=='string'?thumbnail:null;
+      if(activeFiles.reduce((sum,file)=>sum+file.size,extraThumbnail?.size||0)>100*1048576)throw new Error('La publication, miniature comprise, ne peut pas dépasser 100 Mio.');
       for(let index=0;index<activeFiles.length;index++){setProgress('Transfert des fichiers : '+(index+1)+' / '+activeFiles.length);paths.push(await upload(activeFiles[index]));}
+      let thumbnailUrl=type==='photo'?paths[files.indexOf(coverFile)]||'':typeof thumbnail==='string'?thumbnail:'';
+      if(extraThumbnail){setProgress('Transfert de la miniature…');thumbnailUrl=await upload(extraThumbnail);}
       requestId.current ||= crypto.randomUUID();
-      const result=await Ho('/api/publications',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId:requestId.current,type,title:title.trim(),date,topic,language:finalLanguage,description,credit,status:'published',keywords:[topic],location:'',duration:'',thumbnailUrl:type==='photo'?paths[0]:'',mediaUrl:type==='video'?(videoMode==='link'?videoUrl.trim():paths[0]):'',fileUrl:type==='press'?paths[0]||'':'',captionsUrl:'',photos:type==='photo'?paths.map((url,index)=>({url,caption:captions[index]||''})):[],content:type==='press'?pressText:'',transcript:''})});
+      const result=await Ho('/api/publications',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId:requestId.current,type,title:title.trim(),date,topic,language:finalLanguage,description,credit,status:'published',keywords:[topic],location:'',duration:'',thumbnailUrl,mediaUrl:type==='video'?(videoMode==='link'?videoUrl.trim():paths[0]):'',fileUrl:type==='press'?paths[0]||'':'',captionsUrl:'',photos:type==='photo'?paths.map((url,index)=>({url,caption:captions[index]||''})):[],content:type==='press'?pressText:'',transcript:''})});
       if(!result.published)throw new Error('La publication n’a pas été confirmée.');
       setProgress('Publication effectuée.');onToast('La publication est en ligne et visible dans l’accueil.');
       await onPublished(result.id,finalLanguage);
@@ -107,15 +131,17 @@ function nf({auth,isAdmin,loading,error,onBack,onLogout,onRefresh,onToast,onPubl
             h('label',{className:'field gh-wide'},'Rubrique *',h('select',{required:true,value:topic,onChange:event=>setTopic(event.target.value)},...el.map(value=>h('option',{key:value,value},value))))),
           type==='video'&&h('div',{className:'mx-video-mode',role:'group','aria-label':'Source de la vidéo'},h('button',{type:'button','aria-pressed':videoMode==='file',onClick:()=>setVideoMode('file')},'Importer un fichier'),h('button',{type:'button','aria-pressed':videoMode==='link',onClick:()=>setVideoMode('link')},'Utiliser un lien vidéo')),
           type==='video'&&videoMode==='link'?input('Adresse HTTPS de la vidéo *',videoUrl,setVideoUrl,{type:'url',required:true,maxLength:2000,placeholder:'https://…'}):h('div',{className:'mx-support-upload'},
-            h('label',{className:'gh-file-label'},h(au,{size:22}),attachmentLabel,h('input',{type:'file',accept:type==='photo'?'image/jpeg,image/png,image/webp':type==='video'?'video/mp4,video/webm':'application/pdf',multiple:type==='photo',onChange:event=>{addFiles(event.target.files);event.target.value='';}})),
+            h('label',{className:'gh-file-label'},h(type==='photo'?pa:type==='video'?Ta:ma,{size:22}),attachmentLabel,h('input',{type:'file',accept:type==='photo'?'image/jpeg,image/png,image/webp':type==='video'?'video/mp4,video/webm':'application/pdf',multiple:type==='photo',onChange:event=>{addFiles(event.target.files);event.target.value='';}})),
             h('small',null,type==='photo'?'JPG, PNG ou WebP · 30 photos maximum · 12 Mio par photo':type==='video'?'MP4 ou WebM · 25 Mio maximum':'PDF · 20 Mio maximum')),
-          files.length>0&&!(type==='video'&&videoMode==='link')&&h('div',{className:'mx-selected-files'},type==='photo'?h('div',{className:'mx-photo-grid'},...files.map((file,index)=>h(MxPhotoPreview,{key:file.name+'-'+file.lastModified,file,caption:captions[index]||'',index,total:files.length,onCaption:value=>setCaptions(captions.map((note,position)=>position===index?value:note)),onRemove:()=>{setFiles(files.filter((_,position)=>position!==index));setCaptions(captions.filter((_,position)=>position!==index));},onMove:destination=>move(index,destination)}))):h('div',null,h('strong',null,files[0].name),h('small',null,mxSize(files[0].size)),h('button',{type:'button',className:'mx-remove',onClick:()=>setFiles([])},'Retirer'))),
+          type==='photo'&&files.length>0&&h('p',{className:'mx-cover-help'},h(pa,{size:16}),'Choisissez la photo qui servira de miniature dans l’accueil.'),
+          files.length>0&&!(type==='video'&&videoMode==='link')&&h('div',{className:'mx-selected-files'},type==='photo'?h('div',{className:'mx-photo-grid'},...files.map((file,index)=>h(MxPhotoPreview,{key:file.name+'-'+file.size+'-'+file.lastModified,file,caption:captions[index]||'',index,total:files.length,cover:file===coverFile,onCover:()=>setPhotoCover(file),onCaption:value=>setCaptions(captions.map((note,position)=>position===index?value:note)),onRemove:()=>{setFiles(files.filter((_,position)=>position!==index));setCaptions(captions.filter((_,position)=>position!==index));},onMove:destination=>move(index,destination)}))):h('div',null,h('strong',null,files[0].name),h('small',null,mxSize(files[0].size)),h('button',{type:'button',className:'mx-remove',onClick:()=>setFiles([])},'Retirer'))),
+          type==='video'&&h(MxThumbnailField,{source:thumbnail,pending:thumbnailPending,custom:!!customThumbnail,note:videoMode==='link'&&mxYoutubeThumbnail(videoUrl)?'Miniature récupérée depuis le lien YouTube.':thumbnailNote,onChange:chooseThumbnail,onReset:()=>setCustomThumbnail(null)}),
           type==='press'&&h('label',{className:'field mx-press-text'},'Texte du communiqué'+(!files.length?' *':' (facultatif)'),h('textarea',{rows:5,maxLength:40000,value:pressText,required:!files.length,onChange:event=>setPressText(event.target.value),dir:'auto',placeholder:'Saisissez le texte si vous ne joignez pas de PDF.'}))),
         h('details',{className:'mx-optional-fields'},h('summary',null,'Informations complémentaires',h('small',null,'Facultatif')),h('div',{className:'gh-fields'},h('label',{className:'field gh-wide'},'Courte description',h('textarea',{rows:3,maxLength:1200,value:description,disabled:busy,onChange:event=>setDescription(event.target.value)})),input('Crédits / auteur',credit,setCredit,{maxLength:200,disabled:busy}))),
         formError&&h('p',{className:'gh-error',role:'alert'},formError),
-        h('div',{className:'mx-publish-footer'},h('button',{className:'button secondary',type:'button',disabled:busy,onClick:()=>setPreview(true)},h(au,{size:17}),'Aperçu'),h('button',{className:'button primary mx-publish-button',type:'submit',disabled:busy},h(zl,{size:20}),busy?'Publication en cours…':'Valider et publier')),
+        h('div',{className:'mx-publish-footer'},h('button',{className:'button secondary',type:'button',disabled:busy,onClick:()=>setPreview(true)},h(au,{size:17}),'Aperçu'),h('button',{className:'button primary mx-publish-button',type:'submit',disabled:busy||thumbnailPending},h(zl,{size:20}),busy?'Publication en cours…':'Valider et publier')),
         busy&&h('p',{className:'mx-publishing-status',role:'status','aria-live':'polite'},progress)),
-      h('aside',{className:'mx-publication-guide'},h('div',{className:'eyebrow'},'VOTRE PUBLICATION'),h('span',{className:'mx-guide-format'},h(Oo,{type,size:22}),nu[type]),h('h2',{dir:'auto'},title.trim()||'Un nouveau contenu à partager'),h('dl',null,h('div',null,h('dt',null,'Date'),h('dd',null,date?Ya(date):'À renseigner')),h('div',null,h('dt',null,'Rubrique'),h('dd',null,topic)),h('div',null,h('dt',null,'Support'),h('dd',null,type==='video'&&videoMode==='link'?'Lien vidéo HTTPS':files.length?mxPlural(files.length,'fichier'):type==='press'&&pressText?'Texte du communiqué':'À sélectionner'))),h('div',{className:'mx-guide-note'},h(Wi,{size:17}),h('p',null,'Vérifiez votre contenu dans l’aperçu. Le bouton « Valider et publier » confirme sa mise en ligne.')))),
-      preview&&h(MxPublicationPreview,{title,date,topic,description,language:finalLanguage,photos:type==='photo'?files:[],captions,video:type==='video'&&videoMode==='file'?files[0]||null:null,videoUrl:type==='video'&&videoMode==='link'?videoUrl:'',press:type==='press'?files[0]||null:null,pressText:type==='press'?pressText:'',onClose:()=>setPreview(false)}),
+      h('aside',{className:'mx-publication-guide'},h('div',{className:'eyebrow'},'VOTRE PUBLICATION'),(type==='video'||type==='photo')&&h('div',{className:'mx-guide-cover'},h(MxThumbnailImage,{source:thumbnailPreviewUrl,title}),h('small',null,'Miniature dans l’accueil')),h('span',{className:'mx-guide-format'},h(Oo,{type,size:22}),nu[type]),h('h2',{dir:'auto'},title.trim()||'Un nouveau contenu à partager'),h('dl',null,h('div',null,h('dt',null,'Date'),h('dd',null,date?Ya(date):'À renseigner')),h('div',null,h('dt',null,'Rubrique'),h('dd',null,topic)),h('div',null,h('dt',null,'Support'),h('dd',null,type==='video'&&videoMode==='link'?'Lien vidéo HTTPS':files.length?mxPlural(files.length,'fichier'):type==='press'&&pressText?'Texte du communiqué':'À sélectionner'))),h('div',{className:'mx-guide-note'},h(Wi,{size:17}),h('p',null,'Vérifiez votre contenu dans l’aperçu. Le bouton « Valider et publier » confirme sa mise en ligne.')))),
+      preview&&h(MxPublicationPreview,{title,date,topic,description,language:finalLanguage,thumbnail,photos:type==='photo'?files:[],captions,video:type==='video'&&videoMode==='file'?files[0]||null:null,videoUrl:type==='video'&&videoMode==='link'?videoUrl:'',press:type==='press'?files[0]||null:null,pressText:type==='press'?pressText:'',onClose:()=>setPreview(false)}),
       h(MxPublishedList,{items,onOpen:onPreview}))));
 }

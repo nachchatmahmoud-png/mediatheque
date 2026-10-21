@@ -20,6 +20,10 @@ export async function buildInterface(root, output) {
   const baseMarker = 'var $s="/mediatheque".replace(/\\/$/,"");';
   if (!bundle.includes(baseMarker)) throw new Error('Base du portail introuvable.');
   bundle = bundle.replace(baseMarker, 'var $s=new URL(".",document.baseURI).pathname.replace(/\\/$/,"");');
+  // Bundle the last verified official video so the first render needs no request.
+  const latest=JSON.parse(await readFile(join(root,'site/latest-video.json'),'utf8'));
+  if(latest.channelId!=='UCIKc_HXIZnAmfO9ulxf80EQ'||latest.channelUrl!=='https://www.youtube.com/@Matnuhpv'||!/^[-\w]{11}$/.test(latest.videoId)||typeof latest.title!=='string'||!latest.title.trim()||Number.isNaN(Date.parse(latest.publishedAt)))throw new Error('La dernière vidéo officielle est non valide.');
+  bundle=bundle.replace(/var ar=\{[\s\S]*?\};var ge=/,()=> 'var ar='+JSON.stringify(latest)+';var ge=');
   bundle=bundle.replaceAll('e.language.toUpperCase()','(e.language==="ar"?"العربية":"Français")');
   const sections = [
     ['latest-video.js', 'function af(){', 'var F=Y(ze(),1);'],

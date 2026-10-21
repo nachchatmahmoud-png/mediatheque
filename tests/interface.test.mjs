@@ -13,7 +13,7 @@ import {publicationToCatalogue, validateAsset} from '../github-pages/catalogue.t
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const helpers = await readFile(join(root, 'interface/components.js'), 'utf8');
-const utilities = vm.runInNewContext(helpers + ';({mxHttps,mxValidateFile,mxPublicationSuffix,mxStorage})', {
+const utilities = vm.runInNewContext(helpers + ';({mxHttps,mxYoutubeThumbnail,mxValidateFile,mxPublicationSuffix,mxStorage})', {
   URL, Intl, crypto: webcrypto, Uint8Array,
   localStorage: {getItem() {throw new Error('disabled');}, setItem() {throw new Error('disabled');}},
 });
@@ -39,6 +39,11 @@ test('file selection, safe links and storage restrictions have usable outcomes',
   assert.equal(utilities.mxHttps('javascript:alert(1)'), '');
   assert.equal(utilities.mxHttps('https://user:secret@example.org/'), '');
   assert.equal(utilities.mxHttps('https://example.org/video.mp4'), 'https://example.org/video.mp4');
+  assert.equal(utilities.mxYoutubeThumbnail('https://www.youtube.com/watch?v=abcdefghijk'),'https://i.ytimg.com/vi/abcdefghijk/hqdefault.jpg');
+  assert.equal(utilities.mxYoutubeThumbnail('https://youtu.be/abcdefghijk?t=3'),'https://i.ytimg.com/vi/abcdefghijk/hqdefault.jpg');
+  assert.equal(utilities.mxYoutubeThumbnail('https://youtube.com.evil.test/watch?v=abcdefghijk'),'');
+  assert.equal(utilities.mxYoutubeThumbnail('https://user:secret@youtube.com/watch?v=abcdefghijk'),'');
+  assert.equal(utilities.mxYoutubeThumbnail('https://www.youtube.com/watch?v=bad'),'');
   assert.throws(() => utilities.mxValidateFile({name: 'photo.exe', size: 10}, 'photo'));
   assert.throws(() => utilities.mxValidateFile({name: 'photo.jpg', size: 13 * 1048576}, 'photo'));
   assert.throws(() => utilities.mxValidateFile({name: 'empty.pdf', size: 0}, 'press'));
