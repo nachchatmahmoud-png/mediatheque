@@ -1,59 +1,44 @@
-# Médiathèque — version publique
+# Médiathèque — portail public
 
-Vidéos, albums photo, communiqués de presse et dossiers d’événements du Ministère de l’Aménagement du Territoire National, de l’Urbanisme, de l’Habitat et de la Politique de la Ville.
+Vidéos, albums photo, communiqués et événements du Ministère de l’Aménagement du Territoire National, de l’Urbanisme, de l’Habitat et de la Politique de la Ville.
 
-**Ce dépôt et tous les fichiers qui y sont ajoutés sont publics. Déposez uniquement des contenus validés pour diffusion publique.**
+Le portail public est hébergé sur GitHub Pages : https://nachchatmahmoud-png.github.io/mediatheque/
 
-Le site ne devient accessible qu’après activation de GitHub Pages et réussite du déploiement. Le catalogue est initialement vide.
+## Accès et publication
 
-## Publier un événement
+**Espace de gestion** ouvre le service d’administration. L’identifiant et le mot de passe sont contrôlés par ce serveur. Les visiteurs ne peuvent ni transférer un fichier ni publier. Le propriétaire active le premier compte avec son compte propriétaire vérifié et choisit lui-même ses identifiants. Aucun mot de passe n’est conservé dans ce dépôt ou dans le navigateur.
 
-1. Dans le site, ouvrir **Espace de gestion**.
-2. Choisir **Vidéothèque**, **Photothèque** ou **Espace médias**, puis sélectionner les fichiers à importer.
-3. Saisir le titre, la date et les mots-clés. La rubrique est proposée selon les mots-clés choisis ; le choix manuel reste possible. Les légendes sont saisies sous les photos. Les descriptions et transcriptions sont facultatives, dans **Informations complémentaires**.
-4. Télécharger le dossier ZIP, puis l’extraire sur l’ordinateur.
-5. Ouvrir [publications](https://github.com/nachchatmahmoud-png/mediatheque/tree/main/publications), puis **Add file → Upload files**. Déposer le dossier extrait entier et valider **Commit changes**.
-6. Attendre la réussite du workflow **Publication GitHub Pages** dans l’onglet Actions.
+Après connexion :
 
-La publication utilise l’authentification GitHub et les droits d’écriture sur ce dépôt. Le formulaire prépare les fichiers localement ; il ne les envoie pas avant votre validation sur GitHub. Aucun identifiant ou mot de passe de l’application de travail n’est transféré dans cette version.
+1. Choisir Vidéothèque, Photothèque ou Espace médias.
+2. Renseigner le titre, la date, la rubrique et le support : vidéo ou lien HTTPS, photos, PDF ou texte du communiqué.
+3. Vérifier l’aperçu si nécessaire, puis cliquer sur **✓ Valider et publier**.
 
-Les photographies sont prévisualisées dès leur sélection. Les commandes **Monter** et **Descendre** permettent de choisir leur ordre ; la première photographie devient la couverture de l’album. Chaque légende est saisie sous sa photographie et accompagne celle-ci lors d’un déplacement.
+Description, crédits, langue et légendes sont facultatifs. La langue est proposée selon le titre. Les photos peuvent être réordonnées ; la première sert de couverture.
 
-Avant l’export, le récapitulatif indique les supports choisis, le nombre et le poids des fichiers. **Aperçu de la publication** permet de vérifier les textes et les supports. **Enregistrer le brouillon** conserve la saisie et les légendes dans le stockage de session de l’onglet ; après rechargement, **Reprendre le brouillon** restaure ces informations. Les fichiers doivent être sélectionnés à nouveau. Le brouillon dépend de la session du navigateur et ne constitue pas une sauvegarde durable.
+Les fichiers sont transférés au serveur et restent protégés avant leur publication. Une confirmation n’apparaît qu’après l’enregistrement de l’événement et du support. Une nouvelle tentative après une interruption conserve l’identifiant de publication pour éviter un doublon. La liste des publications permet de les retrouver et de les consulter.
 
-La rubrique **Publications en ligne** permet de retrouver un contenu, de le consulter et d’ouvrir sa fiche dans GitHub pour la corriger. Un nouvel export d’une même fiche conserve le nom du dossier pendant la saisie ; une correction peut ainsi remplacer ce dossier sans créer une nouvelle publication.
+## Raccordement du catalogue public
 
-## Consulter et rechercher
+`interface/service-config.json` définit l’origine du service et l’activation de son flux public. `publicFeedEnabled` reste désactivé tant que le service conserve son accès propriétaire uniquement. Le portail GitHub continue alors à afficher son catalogue statique existant. Après autorisation de consultation publique du service, activer ce réglage : l’accueil et la recherche liront les publications directement, sans transfert ZIP ni nouveau déploiement pour chaque contenu.
 
-La recherche est accessible dès l’accueil. Les dernières publications et les supports d’un événement sont mis en avant dès que le catalogue contient des publications.
+Les sessions et les écritures restent sur l’origine de l’administration. L’accueil public ne transmet aucune session au service et ne lit que le catalogue et les fichiers publiés. La mise en ligne d’un contenu suppose qu’il est validé pour diffusion publique.
 
-Les filtres par rubrique, année et langue sont regroupés dans **Affiner**. Le bouton **Partager la recherche** copie un lien qui conserve les mots-clés, les filtres, le type de contenu et le tri. Ces critères sont restaurés à l’ouverture du lien ou après rechargement. La recherche prend en compte les accents français et les variantes courantes des lettres arabes, ainsi que les textes et transcriptions saisis.
+## Consultation
 
-## Vidéo à la une
+La recherche depuis l’accueil porte sur les titres, rubriques, textes, légendes et mots-clés, en français et en arabe. **Affiner** regroupe les filtres par rubrique, année et langue. **Partager la recherche** copie une adresse qui conserve les critères et le tri. Les PDF et vidéos ne sont pas transcrits automatiquement.
 
-L’encadré de l’accueil affiche la dernière vidéo de la chaîne officielle https://www.youtube.com/@Matnuhpv. Le flux public est vérifié automatiquement aux minutes 13 et 43 de chaque heure. Un nouveau déploiement est lancé uniquement si la vidéo ou ses informations ont changé. Les horaires de lancement peuvent être décalés par GitHub Actions. La dernière vidéo connue est conservée si YouTube est temporairement indisponible.
+La vidéo à la une provient du flux de la chaîne officielle https://www.youtube.com/@Matnuhpv, vérifié par GitHub Actions aux minutes 13 et 43 de chaque heure. La dernière vidéo connue reste disponible si le flux ne répond pas.
 
-## Corriger ou retirer un contenu
+## Limites des fichiers
 
-Chaque événement possède sa fiche `publications/nom-du-dossier/publication.json`. Modifier cette fiche pour corriger ses informations. Passer `status` de `published` à `draft` retire le dossier du site après le prochain déploiement.
+- Photos : JPG, PNG ou WebP ; 30 fichiers maximum, 12 Mio par fichier.
+- Vidéo : MP4 ou WebM jusqu’à 25 Mio, ou adresse HTTPS.
+- Communiqué : PDF jusqu’à 20 Mio, texte ou les deux.
+- Publication : 100 Mio de fichiers au total.
 
-**Un retrait du site ne rend pas les fichiers du dépôt privés. Ils restent consultables dans le dépôt public et son historique. N’y ajoutez jamais de donnée confidentielle.**
+## Source et validation
 
-## Capacités et limites
+Les composants éditables sont dans `interface/`. `scripts/build-interface.mjs` les assemble avec le runtime et les lecteurs du socle `site/assets/app.js`. `scripts/build-github-pages.mjs` génère `_site`. Le serveur d’authentification et de stockage est un projet distinct ; aucun secret n’est inclus dans ce dépôt public.
 
-- Album : jusqu’à 30 photographies JPG, PNG ou WebP, 12 Mio par fichier.
-- Vidéo : MP4 ou WebM, 25 Mio par fichier pour le transfert depuis le navigateur GitHub, ou adresse HTTPS existante.
-- Communiqué : PDF jusqu’à 20 Mio, texte saisi, ou les deux.
-- Dossier préparé dans le navigateur : 100 Mio au total.
-- Recherche : titres, mots-clés et sigles, présentation, légendes, transcriptions saisies et textes des communiqués. Les PDF et les vidéos ne sont pas transcrits automatiquement.
-- Les données de comptes, les sessions et la base de l’application de travail ne sont pas incluses.
-
-## Hébergement
-
-Dans **Settings → Pages**, choisir **GitHub Actions**, puis lancer le workflow **Publication GitHub Pages** depuis Actions. Les modifications suivantes du dépôt reconstruisent automatiquement le site.
-
-Le répertoire `site` contient le socle de l’interface et ses ressources. Les composants éditables de l’accueil, du catalogue et de la gestion se trouvent dans `interface/`. Le script `scripts/build-interface.mjs` les assemble avec le runtime et les lecteurs de médias conservés ; il vérifie les limites de remplacement pour signaler toute modification incompatible du socle. Le script `scripts/build-github-pages.mjs` assemble l’interface, valide le catalogue et copie uniquement les supports publiés dans `_site`. Le code du serveur de l’application complète n’est pas inclus.
-
-Vérification locale : Node.js 22.13 ou ultérieur et Python 3, puis `npm test` et `npm run build`. Aucune installation de dépendances n’est requise. Les vérifications contrôlent notamment la lisibilité des archives ZIP et leur compatibilité avec le catalogue ; elles sont exécutées avant le déploiement GitHub Pages.
-
-Documentation officielle : https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages
+Node.js 22.13 ou ultérieur et Python 3 : `npm test`, puis `npm run build`. Le workflow GitHub Actions exécute ces contrôles avant la publication GitHub Pages. Les anciennes fiches sous `publications/` restent prises en charge par le générateur statique. Elles restent publiques, y compris dans l’historique du dépôt.

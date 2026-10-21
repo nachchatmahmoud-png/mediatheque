@@ -1,715 +1,114 @@
-// Source de l’interface publique ; assemblée par scripts/build-interface.mjs.
-function nf({ onBack: e, onToast: a, items = [], onPreview }) {
-  let [t, l] = (0, pe.useState)([]),
-    [o, i] = (0, pe.useState)(""),
-    [u, n] = (0, pe.useState)(SL),
-    [r, f] = (0, pe.useState)(el[0]),
-    [x, h] = (0, pe.useState)(""),
-    [s, p] = (0, pe.useState)(""),
-    [S, C] = (0, pe.useState)(""),
-    [T, m] = (0, pe.useState)(""),
-    [c, g] = (0, pe.useState)("fr"),
-    [L, z] = (0, pe.useState)([]),
-    [R, I] = (0, pe.useState)([]),
-    [M, H] = (0, pe.useState)(null),
-    [k, _e] = (0, pe.useState)(""),
-    [te, tl] = (0, pe.useState)(""),
-    [ke, ql] = (0, pe.useState)(null),
-    [ye, El] = (0, pe.useState)(""),
-    [Ae, Ol] = (0, pe.useState)(!1),
-    [Ja, yt] = (0, pe.useState)(""),
-    [Oa, ll] = (0, pe.useState)(""),
-    Ze = t.includes("photo"),
-    He = t.includes("video"),
-    Wa = t.includes("press");
-  const [previewOpen, setPreviewOpen] = pe.useState(false);
-  const [downloadUrl, setDownloadUrl] = pe.useState('');
-  pe.useEffect(() => () => { if (downloadUrl) URL.revokeObjectURL(downloadUrl); }, [downloadUrl]);
-  const [savedDraft, setSavedDraft] = pe.useState(() => {
-    try { const value = JSON.parse(sessionStorage.getItem('mediatheque-draft') || 'null'); return value?.schema === 1 ? value : null; } catch { return null; }
-  });
-  const exportId = pe.useRef('');
-  const selectedFiles = [...(Ze ? L : []), ...(He && M ? [M] : []), ...(Wa && ke ? [ke] : [])];
-  const totalBytes = selectedFiles.reduce((total, file) => total + file.size, 0);
-  const saveDraft = () => {
-    const value = { schema: 1, types: t, title: o, date: u, topic: r, location: x, description: s, keywords: S, credit: T, language: c, videoUrl: k, transcript: te, pressText: ye, exportId: exportId.current,
-      photoNotes: L.map((file, index) => ({name: file.name, size: file.size, caption: R[index] || ''})) };
-    try { sessionStorage.setItem('mediatheque-draft', JSON.stringify(value)); setSavedDraft(value); a('Le brouillon de saisie est enregistré pour cet onglet. Les fichiers ne sont pas conservés.'); }
-    catch { a('Le navigateur ne permet pas l’enregistrement du brouillon.'); }
+// Administration: the server owns authentication, sessions and publication.
+function MxAdminLogin({auth,onAuthenticated}) {
+  const h=mxElement;
+  const [username,setUsername]=O.useState(auth.username||'');
+  const [password,setPassword]=O.useState('');
+  const [confirmation,setConfirmation]=O.useState('');
+  const [recover,setRecover]=O.useState(false);
+  const [busy,setBusy]=O.useState(false);
+  const [error,setError]=O.useState('');
+  const create=!auth.configured&&auth.canSetup;
+  const newPassword=create||recover;
+  const submit=async event=>{
+    event.preventDefault();setError('');setBusy(true);
+    try{
+      await Ho('/api/auth/'+(create?'setup':recover?'recover':'login'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password,confirmPassword:confirmation})});
+      const status=await Ho('/api/auth/session');
+      if(!status.authenticated)throw new Error('La session n’a pas pu être conservée. Ouvrez la gestion dans un onglet distinct, puis reconnectez-vous.');
+      setPassword('');setConfirmation('');await onAuthenticated();
+    }catch(exception){setError(exception.message);}finally{setBusy(false);}
   };
-  const restoreDraft = () => {
-    if (!savedDraft) return;
-    const value = savedDraft;
-    l(Array.isArray(value.types) ? value.types.filter(type => ['photo', 'video', 'press'].includes(type)) : []);
-    i(String(value.title || '').slice(0, 180)); n(/^\d{4}-\d{2}-\d{2}$/.test(value.date) ? value.date : SL());
-    f(el.includes(value.topic) ? value.topic : el[0]); h(String(value.location || '').slice(0, 150));
-    p(String(value.description || '').slice(0, 2000)); C(String(value.keywords || '').slice(0, 3000));
-    m(String(value.credit || '').slice(0, 200)); g(value.language === 'ar' ? 'ar' : 'fr');
-    _e(String(value.videoUrl || '').slice(0, 2000)); tl(String(value.transcript || '').slice(0, 60000)); El(String(value.pressText || '').slice(0, 40000));
-    z([]); I([]); H(null); ql(null); exportId.current = /^[a-z0-9][a-z0-9-]{2,79}$/.test(value.exportId) ? value.exportId : '';
-    a('Le brouillon a été repris. Sélectionnez à nouveau les fichiers à joindre.');
-  };
-  const movePhoto = (index, destination) => {
-    const files = [...L], captions = [...R];
-    files.splice(destination, 0, files.splice(index, 1)[0]); captions.splice(destination, 0, captions.splice(index, 1)[0]);
-    z(files); I(captions);
-  };
-  (0, pe.useEffect)(
-    () => ll(""),
-    [t, o, u, r, x, s, S, T, c, L, R, M, k, te, ke, ye],
-  );
-  let Ha = (B) => {
-      (l((P) => (P.includes(B) ? P.filter((Ne) => Ne !== B) : [...P, B])),
-        yt(""));
-    },
-    cu = (B) => {
-      if (!B) return;
-      let P = Array.from(B).filter(file => !L.some(existing => existing.name === file.name && existing.size === file.size && existing.lastModified === file.lastModified));
-      try { P.forEach(file => mxValidateFile(file, 'photo')); } catch (error) { yt(error.message); return; }
-      if (!P.length) { a('Ces photographies sont déjà sélectionnées.'); return; }
-      if (L.length + P.length > 30) {
-        yt("Un album peut contenir jusqu’à 30 photographies.");
-        return;
-      }
-      const notes = Array.isArray(savedDraft?.photoNotes) ? savedDraft.photoNotes : [];
-      const noteFor = file => notes.find(note => note.name === file.name && note.size === file.size);
-      if (!L.length && notes.length) P.sort((left, right) => (notes.indexOf(noteFor(left)) < 0 ? 999 : notes.indexOf(noteFor(left))) - (notes.indexOf(noteFor(right)) < 0 ? 999 : notes.indexOf(noteFor(right))));
-      (z([...L, ...P]), I([...R, ...P.map(file => String(noteFor(file)?.caption || '').slice(0, 300))]), yt(""));
-    },
-    Fo = async (B) => {
-      (B.preventDefault(), yt(""), ll(""), Ol(!0));
-      try {
-        if (!t.length) throw new Error("Choisissez un contenu à ajouter.");
-        if (Ze && !L.length)
-          throw new Error(
-            "Ajoutez au moins une photographie à l’album.",
-          );
-        if (He && !M && !k.trim())
-          throw new Error(
-            "Sélectionnez la vidéo ou renseignez son adresse HTTPS.",
-          );
-        if (Wa && !ke && !ye.trim())
-          throw new Error(
-            "Sélectionnez le PDF ou saisissez le texte du communiqué dans les informations complémentaires.",
-          );
-        let P =
-            exportId.current || (u + "-" + zg(o)).slice(0, 66) +
-            "-" +
-            mxPublicationSuffix(),
-          Ne = [];
-        if (
-          [
-            ...(Ze ? L : []),
-            ...(He && M ? [M] : []),
-            ...(Wa && ke ? [ke] : []),
-          ].reduce((Ce, ha) => Ce + ha.size, 0) >
-          100 * uf
-        )
-          throw new Error(
-            "Limitez un dossier à 100 Mio pour préparer sa publication.",
-          );
-        let Na = async (Ce, ha, lr) => {
-            let or = Ce.name.split(".").at(-1)?.toLowerCase() || "",
-              Fe =
-                ha +
-                "/" +
-                String(lr + 1).padStart(2, "0") +
-                "-" +
-                zg(Ce.name.replace(/\.[^.]+$/, "")) +
-                "." +
-                or,
-              Po = new Uint8Array(await Ce.arrayBuffer());
-            return (
-              Ig(Po, Fe),
-              Ne.push({ name: P + "/" + Fe, data: Po }),
-              Fe
-            );
-          },
-          St = [];
-        if (Ze)
-          for (let Ce = 0; Ce < L.length; Ce++)
-            St.push({
-              file: await Na(L[Ce], "photos", Ce),
-              caption: R[Ce] || "",
-            });
-        let Da = He
-            ? M
-              ? [{ file: await Na(M, "videos", 0), title: o, transcript: te }]
-              : [{ url: k.trim(), title: o, transcript: te }]
-            : [],
-          tr = Wa
-            ? [
-                {
-                  ...(ke ? { file: await Na(ke, "communiques", 0) } : {}),
-                  title: o,
-                  text: ye,
-                },
-              ]
-            : [],
-          pu = {
-            version: 1,
-            status: "published",
-            title: o,
-            date: u,
-            topic: r,
-            location: x,
-            description: s,
-            language: c,
-            credit: T,
-            keywords: Ro(S),
-            photos: St,
-            videos: Da,
-            press: tr,
-          };
-        (wg(pu, P),
-          Ne.unshift({
-            name: P + "/publication.json",
-            data: new TextEncoder().encode(
-              JSON.stringify(pu, null, 2) +
-                `
-`,
-            ),
-          }));
-        let mu = Cg(Ne),
-          Se = URL.createObjectURL(
-            new Blob([mu], { type: "application/zip" }),
-          ),
-          ga = document.createElement("a");
-        ((ga.href = Se),
-          (ga.download = P + ".zip"),
-        (ga.style.display = 'none'),
-        document.body.append(ga),
-          ga.click(),
-        ga.remove(),
-        setDownloadUrl(Se),
-          exportId.current = P,
-          ll(P),
-          a(
-            "Le dossier est prêt. Poursuivez la mise en ligne pour publier votre contenu.",
-          ));
-      } catch (P) {
-        yt(
-          P instanceof Error
-            ? P.message
-            : "La préparation du dossier a échoué.",
-        );
-      } finally {
-        Ol(!1);
-      }
-    },
-    ol = Ze
-      ? "Titre de l’événement / de l’album"
-      : t.length > 1
-        ? "Titre de l’événement"
-        : "Titre de la publication";
-  return (0, y.jsxs)("section", {
-    className: "container gh-management",
-    children: [
-      (0, y.jsxs)("button", {
-        className: "button secondary",
-        onClick: e,
-        children: [
-          (0, y.jsx)(Xi, { size: 17 }),
-          "Retour à la médiathèque",
-        ],
-      }),
-      (0, y.jsxs)("div", {
-        className: "gh-heading",
-        children: [
-          (0, y.jsxs)("div", {
-            className: "eyebrow",
-            children: [
-              (0, y.jsx)(Qa, { size: 17 }),
-              "SERVICE DE COMMUNICATION",
-            ],
-          }),
-          (0, y.jsx)("h1", { children: "Gestion des contenus" }),
-          (0, y.jsx)("p", {
-            children:
-              "Préparez une publication et réunissez les photos, vidéos et communiqués d’un même événement dans une seule fiche.",
-          }),
-        ],
-      }),
-      mxElement('ol', {className: 'mx-publish-steps', 'aria-label': 'Étapes de publication'},
-        ...['Choisir les supports', 'Renseigner la fiche', 'Vérifier et publier'].map((label, index) => mxElement('li', {key: label}, mxElement('span', null, index + 1), label))),
-      savedDraft && mxElement('div', {className: 'mx-draft-banner'}, mxElement('span', null, 'Un brouillon de saisie est disponible dans cet onglet.'), mxElement('button', {className: 'button secondary', type: 'button', onClick: restoreDraft}, 'Reprendre le brouillon')),
-      (0, y.jsx)("div", {
-        className: "transfer-shortcuts gh-type-choices",
-        role: "group",
-        "aria-label": "Choisir le contenu à ajouter",
-        children: yL.map(
-          ({ type: B, Icon: P, label: Ne, action: Qe, hint: Na }) =>
-            (0, y.jsxs)(
-              "button",
-              {
-                type: "button",
-                disabled: Ae,
-                className:
-                  "transfer-shortcut gh-type-card " +
-                  B +
-                  (t.includes(B) ? " selected" : ""),
-                onClick: () => Ha(B),
-                "aria-pressed": t.includes(B),
-                children: [
-                  (0, y.jsx)("span", {
-                    className: "transfer-shortcut-icon",
-                    children: (0, y.jsx)(P, { size: 29 }),
-                  }),
-                  (0, y.jsxs)("span", {
-                    children: [
-                      (0, y.jsx)("small", {
-                        className: "gh-space-label",
-                        children: Ne,
-                      }),
-                      (0, y.jsx)("strong", { children: Qe }),
-                      (0, y.jsx)("small", { children: Na }),
-                    ],
-                  }),
-                  t.includes(B)
-                    ? (0, y.jsx)(zl, { size: 21 })
-                    : (0, y.jsx)(Jt, { size: 21 }),
-                ],
-              },
-              B,
-            ),
-        ),
-      }),
-      !!t.length &&
-        (0, y.jsx)(y.Fragment, {
-          children: (0, y.jsxs)("form", {
-            className: "gh-form",
-            onSubmit: Fo,
-            children: [
-              He &&
-                (0, y.jsxs)("fieldset", {
-                  disabled: Ae,
-                  children: [
-                    (0, y.jsxs)("legend", {
-                      children: [
-                        (0, y.jsx)(Ta, { size: 19 }),
-                        "Importer une vidéo",
-                      ],
-                    }),
-                    (0, y.jsx)("p", {
-                      children: "MP4 ou WebM · 25 Mio maximum.",
-                    }),
-                    (0, y.jsxs)("label", {
-                      className: "gh-file-label",
-                      htmlFor: "gh-video",
-                      children: [
-                        "Sélectionner une vidéo",
-                        (0, y.jsx)("input", {
-                          id: "gh-video",
-                          type: "file",
-                          accept: "video/mp4,video/webm",
-                          onChange: (B) => {
-                            const file = B.target.files?.[0];
-                            try { if (file) mxValidateFile(file, 'video'); H(file || null); _e(''); yt(''); } catch (error) { yt(error.message); }
-                            B.target.value = '';
-                          },
-                        }),
-                      ],
-                    }),
-                    M &&
-                      (0, y.jsxs)("p", {
-                        children: [
-                          M.name,
-                          " ",
-                          (0, y.jsx)("button", {
-                            type: "button",
-                            className: "gh-text-button",
-                            onClick: () => H(null),
-                            children: "Retirer",
-                          }),
-                        ],
-                      }),
-                    (0, y.jsxs)("details", {
-                      className: "gh-file-alternative",
-                      children: [
-                        (0, y.jsx)("summary", {
-                          children: "Utiliser un lien vidéo",
-                        }),
-                        (0, y.jsxs)("div", {
-                          className: "field",
-                          children: [
-                            (0, y.jsx)("label", {
-                              htmlFor: "gh-video-url",
-                              children: "Adresse HTTPS de la vidéo",
-                            }),
-                            (0, y.jsx)("input", {
-                              id: "gh-video-url",
-                              type: "url",
-                              value: k,
-                              disabled: !!M,
-                              onChange: (B) => _e(B.target.value),
-                              maxLength: 2e3,
-                              placeholder: "https://…",
-                            }),
-                          ],
-                        }),
-                      ],
-                    }),
-                  ],
-                }),
-              Ze &&
-                (0, y.jsxs)("fieldset", {
-                  disabled: Ae,
-                  children: [
-                    (0, y.jsxs)("legend", {
-                      children: [
-                        (0, y.jsx)(pa, { size: 19 }),
-                        "Importer des photos",
-                      ],
-                    }),
-                    (0, y.jsx)("p", {
-                      children:
-                        "JPG, PNG ou WebP · 30 photos par album · 12 Mio maximum par photo.",
-                    }),
-                    (0, y.jsxs)("label", {
-                      className: "gh-file-label",
-                      htmlFor: "gh-photos",
-                      children: [
-                        "Sélectionner plusieurs photos",
-                        (0, y.jsx)("input", {
-                          id: "gh-photos",
-                          type: "file",
-                          accept: "image/jpeg,image/png,image/webp",
-                          multiple: !0,
-                          onChange: (B) => {
-                            (cu(B.target.files), (B.target.value = ""));
-                          },
-                        }),
-                      ],
-                    }),
-                    mxElement('div', {className: 'mx-photo-grid'}, L.map((file, index) => mxElement(MxPhotoPreview, {
-                      key: file.name + '-' + file.lastModified + '-' + file.size,
-                      file, caption: R[index] || '', index, total: L.length,
-                      onCaption: value => I(R.map((caption, position) => position === index ? value : caption)),
-                      onRemove: () => {z(L.filter((_, position) => position !== index)); I(R.filter((_, position) => position !== index));},
-                      onMove: destination => movePhoto(index, destination),
-                    }))),
-                  ],
-                }),
-              Wa &&
-                (0, y.jsxs)("fieldset", {
-                  disabled: Ae,
-                  children: [
-                    (0, y.jsxs)("legend", {
-                      children: [
-                        (0, y.jsx)(ma, { size: 19 }),
-                        "Importer un communiqué",
-                      ],
-                    }),
-                    (0, y.jsx)("p", {
-                      children: "Document PDF · 20 Mio maximum.",
-                    }),
-                    (0, y.jsxs)("label", {
-                      className: "gh-file-label",
-                      htmlFor: "gh-pdf",
-                      children: [
-                        "Sélectionner le PDF",
-                        (0, y.jsx)("input", {
-                          id: "gh-pdf",
-                          type: "file",
-                          accept: "application/pdf",
-                          onChange: (B) => { const file = B.target.files?.[0]; try { if (file) mxValidateFile(file, 'press'); ql(file || null); yt(''); } catch (error) { yt(error.message); } B.target.value = ''; },
-                        }),
-                      ],
-                    }),
-                    ke &&
-                      (0, y.jsxs)("p", {
-                        children: [
-                          ke.name,
-                          " ",
-                          (0, y.jsx)("button", {
-                            type: "button",
-                            className: "gh-text-button",
-                            onClick: () => ql(null),
-                            children: "Retirer",
-                          }),
-                        ],
-                      }),
-                  ],
-                }),
-              (0, y.jsxs)("fieldset", {
-                disabled: Ae,
-                children: [
-                  (0, y.jsx)("legend", {
-                    children: "Informations essentielles",
-                  }),
-                  (0, y.jsxs)("div", {
-                    className: "gh-fields",
-                    children: [
-                      (0, y.jsxs)("div", {
-                        className: "field",
-                        children: [
-                          (0, y.jsxs)("label", {
-                            htmlFor: "gh-title",
-                            children: [ol, " *"],
-                          }),
-                          (0, y.jsx)("input", {
-                            id: "gh-title",
-                            value: o,
-                            onChange: (B) => i(B.target.value),
-                            maxLength: 180,
-                            required: !0,
-                          }),
-                        ],
-                      }),
-                      (0, y.jsxs)("div", {
-                        className: "field",
-                        children: [
-                          (0, y.jsxs)("label", {
-                            htmlFor: "gh-date",
-                            children: [
-                              Ze || t.length > 1
-                                ? "Date de l’événement"
-                                : "Date de la publication",
-                              " *",
-                            ],
-                          }),
-                          (0, y.jsx)("input", {
-                            id: "gh-date",
-                            type: "date",
-                            value: u,
-                            onChange: (B) => n(B.target.value),
-                            required: !0,
-                          }),
-                        ],
-                      }),
-                      (0, y.jsxs)("div", {
-                        className: "gh-wide",
-                        children: [
-                          (0, y.jsx)(tf, {
-                            value: S,
-                            onChange: C,
-                            topic: r,
-                            text: [
-                              o,
-                              s,
-                              x,
-                              He ? te : "",
-                              Wa ? ye : "",
-                              ...(Ze ? R : []),
-                            ].join(" "),
-                            required: !0,
-                          }),
-                          (0, y.jsx)(lf, {
-                            value: r,
-                            onChange: f,
-                            keywords: S,
-                            autoSelect: !0,
-                          }),
-                        ],
-                      }),
-                    ],
-                  }),
-                ],
-              }),
-              (0, y.jsx)("fieldset", {
-                disabled: Ae,
-                className: "gh-optional",
-                "aria-label": "Informations complémentaires",
-                children: (0, y.jsxs)("details", {
-                  children: [
-                    (0, y.jsxs)("summary", {
-                      children: [
-                        (0, y.jsx)("span", {
-                          children: "Informations complémentaires",
-                        }),
-                        (0, y.jsx)("small", { children: "Facultatif" }),
-                        (0, y.jsx)(Zi, { size: 19 }),
-                      ],
-                    }),
-                    (0, y.jsxs)("div", {
-                      className: "gh-fields",
-                      children: [
-                        (0, y.jsxs)("div", {
-                          className: "field gh-wide",
-                          children: [
-                            (0, y.jsx)("label", {
-                              htmlFor: "gh-description",
-                              children: "Courte description",
-                            }),
-                            (0, y.jsx)("textarea", {
-                              id: "gh-description",
-                              value: s,
-                              onChange: (B) => p(B.target.value),
-                              maxLength: 2e3,
-                              rows: 3,
-                            }),
-                          ],
-                        }),
-                        (0, y.jsxs)("div", {
-                          className: "field",
-                          children: [
-                            (0, y.jsx)("label", {
-                              htmlFor: "gh-location",
-                              children: "Lieu",
-                            }),
-                            (0, y.jsx)("input", {
-                              id: "gh-location",
-                              value: x,
-                              onChange: (B) => h(B.target.value),
-                              maxLength: 150,
-                            }),
-                          ],
-                        }),
-                        (0, y.jsxs)("div", {
-                          className: "field",
-                          children: [
-                            (0, y.jsx)("label", {
-                              htmlFor: "gh-language",
-                              children: "Langue du contenu",
-                            }),
-                            (0, y.jsxs)("select", {
-                              id: "gh-language",
-                              value: c,
-                              onChange: (B) => g(B.target.value),
-                              children: [
-                                (0, y.jsx)("option", {
-                                  value: "fr",
-                                  children: "Français",
-                                }),
-                                (0, y.jsx)("option", {
-                                  value: "ar",
-                                  children:
-                                    "العربية",
-                                }),
-                              ],
-                            }),
-                          ],
-                        }),
-                        (0, y.jsxs)("div", {
-                          className: "field gh-wide",
-                          children: [
-                            (0, y.jsx)("label", {
-                              htmlFor: "gh-credit",
-                              children: "Crédits / auteur",
-                            }),
-                            (0, y.jsx)("input", {
-                              id: "gh-credit",
-                              value: T,
-                              onChange: (B) => m(B.target.value),
-                              maxLength: 200,
-                            }),
-                          ],
-                        }),
-                        He &&
-                          (0, y.jsxs)("div", {
-                            className: "field gh-wide",
-                            children: [
-                              (0, y.jsx)("label", {
-                                htmlFor: "gh-transcript",
-                                children: "Transcription de la vidéo",
-                              }),
-                              (0, y.jsx)("textarea", {
-                                id: "gh-transcript",
-                                value: te,
-                                onChange: (B) => tl(B.target.value),
-                                maxLength: 6e4,
-                                rows: 4,
-                              }),
-                            ],
-                          }),
-                        Wa &&
-                          (0, y.jsxs)("div", {
-                            className: "field gh-wide",
-                            children: [
-                              (0, y.jsx)("label", {
-                                htmlFor: "gh-press",
-                                children: "Texte du communiqué",
-                              }),
-                              (0, y.jsx)("textarea", {
-                                id: "gh-press",
-                                value: ye,
-                                onChange: (B) => El(B.target.value),
-                                maxLength: 4e4,
-                                rows: 5,
-                              }),
-                              (0, y.jsx)("small", {
-                                children:
-                                  "À renseigner si vous ne joignez pas de PDF, ou pour permettre la recherche dans le texte.",
-                              }),
-                            ],
-                          }),
+  return h('div',{className:'mx-admin-login'},
+    h('div',{className:'mx-login-intro'},h('span',{className:'mx-login-lock'},h(Wi,{size:30})),h('div',{className:'eyebrow'},'ACCÈS RÉSERVÉ'),h('h2',null,'Espace administrateur'),h('p',null,'Connectez-vous pour ajouter et publier les contenus de la médiathèque.'),h('p',{className:'mx-login-note'},'Les visiteurs peuvent consulter l’accueil. La publication est réservée aux administrateurs authentifiés.')),
+    !auth.configured&&!auth.canSetup?h('div',{className:'mx-login-panel'},h('h3',null,'Activer le compte administrateur'),h('p',null,'Le propriétaire doit d’abord définir l’identifiant et le mot de passe de gestion.'),h('a',{className:'button primary',href:'/signin-with-chatgpt?return_to=%2F%3Fview%3Dmanage',target:'_top'},'Accéder avec le compte propriétaire',h(wl,{size:17})))
+    :h('form',{className:'mx-login-panel',onSubmit:submit},h('h3',null,create?'Créer le compte administrateur':recover?'Réinitialiser l’accès':'Connexion'),
+      h('label',{className:'field'},'Identifiant',h('input',{name:'username',autoComplete:'username',autoCapitalize:'none',spellCheck:false,required:true,maxLength:60,minLength:3,value:username,onChange:event=>setUsername(event.target.value)})),
+      h('label',{className:'field'},newPassword?'Nouveau mot de passe':'Mot de passe',h('input',{name:'password',type:'password',autoComplete:newPassword?'new-password':'current-password',required:true,minLength:newPassword?15:undefined,maxLength:128,value:password,onChange:event=>setPassword(event.target.value)}),newPassword&&h('small',null,'Choisissez une phrase de passe de 15 caractères minimum.')),
+      newPassword&&h('label',{className:'field'},'Confirmer le mot de passe',h('input',{name:'confirmPassword',type:'password',autoComplete:'new-password',required:true,minLength:15,maxLength:128,value:confirmation,onChange:event=>setConfirmation(event.target.value)})),
+      error&&h('p',{className:'gh-error',role:'alert'},error),
+      h('button',{className:'button primary mx-auth-submit',type:'submit',disabled:busy},h(Wi,{size:16}),busy?'Connexion en cours…':create?'Créer le compte et se connecter':recover?'Enregistrer le nouvel accès':'Se connecter'),
+      auth.canRecover&&h('button',{className:'mx-recover',type:'button',disabled:busy,onClick:()=>{setRecover(!recover);setPassword('');setConfirmation('');setError('');}},recover?'Revenir à la connexion':'Réinitialiser mon accès propriétaire')));
+}
 
-                      ],
-                    }),
-                  ],
-                }),
-              }),
-              Ja &&
-                (0, y.jsx)("p", {
-                  className: "gh-error",
-                  role: "alert",
-                  children: Ja,
-                }),
-              mxElement('section', {className: 'mx-publication-summary', 'aria-label': 'Récapitulatif de la publication'},
-                mxElement('div', null, mxElement('h2', null, 'Vérifier la publication'), mxElement('p', null, o || 'Renseignez le titre de votre publication.')),
-                mxElement('dl', null,
-                  mxElement('div', null, mxElement('dt', null, 'Supports'), mxElement('dd', null, t.map(type => nu[type]).join(' · '))),
-                  mxElement('div', null, mxElement('dt', null, 'Fichiers'), mxElement('dd', null, mxPlural(selectedFiles.length, 'fichier') + ' · ' + mxSize(totalBytes))),
-                  mxElement('div', null, mxElement('dt', null, 'Rubrique'), mxElement('dd', null, r))),
-                mxElement('div', {className: 'mx-summary-actions'},
-                  mxElement('button', {className: 'button secondary', type: 'button', disabled: Ae, onClick: () => setPreviewOpen(true)}, mxElement(au, {size: 17}), 'Aperçu de la publication'),
-                  mxElement('button', {className: 'button secondary', type: 'button', disabled: Ae, onClick: saveDraft}, 'Enregistrer le brouillon')),
-                mxElement('small', null, 'Le brouillon conserve la saisie dans cet onglet. Les fichiers doivent être sélectionnés à nouveau après rechargement.')),
-              (0, y.jsxs)("div", {
-                className: "gh-export",
-                children: [
-                  (0, y.jsxs)("button", {
-                    className: "button primary",
-                    type: "submit",
-                    disabled: Ae,
-                    children: [
-                      (0, y.jsx)(Wt, { size: 18 }),
-                      Ae
-                        ? "Préparation du dossier…"
-                        : "Télécharger le dossier de publication",
-                    ],
-                  }),
-                  (0, y.jsx)("p", {
-                    children:
-                      "Un dossier ZIP est téléchargé sur votre ordinateur. La mise en ligne se poursuit à l’étape suivante.",
-                  }),
-                ],
-              }),
-            ],
-          }),
-        }),
-      previewOpen && mxElement(MxPublicationPreview, {title: o, date: u, topic: r, description: s, language: c, photos: Ze ? L : [], captions: R, video: He ? M : null, videoUrl: He ? k : '', press: Wa ? ke : null, pressText: Wa ? ye : '', onClose: () => setPreviewOpen(false)}),
-      mxElement(MxPublishedList, {items, onOpen: onPreview}),
-      Oa &&
-        (0, y.jsxs)("div", {
-          className: "gh-success",
-          role: "status",
-          children: [
-            (0, y.jsx)("h2", { children: "Votre dossier est prêt" }),
-            downloadUrl && mxElement('a', {className: 'button secondary mx-download-again', href: downloadUrl, download: Oa + '.zip'}, mxElement(Wt, {size: 17}), 'Télécharger à nouveau le ZIP'),
-            (0, y.jsxs)("p", {
-              children: [
-                "Extrayez le dossier ",
-                (0, y.jsx)("strong", { children: Oa }),
-                " de l’archive ZIP téléchargée, puis déposez-le dans la fenêtre de mise en ligne.",
-              ],
-            }),
-            (0, y.jsxs)("a", {
-              className: "button primary",
-              href: vL + "/upload/main/publications",
-              target: "_blank",
-              rel: "noreferrer",
-              children: [
-                "Continuer la mise en ligne",
-                (0, y.jsx)(Oe, { size: 17 }),
-              ],
-            }),
-            (0, y.jsx)("p", {
-              children:
-                "Validez le dépôt pour lancer l’indexation et la publication de votre contenu.",
-            }),
-          ],
-        }),
-    ],
-  });
+function nf({auth,isAdmin,loading,error,onBack,onLogout,onRefresh,onToast,onPublished,items=[],onPreview}) {
+  const h=mxElement;
+  const [type,setType]=O.useState('video');
+  const [title,setTitle]=O.useState('');
+  const [date,setDate]=O.useState(SL);
+  const [topic,setTopic]=O.useState(el[0]);
+  const [files,setFiles]=O.useState([]);
+  const [captions,setCaptions]=O.useState([]);
+  const [videoMode,setVideoMode]=O.useState('file');
+  const [videoUrl,setVideoUrl]=O.useState('');
+  const [pressText,setPressText]=O.useState('');
+  const [description,setDescription]=O.useState('');
+  const [credit,setCredit]=O.useState('');
+  const [language,setLanguage]=O.useState('auto');
+  const [busy,setBusy]=O.useState(false);
+  const [progress,setProgress]=O.useState('');
+  const [formError,setFormError]=O.useState('');
+  const [preview,setPreview]=O.useState(false);
+  const requestId=O.useRef('');
+  const uploaded=O.useRef(new Map());
+  const finalLanguage=language==='auto'?(/[\u0600-\u06ff]/u.test(title)?'ar':'fr'):language;
+  const setKind=value=>{if(busy)return;setType(value);setFiles([]);setCaptions([]);setFormError('');requestId.current='';uploaded.current.clear();};
+  const addFiles=list=>{
+    const chosen=Array.from(list||[]);if(!chosen.length)return;
+    try{
+      chosen.forEach(file=>mxValidateFile(file,type));
+      const next=type==='photo'?[...files,...chosen.filter(file=>!files.some(other=>other.name===file.name&&other.size===file.size&&other.lastModified===file.lastModified))]:[chosen[0]];
+      if(next.length>30)throw new Error('Un album peut contenir au maximum 30 photographies.');
+      if(next.reduce((total,file)=>total+file.size,0)>100*1048576)throw new Error('La publication ne peut pas dépasser 100 Mio.');
+      setFiles(next);setCaptions(type==='photo'?[...captions,...next.slice(files.length).map(()=>'')]:[]);setFormError('');
+    }catch(exception){setFormError(exception.message);}
+  };
+  const upload=async file=>{
+    const key=[file.name,file.size,file.lastModified].join(':');
+    if(uploaded.current.has(key))return uploaded.current.get(key);
+    const mime=file.type||({jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',mp4:'video/mp4',webm:'video/webm',pdf:'application/pdf'}[file.name.split('.').at(-1).toLowerCase()]);
+    const result=await Ho('/api/uploads?name='+encodeURIComponent(file.name),{method:'POST',headers:{'Content-Type':mime},body:file});
+    uploaded.current.set(key,result.url);return result.url;
+  };
+  const publish=async event=>{
+    event.preventDefault();if(busy)return;setFormError('');
+    try{
+      if(!title.trim())throw new Error('Renseignez le titre de la publication.');
+      if(type==='photo'&&!files.length)throw new Error('Sélectionnez au moins une photographie.');
+      if(type==='video'&&(videoMode==='file'?!files.length:!mxHttps(videoUrl)))throw new Error(videoMode==='file'?'Sélectionnez une vidéo.':'Renseignez une adresse vidéo HTTPS valide.');
+      if(type==='press'&&!files.length&&!pressText.trim())throw new Error('Sélectionnez un PDF ou saisissez le texte du communiqué.');
+      setBusy(true);setProgress('Validation de la publication…');
+      const paths=[];
+      const activeFiles=type==='video'&&videoMode==='link'?[]:files;
+      for(let index=0;index<activeFiles.length;index++){setProgress('Transfert des fichiers : '+(index+1)+' / '+activeFiles.length);paths.push(await upload(activeFiles[index]));}
+      requestId.current ||= crypto.randomUUID();
+      const result=await Ho('/api/publications',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId:requestId.current,type,title:title.trim(),date,topic,language:finalLanguage,description,credit,status:'published',keywords:[topic],location:'',duration:'',thumbnailUrl:type==='photo'?paths[0]:'',mediaUrl:type==='video'?(videoMode==='link'?videoUrl.trim():paths[0]):'',fileUrl:type==='press'?paths[0]||'':'',captionsUrl:'',photos:type==='photo'?paths.map((url,index)=>({url,caption:captions[index]||''})):[],content:type==='press'?pressText:'',transcript:''})});
+      if(!result.published)throw new Error('La publication n’a pas été confirmée.');
+      setProgress('Publication effectuée.');onToast('La publication est en ligne et visible dans l’accueil.');
+      await onPublished(result.id);
+    }catch(exception){setFormError(exception.message);}finally{setBusy(false);setProgress('');}
+  };
+  const move=(index,destination)=>{const next=[...files],notes=[...captions];next.splice(destination,0,next.splice(index,1)[0]);notes.splice(destination,0,notes.splice(index,1)[0]);setFiles(next);setCaptions(notes);};
+  const input=(label,value,onChange,props={})=>h('label',{className:'field'},label,h('input',{...props,value,onChange:event=>onChange(event.target.value)}));
+  const attachmentLabel=type==='photo'?'Sélectionner les photos':type==='video'?'Sélectionner la vidéo':'Sélectionner le PDF';
+  return h('section',{className:'container gh-management mx-simple-management'},
+    h('button',{className:'button secondary',onClick:onBack},h(Xi,{size:17}),'Retour à la médiathèque'),
+    h('div',{className:'gh-heading mx-management-heading'},h('div',null,h('div',{className:'eyebrow'},'SERVICE DE COMMUNICATION'),h('h1',null,'Gestion des contenus'),h('p',null,isAdmin?'Ajoutez votre support et publiez-le directement dans l’accueil.':'Authentification requise pour accéder à la publication.')),isAdmin&&h('button',{className:'button secondary',disabled:busy,onClick:()=>onLogout().catch(exception=>onToast(exception.message))},h(Wi,{size:15}),'Se déconnecter')),
+    loading?h('p',{role:'status'},'Chargement de l’espace de gestion…'):error?h('div',{className:'gh-error',role:'alert'},error,h('button',{className:'button secondary',onClick:onRefresh},'Réessayer')):!auth.authenticated||!isAdmin?h(MxAdminLogin,{auth,onAuthenticated:onRefresh}):h(O.Fragment,null,
+      h('div',{className:'transfer-shortcuts gh-type-choices',role:'group','aria-label':'Type de support'},...yL.map(({type:kind,Icon,label})=>h('button',{key:kind,type:'button',disabled:busy,className:'transfer-shortcut gh-type-card '+kind+(type===kind?' selected':''),'aria-pressed':type===kind,onClick:()=>setKind(kind)},h('span',{className:'transfer-shortcut-icon'},h(Icon,{size:26})),h('strong',null,label),type===kind&&h(zl,{size:20})))),
+      h('form',{className:'gh-form mx-simple-form',onSubmit:publish},
+        h('fieldset',{disabled:busy},h('legend',null,'Nouvelle publication'),
+          h('div',{className:'gh-fields'},input('Titre *',title,setTitle,{required:true,maxLength:180,placeholder:'Titre de la vidéo, de l’album ou du communiqué',dir:'auto'}),input('Date *',date,setDate,{type:'date',required:true}),
+            h('label',{className:'field gh-wide'},'Rubrique *',h('select',{required:true,value:topic,onChange:event=>setTopic(event.target.value)},...el.map(value=>h('option',{key:value,value},value))))),
+          type==='video'&&h('div',{className:'mx-video-mode',role:'group','aria-label':'Source de la vidéo'},h('button',{type:'button','aria-pressed':videoMode==='file',onClick:()=>setVideoMode('file')},'Importer un fichier'),h('button',{type:'button','aria-pressed':videoMode==='link',onClick:()=>setVideoMode('link')},'Utiliser un lien vidéo')),
+          type==='video'&&videoMode==='link'?input('Adresse HTTPS de la vidéo *',videoUrl,setVideoUrl,{type:'url',required:true,maxLength:2000,placeholder:'https://…'}):h('div',{className:'mx-support-upload'},
+            h('label',{className:'gh-file-label'},h(au,{size:22}),attachmentLabel,h('input',{type:'file',accept:type==='photo'?'image/jpeg,image/png,image/webp':type==='video'?'video/mp4,video/webm':'application/pdf',multiple:type==='photo',onChange:event=>{addFiles(event.target.files);event.target.value='';}})),
+            h('small',null,type==='photo'?'JPG, PNG ou WebP · 30 photos maximum · 12 Mio par photo':type==='video'?'MP4 ou WebM · 25 Mio maximum':'PDF · 20 Mio maximum')),
+          files.length>0&&!(type==='video'&&videoMode==='link')&&h('div',{className:'mx-selected-files'},type==='photo'?h('div',{className:'mx-photo-grid'},...files.map((file,index)=>h(MxPhotoPreview,{key:file.name+'-'+file.lastModified,file,caption:captions[index]||'',index,total:files.length,onCaption:value=>setCaptions(captions.map((note,position)=>position===index?value:note)),onRemove:()=>{setFiles(files.filter((_,position)=>position!==index));setCaptions(captions.filter((_,position)=>position!==index));},onMove:destination=>move(index,destination)}))):h('div',null,h('strong',null,files[0].name),h('small',null,mxSize(files[0].size)),h('button',{type:'button',className:'mx-remove',onClick:()=>setFiles([])},'Retirer'))),
+          type==='press'&&h('label',{className:'field mx-press-text'},'Texte du communiqué'+(!files.length?' *':' (facultatif)'),h('textarea',{rows:5,maxLength:40000,value:pressText,required:!files.length,onChange:event=>setPressText(event.target.value),dir:'auto',placeholder:'Saisissez le texte si vous ne joignez pas de PDF.'}))),
+        h('details',{className:'mx-optional-fields'},h('summary',null,'Informations complémentaires',h('small',null,'Facultatif')),h('div',{className:'gh-fields'},h('label',{className:'field gh-wide'},'Courte description',h('textarea',{rows:3,maxLength:1200,value:description,disabled:busy,onChange:event=>setDescription(event.target.value)})),input('Crédits / auteur',credit,setCredit,{maxLength:200,disabled:busy}),h('label',{className:'field'},'Langue',h('select',{value:language,disabled:busy,onChange:event=>setLanguage(event.target.value)},h('option',{value:'auto'},'Selon le titre'),h('option',{value:'fr'},'Français'),h('option',{value:'ar'},'العربية'))))),
+        formError&&h('p',{className:'gh-error',role:'alert'},formError),
+        h('div',{className:'mx-publish-footer'},h('button',{className:'button secondary',type:'button',disabled:busy,onClick:()=>setPreview(true)},h(au,{size:17}),'Aperçu'),h('button',{className:'button primary mx-publish-button',type:'submit',disabled:busy},h(zl,{size:20}),busy?'Publication en cours…':'Valider et publier')),
+        busy&&h('p',{className:'mx-publishing-status',role:'status','aria-live':'polite'},progress)),
+      preview&&h(MxPublicationPreview,{title,date,topic,description,language:finalLanguage,photos:type==='photo'?files:[],captions,video:type==='video'&&videoMode==='file'?files[0]||null:null,videoUrl:type==='video'&&videoMode==='link'?videoUrl:'',press:type==='press'?files[0]||null:null,pressText:type==='press'?pressText:'',onClose:()=>setPreview(false)}),
+      h(MxPublishedList,{items,onOpen:onPreview})));
 }

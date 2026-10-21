@@ -147,3 +147,45 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .mx-preview-gallery { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+.mx-management-heading { display:flex; align-items:center; justify-content:space-between; gap:24px; }
+.mx-management-heading > div { flex:1; }
+.mx-admin-login { display:grid; grid-template-columns:1fr 1fr; border:1px solid #dbe3d7; border-radius:15px; overflow:hidden; margin:35px 0; }
+.mx-login-intro { padding:45px 38px; background:linear-gradient(135deg,#e8eee1,#f5f5eb); }
+.mx-login-lock { display:inline-flex; padding:18px; color:#285e44; background:#fff9; border:1px solid #d3dfc8; border-radius:14px; margin-bottom:26px; }
+.mx-login-intro h2 { font-family:var(--serif); font-size:37px; font-weight:400; letter-spacing:-.7px; line-height:1.25; margin:15px 0; }
+.mx-login-intro p { font-size:14px; line-height:1.9; color:#566c4f; }
+.mx-login-intro .mx-login-note { margin-top:25px; padding-top:22px; border-top:1px solid #d5dfca; font-size:12px; }
+.mx-login-panel { padding:44px 36px; background:#fff; display:flex; flex-direction:column; align-items:stretch; gap:20px; }
+.mx-login-panel h3 { font-size:22px; font-weight:600; margin:0 0 5px; }
+.mx-login-panel p { font-size:14px; line-height:1.9; color:#5f705b; }
+.mx-login-panel .field { display:flex; flex-direction:column; gap:9px; color:#35543c; font-size:13px; }
+.mx-login-panel input { width:100%; border:1px solid #ccd9c5; border-radius:7px; padding:13px 14px; font:inherit; font-size:16px; color:#24432f; }
+.mx-login-panel small { font-size:11px; line-height:1.7; color:#6b7b62; }
+.mx-auth-submit { justify-content:center; margin-top:4px; min-height:48px; }
+.mx-recover { font-size:12px; color:#4d6b44; text-decoration:underline; line-height:1.8; }
+.mx-simple-management .gh-type-card { gap:15px; min-height:95px; }
+.mx-simple-form .gh-fields { margin-bottom:22px; }
+.mx-simple-form .gh-fields > .field:first-child { grid-column:1/-1; }
+.mx-simple-form .gh-wide { grid-column:auto; }
+.mx-video-mode { display:flex; gap:8px; margin:20px 0; }
+.mx-video-mode button { padding:11px 15px; background:#f4f6f0; border:1px solid #dae3d3; border-radius:6px; font-size:13px; color:#4a6941; }
+.mx-video-mode button[aria-pressed=true] { color:#fff; background:#245c40; border-color:#245c40; }
+.mx-support-upload .gh-file-label { display:flex; align-items:center; justify-content:center; gap:12px; min-height:95px; padding:22px; cursor:pointer; color:#345d3b; font-weight:500; }
+.mx-support-upload .gh-file-label { position:relative; }
+.mx-support-upload .gh-file-label input { position:absolute; width:1px; height:1px; padding:0; margin:0; opacity:0; overflow:hidden; }
+.mx-support-upload .gh-file-label:focus-within { outline:3px solid #a3b9a7; outline-offset:3px; }
+.mx-support-upload > small { display:block; margin:10px 0 0; font-size:12px; color:#6a7d60; line-height:1.8; }
+.mx-selected-files { margin-top:20px; }
+.mx-selected-files > div:not(.mx-photo-grid) { display:flex; align-items:center; gap:15px; padding:15px; background:#f4f7ef; border-radius:7px; overflow-wrap:anywhere; font-size:13px; }
+.mx-selected-files small { color:#708263; font-size:12px; }
+.mx-selected-files button.mx-remove { margin-left:auto; color:#8f463c; }
+.mx-press-text { margin-top:22px!important; }
+.mx-optional-fields { border:1px solid #dce4d5; border-radius:10px; margin:25px 0; background:#fff; }
+.mx-optional-fields summary { display:flex; justify-content:space-between; gap:15px; padding:20px 24px; cursor:pointer; font-size:14px; font-weight:500; color:#38573b; }
+.mx-optional-fields summary small { font-size:11px; color:#74856b; font-weight:400; }
+.mx-optional-fields > .gh-fields { padding:0 24px 24px; margin-bottom:0; }
+.mx-optional-fields .gh-wide { grid-column:1/-1; }
+.mx-publish-footer { display:flex; justify-content:flex-end; gap:12px; padding:15px 0; }
+.mx-publish-button { min-height:50px; font-size:15px; padding:15px 24px; }
+.mx-publishing-status { text-align:right; font-size:13px; color:#3f6541; margin:8px 0; }
+@media(max-width:680px){ .mx-admin-login { grid-template-columns:1fr; } .mx-login-intro { padding:30px 24px; } .mx-login-intro h2 { font-size:32px; } .mx-login-panel { padding:30px 24px; } .mx-management-heading { align-items:flex-start; flex-direction:column; } .mx-publish-footer { flex-direction:column-reverse; } .mx-publish-footer .button { justify-content:center; width:100%; } .mx-simple-form .gh-wide { grid-column:1/-1; } .mx-video-mode button { flex:1; font-size:12px; padding:11px 8px; } }

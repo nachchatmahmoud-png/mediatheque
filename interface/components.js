@@ -101,7 +101,7 @@ function MxPublicationPreview({ title, date, topic, description, language, photo
   }, [photos, video, press]);
   return h(Ul, { label: 'Aperçu de la publication', onClose, wide: true },
     h('div', { className: 'mx-publication-preview' },
-      h('div', { className: 'eyebrow' }, 'APERÇU AVANT EXPORT'),
+      h('div', { className: 'eyebrow' }, 'APERÇU AVANT PUBLICATION'),
       h('h2', { dir: 'auto' }, title || 'Titre à renseigner'),
       h('p', { className: 'mx-preview-meta' }, date && Ya(date), ' · ', topic),
       description && h('p', { dir: language === 'ar' ? 'rtl' : 'auto' }, description),
@@ -110,7 +110,7 @@ function MxPublicationPreview({ title, date, topic, description, language, photo
       mxHttps(videoUrl) && h('a', { className: 'button secondary', href: mxHttps(videoUrl), target: '_blank', rel: 'noreferrer' }, 'Vérifier le lien vidéo', h(Oe, { size: 16 })),
       urls.press && h('a', { className: 'button secondary', href: urls.press, target: '_blank', rel: 'noreferrer' }, 'Ouvrir le PDF sélectionné', h(Oe, { size: 16 })),
       pressText && h('div', { className: 'mx-preview-text', dir: language === 'ar' ? 'rtl' : 'auto' }, pressText),
-      h('p', { className: 'mx-preview-note' }, 'Cet aperçu est local. Le contenu sera mis en ligne après le dépôt du dossier dans GitHub.'),
+      h('p', { className: 'mx-preview-note' }, 'Le contenu sera mis en ligne après votre clic sur « Valider et publier ».'),
       h('button', { className: 'button primary', onClick: onClose }, 'Revenir au formulaire')));
 }
 
@@ -126,7 +126,8 @@ function MxPublishedList({ items, onOpen }) {
       h('div', { className: 'mx-published-list' }, filtered.slice(0, 30).map(item => h('article', { key: item.id },
         h('div', null, h('small', null, nu[item.type], ' · ', Ya(item.date)), h('strong', { dir: 'auto' }, item.title)),
         h('div', null, h('button', { className: 'button secondary', onClick: () => onOpen(item) }, 'Consulter'),
-          item.eventId && h('a', { href: vL + '/blob/main/publications/' + encodeURIComponent(item.eventId) + '/publication.json', target: '_blank', rel: 'noreferrer' }, 'Modifier la fiche', h(Oe, { size: 14 })))))),
+          null)))),
+
       !filtered.length && h('p', { role: 'status' }, 'Aucune publication ne correspond à ces termes.'),
       filtered.length > 30 && h('p', null, 'Les 30 premiers résultats sont affichés. Précisez votre recherche.'))
       : h('p', { className: 'mx-management-empty' }, 'Aucun contenu n’est encore publié. Préparez votre première publication ci-dessus.'));

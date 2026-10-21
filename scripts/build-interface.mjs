@@ -22,7 +22,19 @@ export async function buildInterface(root, output) {
     const source = await readFile(join(root, 'interface', file), 'utf8');
     bundle = bundle.slice(0, from) + source + '\n' + bundle.slice(until);
   }
+  const apiSource = await readFile(join(root, 'interface/service-api.js'), 'utf8');
+  const apiSplit = apiSource.indexOf('async function Ho(');
+  for (const [start, end, replacement] of [
+    ['async function cL(){', 'function pL(', apiSource.slice(0, apiSplit)],
+    ['async function Ho(', 'var fu=Y(ta(),1);', apiSource.slice(apiSplit)],
+  ]) {
+    const from=bundle.indexOf(start), until=bundle.indexOf(end,from);
+    if(from<0||until<from)throw new Error('Limite du service introuvable : '+start);
+    bundle=bundle.slice(0,from)+replacement+'\n'+bundle.slice(until);
+  }
   const helpers = await readFile(join(root, 'interface/components.js'), 'utf8');
-  bundle = bundle.replace('function rf()', helpers + '\nfunction rf()');
+  const config=JSON.parse(await readFile(join(root,'interface/service-config.json'),'utf8'));
+  const configuration='const MX_SERVICE='+JSON.stringify(config)+'; const MX_ON_SERVICE=document.querySelector(\'meta[name="mediatheque-service"]\')?.content==="enabled"||window.location.origin===new URL(MX_SERVICE.origin).origin; const MX_API_ORIGIN=MX_ON_SERVICE?window.location.origin:MX_SERVICE.origin;\n';
+  bundle = bundle.replace('function rf()', configuration+helpers + '\nfunction rf()');
   await writeFile(join(output, 'assets/app.js'), bundle);
 }

@@ -29,7 +29,8 @@ test('complete assembled application parses and supports a subdirectory deployme
       const expression = bundle.match(/var \$s=([^;]+);/)[1];
       assert.equal(vm.runInNewContext(expression, {URL, document: {baseURI: base}}), expected);
     }
-    assert.match(bundle, /Reprendre le brouillon/);
+    assert.match(bundle, /Se connecter/);
+    assert.match(bundle, /Valider et publier/);
     assert.match(bundle, /Partager la recherche/);
   } finally { await rm(output, {recursive: true, force: true}); }
 });
