@@ -14,7 +14,7 @@ Le formulaire demande un **identifiant** et un **mot de passe** personnels. Les 
 
 **État actuel : service non connecté, comptes non activés.** Le formulaire l’indique et reste désactivé. Les quatre personnes prévues sont Katiri Abdelah, Rbina Abdelah, Nachchat Mahmoud et Ilham Boudil. Aucun mot de passe de ces personnes n’a été créé ou publié dans le dépôt.
 
-L’adresse HTTPS du service se renseigne dans `interface/service-config.json`, champ `authentication.apiBase`, après son déploiement. Les échanges attendus et les conditions d’activation sont décrits dans `administration/README.md`. Le jeton de session reste uniquement en mémoire et expire après 30 minutes d’inactivité, au plus tard à l’expiration imposée par le serveur.
+L’adresse HTTPS du service se renseigne dans `interface/service-config.json`, champ `authentication.apiBase`, après son déploiement. Le code du serveur, les profils demandés, les scripts de préparation et les conditions d’activation sont disponibles dans `administration/`. Les mots de passe initiaux ne sont créés que lors de la configuration privée du service et doivent être remplacés à la première connexion. Le jeton de session reste uniquement en mémoire et expire après 30 minutes d’inactivité, au plus tard à l’expiration imposée par le serveur.
 
 ## Publier un contenu
 

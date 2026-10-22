@@ -10,7 +10,7 @@ const sessionToken='LOCAL_TEST_SESSION_TOKEN_NEVER_VALID_123456789';
 const credentials={username:'  Admin.Test  ',password:'Mot de passe de test non utilisable'};
 const publication={requestId:'12345678-1234-1234-1234-123456789abc',type:'video',title:'Publication de test',language:'fr'};
 
-function client({base=apiBase,denyLogin=false,denyWrite=false,badSession=false,logoutFailure=false}={}){
+function client({base=apiBase,denyLogin=false,denyWrite=false,badSession=false,logoutFailure=false,initialPassword=false}={}){
   const calls=[],events=[],timers=[];let live=false,checks=0;
   const response=(status,value)=>({ok:status>=200&&status<300,status,json:async()=>value});
   const context=vm.createContext({URL,Event,File,Date,er:undefined,MX_SERVICE:{authentication:{apiBase:base}},
@@ -26,9 +26,10 @@ function client({base=apiBase,denyLogin=false,denyWrite=false,badSession=false,l
         return response(200,{items:live?[{id:'publication-test-video-1',language:'fr',title:publication.title},{id:'publication-ar',language:'ar'}]:[],events:[],settings:{}});
       }
       const path=url.slice(apiBase.length);
-      if(path==='/api/auth/login')return response(denyLogin?401:200,{authenticated:true,sessionToken,expiresAt:new Date(Date.now()+3600000).toISOString(),role:badSession?'reader':'admin',displayName:'Administrateur de test'});
+      if(path==='/api/auth/login')return response(denyLogin?401:200,{authenticated:true,sessionToken,expiresAt:new Date(Date.now()+3600000).toISOString(),role:badSession?'reader':'admin',displayName:'Administrateur de test',requiresPasswordChange:initialPassword});
       assert.equal(options.headers.Authorization,'Bearer '+sessionToken);
-      if(path==='/api/auth/session')return response(200,{authenticated:true});
+      if(path==='/api/auth/session')return response(200,{authenticated:true,requiresPasswordChange:initialPassword});
+      if(path==='/api/auth/change-password'){initialPassword=false;return response(200,{authenticated:true,sessionToken,expiresAt:new Date(Date.now()+3600000).toISOString(),role:'admin',requiresPasswordChange:false});}
       if(path==='/api/auth/logout'){if(logoutFailure)throw new Error('offline');return response(200,{ok:true});}
       if(denyWrite)return response(403,{});
       if(path.startsWith('/api/uploads?'))return response(201,{url:'admin-upload:12345678-1234-1234-1234-123456789abc',name:'test.png',size:10});
@@ -116,4 +117,13 @@ test('an idle administrator session closes without leaving a persistent credenti
   const value=client();await login(value);value.timers.at(-1)();
   assert.equal((await value.context.Ho('/api/auth/session')).authenticated,false);
   assert.equal(value.events.includes('management-session-expired'),true);
+});
+
+test('the first-login password requirement is preserved until the server confirms the new password',async()=>{
+  const value=client({initialPassword:true});assert.equal((await login(value)).requiresPasswordChange,true);
+  assert.equal((await value.context.Ho('/api/auth/session')).requiresPasswordChange,true);
+  const result=await value.context.Ho('/api/auth/change-password',{method:'POST',body:JSON.stringify({currentPassword:'INITIAL TEST ONLY',password:'NEW TEST PASSWORD ONLY',confirmPassword:'NEW TEST PASSWORD ONLY'})});
+  assert.equal(result.requiresPasswordChange,false);
+  assert.equal((await value.context.Ho('/api/auth/session')).requiresPasswordChange,false);
+  assert.equal('sessionToken' in result,false);
 });

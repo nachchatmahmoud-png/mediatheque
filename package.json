@@ -7,6 +7,7 @@
   },
   "scripts": {
     "test": "node --experimental-strip-types --test tests/*.test.mjs",
-    "build": "node --experimental-strip-types scripts/build-github-pages.mjs"
+    "build": "node --experimental-strip-types scripts/build-github-pages.mjs",
+    "admin:package": "node scripts/package-administration.mjs"
   }
 }

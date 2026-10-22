@@ -1,0 +1,17 @@
+{
+  "name": "mediatheque-administration-service",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "tsc --noEmit --strict --target ES2022 --lib ES2023,DOM --module ESNext --moduleResolution bundler --allowImportingTsExtensions server/*.ts",
+    "provision": "node provision.mjs",
+    "test": "node --experimental-strip-types --test tests/*.test.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.118.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.11",
+    "typescript": "7.0.2"
+  }
+}

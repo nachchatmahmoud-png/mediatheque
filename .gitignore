@@ -1,3 +1,5 @@
 /_site/
 /node_modules/
 .env*
+administration/node_modules/
+supabase/functions/mediatheque/generated/

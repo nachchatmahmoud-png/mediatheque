@@ -13,6 +13,13 @@ const MxAdministration=(()=>{
   const touch=()=>{clearTimeout(idleTimer);idleTimer=setTimeout(expire,Math.max(0,Math.min(30*60*1000,expiresAt-Date.now())));};
   const current=()=>{if(identity&&expiresAt<=Date.now())clear();return identity?{...identity}:anonymous();};
   const requireAccess=()=>{if(!current().authenticated)throw new Error('Connectez-vous à l’espace de gestion.');touch();};
+  function installSession(result,username){
+    const expiry=Date.parse(result.expiresAt);
+    if(result.authenticated!==true||!['owner','admin'].includes(result.role)||typeof result.sessionToken!=='string'||! /^[A-Za-z0-9._~-]{32,4096}$/.test(result.sessionToken)||!Number.isFinite(expiry)||expiry<=Date.now()||expiry>Date.now()+8*60*60*1000)throw new Error('La connexion n’a pas été confirmée. Réessayez.');
+    clear();token=result.sessionToken;expiresAt=expiry;
+    identity={authenticated:true,configured:true,username,displayName:typeof result.displayName==='string'?result.displayName:username,role:result.role,requiresPasswordChange:result.requiresPasswordChange===true};
+    touch();return current();
+  }
   async function request(path,{method='GET',body,headers={},authenticated=true}={}){
     if(!apiBase)throw new Error(unavailable);
     if(authenticated)requireAccess();
@@ -35,16 +42,18 @@ const MxAdministration=(()=>{
     const password=credentials?.password;
     if(!/^[a-z0-9][a-z0-9._@-]{2,59}$/.test(username)||typeof password!=='string'||!password||password.length>512)throw new Error('Renseignez votre identifiant et votre mot de passe.');
     const result=await request('/api/auth/login',{method:'POST',authenticated:false,headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
-    const expiry=Date.parse(result.expiresAt);
-    if(result.authenticated!==true||!['owner','admin'].includes(result.role)||typeof result.sessionToken!=='string'||! /^[A-Za-z0-9._~-]{32,4096}$/.test(result.sessionToken)||!Number.isFinite(expiry)||expiry<=Date.now()||expiry>Date.now()+8*60*60*1000)throw new Error('La connexion n’a pas été confirmée. Réessayez.');
-    token=result.sessionToken;expiresAt=expiry;
-    identity={authenticated:true,configured:true,username,displayName:typeof result.displayName==='string'?result.displayName:username,role:result.role};
-    touch();return current();
+    return installSession(result,username);
+  }
+  async function changePassword(credentials){
+    requireAccess();const username=identity.username;
+    const result=await request('/api/auth/change-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(credentials)});
+    return installSession(result,username);
   }
   async function session(){
     if(!current().authenticated)return current();
     const result=await request('/api/auth/session');
     if(result.authenticated!==true){clear();return current();}
+    identity.requiresPasswordChange=result.requiresPasswordChange===true;
     return current();
   }
   async function logout(){
@@ -80,5 +89,5 @@ const MxAdministration=(()=>{
     }while(Date.now()<deadline);
     throw new Error('Le contenu est enregistré. La mise en ligne se poursuit. Cliquez à nouveau sur « Valider et publier » pour vérifier son affichage, sans créer de doublon.');
   }
-  return {current,session,login,logout,requireAccess,stage,publish};
+  return {current,session,login,logout,changePassword,requireAccess,stage,publish};
 })();

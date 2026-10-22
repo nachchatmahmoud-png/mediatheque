@@ -15,6 +15,7 @@ async function Ho(path,options={}) {
   if(path.startsWith('/api/search?'))return pL(await cL(),new URL(path,'https://local.invalid').searchParams.get('q')||'');
   if(path==='/api/auth/session')return MxAdministration.session();
   if(path==='/api/auth/login'&&method==='POST'){const result=await MxAdministration.login(JSON.parse(options.body||'{}'));er=undefined;return result;}
+  if(path==='/api/auth/change-password'&&method==='POST'){const result=await MxAdministration.changePassword(JSON.parse(options.body||'{}'));er=undefined;return result;}
   if(path==='/api/auth/logout'&&method==='POST'){er=undefined;return MxAdministration.logout();}
   if(method==='GET'&&path.startsWith('/api/library')){
     if(new URL(path,'https://local.invalid').searchParams.has('manage')){

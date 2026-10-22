@@ -1,0 +1,3 @@
+[functions.mediatheque]
+# Login is public; every protected route checks the opaque server session.
+verify_jwt = false
