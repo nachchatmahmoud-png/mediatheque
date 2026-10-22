@@ -60,6 +60,6 @@ function MxVideoLanguageFields({spokenLanguage,onSpokenLanguage,captionsLanguage
 function mxLatestPresentation(video) {
   const record=MX_VIDEO_LOCALIZATIONS[video.videoId]||{};
   const translation=record[MX_LOCALE]||{};
-  return {title:translation.title||(mxDetectedLanguage(video.title)===MX_LOCALE?video.title:mxT('Dernière vidéo du ministère')),description:translation.description||'',
+  return {title:translation.title||video.title,description:translation.description||'',
     item:{type:'video',mediaUrl:'https://www.youtube.com/watch?v='+video.videoId,spokenLanguage:record.spokenLanguage||'',captionsLanguage:record.captionsLanguage||'',captionsSource:'youtube',captionsValidated:record.captionsValidated===true}};
 }

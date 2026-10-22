@@ -1,4 +1,4 @@
-// The named account and repository rights are verified by GitHub.
+// The administration service verifies the account and publication rights.
 function MxManagementHero({auth,items,onLogout,busy,onToast}){
  const h=mxElement;
  return h('div',{className:'mx-management-hero'},h('div',{className:'mx-management-hero-copy'},h('div',{className:'eyebrow'},h('span',null),'ESPACE ADMINISTRATEUR'),h('h1',null,'Gestion des contenus'),h('p',null,auth.authenticated?'Préparez vos supports, vérifiez leur présentation et publiez en toute simplicité.':'Un accès personnel pour enrichir et administrer la médiathèque.')),auth.authenticated&&h('div',{className:'mx-session-card'},h('span',{className:'mx-session-label'},h('span',null),'SESSION OUVERTE'),h('strong',null,auth.displayName||auth.username),h('small',null,auth.role==='owner'?'Propriétaire · Administration des comptes':'Administrateur · Publication des contenus'),h('button',{className:'button secondary',disabled:busy,onClick:()=>onLogout().catch(exception=>onToast(exception.message))},h(Wi,{size:15}),'Se déconnecter')));

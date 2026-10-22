@@ -1,5 +1,6 @@
 {
   "provider": "github",
   "repository": "nachchatmahmoud-png/mediatheque",
-  "branch": "main"
+  "branch": "main",
+  "authentication": {"apiBase": ""}
 }

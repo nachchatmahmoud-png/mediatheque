@@ -10,22 +10,22 @@ Les pages française et arabe disposent de leurs propres textes, résultats et �
 
 ## Accès des administrateurs
 
-L’identité et le droit de publication sont vérifiés par l’API GitHub. Le compte doit disposer du droit d’écriture dans `nachchatmahmoud-png/mediatheque`. Le formulaire demande une clé personnelle GitHub, conservée uniquement en mémoire pendant l’onglet ouvert, effacée à la déconnexion ou après 30 minutes d’inactivité. La clé est transmise uniquement à `api.github.com`, jamais au catalogue public, à une URL, au stockage du navigateur ou aux fichiers publiés.
+Le formulaire demande un **identifiant** et un **mot de passe** personnels. Les pages restent sur GitHub Pages. Les mots de passe et les droits de publication doivent être vérifiés par un service sécurisé ; aucune clé GitHub n’est demandée aux administrateurs ou embarquée dans le site.
 
-Pour le propriétaire : utiliser une clé fine, limitée à ce dépôt, avec `Contents: Read and write` et une date d’expiration. Pour un collaborateur du dépôt personnel d’un autre utilisateur, les limitations actuelles de GitHub nécessitent une clé classique avec le droit minimal `public_repo` et une date d’expiration. Les liens et les indications sont disponibles sous « Première connexion : préparer mon accès ».
+**État actuel : service non connecté, comptes non activés.** Le formulaire l’indique et reste désactivé. Les quatre personnes prévues sont Katiri Abdelah, Rbina Abdelah, Nachchat Mahmoud et Ilham Boudil. Aucun mot de passe de ces personnes n’a été créé ou publié dans le dépôt.
 
-Les habilitations s’accordent dans les paramètres d’accès du dépôt GitHub. Aucun mot de passe partagé, mot de passe d’administrateur ou secret permanent n’est embarqué dans le site.
+L’adresse HTTPS du service se renseigne dans `interface/service-config.json`, champ `authentication.apiBase`, après son déploiement. Les échanges attendus et les conditions d’activation sont décrits dans `administration/README.md`. Le jeton de session reste uniquement en mémoire et expire après 30 minutes d’inactivité, au plus tard à l’expiration imposée par le serveur.
 
 ## Publier un contenu
 
-1. Ouvrir **Espace de gestion** et se connecter avec son accès GitHub.
+1. Ouvrir **Espace de gestion** et se connecter avec son identifiant et son mot de passe, après activation des comptes.
 2. Choisir **Vidéothèque**, **Photothèque** ou **Espace médias**.
 3. Renseigner le titre, la date, la page de publication et la rubrique, puis sélectionner les supports.
 4. Vérifier l’aperçu, puis cliquer sur **Valider et publier**.
 
 Les mots-clés nécessaires à l’indexation sont renseignés à partir de la rubrique. Les informations facultatives sont regroupées. Pour les vidéos, la langue parlée est distincte de la langue de la fiche. Un bref résumé français est demandé pour présenter une vidéo en arabe sur la page française.
 
-Les fichiers et la fiche sont enregistrés ensemble dans `publications/` par un seul commit. GitHub Actions vérifie et publie le catalogue. Le formulaire suit la mise en ligne et retourne à l’accueil lorsque la nouvelle publication y est effectivement présente. Cette étape peut prendre quelques minutes. Une nouvelle tentative conserve la publication déjà enregistrée et évite les doublons. Les mises à jour simultanées de plusieurs administrateurs sont reprises sans écraser leurs modifications.
+Après connexion du service, celui-ci devra enregistrer les fichiers et la fiche ensemble dans `publications/` par un seul commit. GitHub Actions vérifie et publie le catalogue. Le formulaire attend la présence effective du contenu dans le catalogue public avant d’annoncer sa mise en ligne. Une nouvelle tentative conserve le même identifiant de requête pour éviter les doublons côté serveur.
 
 ## Miniatures et sous-titres
 
@@ -33,7 +33,7 @@ Une miniature est créée à partir d’une vidéo importée et peut être rempl
 
 Pour une vidéo importée, les sous-titres WebVTT peuvent être joints et vérifiés dans l’aperçu. Pour YouTube, ils doivent être publiés sur la vidéo dans YouTube Studio. La mention de sous-titres français ou arabes apparaît seulement lorsque l’administrateur a déclaré leur disponibilité et confirmé leur validation.
 
-La dernière vidéo de la chaîne officielle `@Matnuhpv` est actualisée par GitHub Actions aux minutes 13 et 43 de chaque heure. Les présentations françaises validées sont associées à l’identifiant exact de la vidéo dans `site/video-localizations.json`. Elles ne sont jamais réutilisées pour une autre vidéo. L’audio d’origine est conservé ; le site ne traduit pas automatiquement les propos.
+La dernière vidéo de la chaîne officielle `@Matnuhpv` est actualisée par GitHub Actions aux minutes 13 et 43 de chaque heure. La page française reprend la traduction du titre YouTube ; la page arabe conserve son titre d’origine. Les titres traduits et résumés français validés sont associés à l’identifiant exact de la vidéo dans `site/video-localizations.json`. Sans traduction renseignée pour une nouvelle vidéo, son titre d’origine est affiché. Aucun titre générique ne le remplace. L’audio d’origine est conservé ; le site ne traduit pas automatiquement les propos.
 
 ## Formats et limites
 

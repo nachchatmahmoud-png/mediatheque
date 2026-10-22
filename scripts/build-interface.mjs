@@ -57,10 +57,12 @@ export async function buildInterface(root, output) {
     if(from<0||until<from)throw new Error('Limite du service introuvable : '+start);
     bundle=bundle.slice(0,from)+replacement+'\n'+bundle.slice(until);
   }
-  const helpers = await readFile(join(root, 'interface/i18n.js'), 'utf8')+'\n'+await readFile(join(root, 'interface/components.js'), 'utf8')+'\n'+await readFile(join(root,'interface/video-languages.js'),'utf8')+'\n'+await readFile(join(root,'interface/github-service.js'),'utf8')+'\n'+await readFile(join(root,'interface/accounts.js'),'utf8');
+  const helpers = await readFile(join(root, 'interface/i18n.js'), 'utf8')+'\n'+await readFile(join(root, 'interface/components.js'), 'utf8')+'\n'+await readFile(join(root,'interface/video-languages.js'),'utf8')+'\n'+await readFile(join(root,'interface/admin-service.js'),'utf8')+'\n'+await readFile(join(root,'interface/accounts.js'),'utf8');
   const config=JSON.parse(await readFile(join(root,'interface/service-config.json'),'utf8'));
   const localizations=JSON.parse(await readFile(join(root,'site/video-localizations.json'),'utf8'));
   if(config.provider!=='github'||config.repository!=='nachchatmahmoud-png/mediatheque'||config.branch!=='main')throw new Error('Vérifiez le dépôt GitHub de publication.');
+  if(typeof config.authentication?.apiBase!=='string')throw new Error('Vérifiez la configuration du service administrateur.');
+  if(config.authentication.apiBase){const api=new URL(config.authentication.apiBase);if(api.protocol!=='https:'||api.username||api.password||api.search||api.hash||/chatgpt/i.test(api.hostname))throw new Error('Adresse du service administrateur non valide.');}
   const configuration='const MX_SERVICE='+JSON.stringify(config)+'; const MX_VIDEO_LOCALIZATIONS='+JSON.stringify(localizations)+';\n';
   bundle = bundle.replace('function rf()', configuration+helpers + '\nfunction rf()');
   const messages=JSON.parse(await readFile(join(root,'interface/translations-ar.json'),'utf8'));

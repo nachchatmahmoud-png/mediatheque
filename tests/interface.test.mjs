@@ -29,7 +29,10 @@ test('complete assembled application parses and supports a subdirectory deployme
       const expression = bundle.match(/var \$s=([^;]+);/)[1];
       assert.equal(vm.runInNewContext(expression, {URL, document: {baseURI: base}}), expected);
     }
-    assert.ok(bundle.includes('Accéder à la gestion'));
+    assert.ok(bundle.includes('Connexion administrateur'));
+    assert.ok(bundle.includes('current-password'));
+    assert.equal(bundle.includes('Utilisez votre clé personnelle GitHub'),false);
+    assert.equal(bundle.includes('personal-access-tokens'),false);
     assert.equal(bundle.toLowerCase().includes('chatgpt'),false);
     assert.match(bundle, /Valider et publier/);
     assert.match(bundle, /Partager la recherche/);

@@ -322,6 +322,8 @@ body { background:#fcfdfb; color:var(--mx-ink); }
 .mx-login-panel h3 { font-size:25px; letter-spacing:-.6px; }
 .mx-login-panel input { border-radius:8px; padding:14px 15px; background:#fafcf8; }
 .mx-login-panel input:focus { background:#fff; }
+.mx-login-panel .mx-login-activation { background:#f7f3e7; border:1px solid #e6dcc3; border-radius:8px; padding:12px 14px; color:#725d34; font-size:12px; }
+.mx-login-panel input:disabled { background:#f3f5f0; color:#73806e; cursor:not-allowed; }
 .mx-workspace-nav { display:flex; gap:25px; border-bottom:1px solid #d5dfd2; margin-bottom:25px; overflow-x:auto; }
 .mx-workspace-nav > button { display:flex; align-items:center; flex-shrink:0; gap:9px; padding:7px 1px 18px; color:#69806d; border-bottom:3px solid transparent; font-size:13px; font-weight:500; }
 .mx-workspace-nav > button.active { color:#174e3b; border-color:#b29b5e; }
