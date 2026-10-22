@@ -31,7 +31,7 @@ export async function buildInterface(root, output) {
   bundle=bundle.slice(0,readerStart)+'e.type==="video"&&mxElement(MxVideoReader,{item:e})'+bundle.slice(readerEnd);
   const cardMarker=',(0,U.jsxs)("div",{className:"card-bottom"';
   if(!bundle.includes(cardMarker))throw new Error('Carte de publication introuvable.');
-  bundle=bundle.replace(cardMarker,',mxElement(MxVideoLanguage,{item:e,compact:true})'+cardMarker);
+  bundle=bundle.replace(cardMarker,',e.testOnly&&mxElement("span",{className:"mx-test-content-badge"},mxT("Contenu de test")),mxElement(MxVideoLanguage,{item:e,compact:true})'+cardMarker);
   bundle=bundle.replace('className:"language-tag",children:','className:"language-tag",title:mxT("Langue de la fiche"),children:');
   const sections = [
     ['latest-video.js', 'function af(){', 'var F=Y(ze(),1);'],
@@ -57,11 +57,12 @@ export async function buildInterface(root, output) {
     if(from<0||until<from)throw new Error('Limite du service introuvable : '+start);
     bundle=bundle.slice(0,from)+replacement+'\n'+bundle.slice(until);
   }
-  const helpers = await readFile(join(root, 'interface/i18n.js'), 'utf8')+'\n'+await readFile(join(root, 'interface/components.js'), 'utf8')+'\n'+await readFile(join(root,'interface/video-languages.js'),'utf8')+'\n'+await readFile(join(root,'interface/admin-service.js'),'utf8')+'\n'+await readFile(join(root,'interface/accounts.js'),'utf8');
+  const helpers = (await Promise.all(['i18n.js','components.js','video-languages.js','admin-service.js','test-administration.js','accounts.js'].map(file=>readFile(join(root,'interface',file),'utf8')))).join('\n');
   const config=JSON.parse(await readFile(join(root,'interface/service-config.json'),'utf8'));
   const localizations=JSON.parse(await readFile(join(root,'site/video-localizations.json'),'utf8'));
   if(config.provider!=='github'||config.repository!=='nachchatmahmoud-png/mediatheque'||config.branch!=='main')throw new Error('Vérifiez le dépôt GitHub de publication.');
   if(typeof config.authentication?.apiBase!=='string')throw new Error('Vérifiez la configuration du service administrateur.');
+  if(config.management?.mode&&!['test','production'].includes(config.management.mode))throw new Error('Vérifiez le mode de l’espace de gestion.');
   if(config.authentication.apiBase){const api=new URL(config.authentication.apiBase);if(api.protocol!=='https:'||api.username||api.password||api.search||api.hash||/chatgpt/i.test(api.hostname))throw new Error('Adresse du service administrateur non valide.');}
   const configuration='const MX_SERVICE='+JSON.stringify(config)+'; const MX_VIDEO_LOCALIZATIONS='+JSON.stringify(localizations)+';\n';
   bundle = bundle.replace('function rf()', configuration+helpers + '\nfunction rf()');

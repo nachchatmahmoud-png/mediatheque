@@ -57,6 +57,13 @@ test('file selection, safe links and storage restrictions have usable outcomes',
   assert.match(utilities.mxPublicationSuffix(), /^[a-f0-9]{12}$/);
 });
 
+test('request identifiers remain cryptographically random when randomUUID is unavailable',()=>{
+  const fallback=vm.runInNewContext(helpers+';mxUuid',{crypto:{getRandomValues:array=>webcrypto.getRandomValues(array)},Uint8Array});
+  const identifiers=Array.from({length:20},()=>fallback());
+  assert.equal(new Set(identifiers).size,20);
+  assert.ok(identifiers.every(value=>/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(value)));
+});
+
 test('browser ZIP writer produces a readable dossier accepted by the public catalogue', async () => {
   const temporary = await mkdtemp(join(tmpdir(), 'mediatheque-export-'));
   try {

@@ -8,17 +8,25 @@ Le site public et son espace de gestion sont hébergés dans ce dépôt et publi
 
 Les pages française et arabe disposent de leurs propres textes, résultats et événements. L’interface arabe se lit de droite à gauche. L’espace de gestion commun est en français et reste sur la même adresse GitHub Pages.
 
-## Accès des administrateurs
+## Tester l’espace de gestion
+
+**Mode test ouvert sans connexion.** Ouvrez le lien Gestion, sélectionnez un support, renseignez les champs et cliquez sur **Valider et publier**. Le contenu apparaît dans l’accueil de la langue choisie, uniquement dans le même navigateur. Les fichiers et miniatures sont conservés localement avec IndexedDB, y compris après rechargement et passage entre les pages française et arabe. Le bouton **Effacer les contenus de test** supprime ces essais locaux.
+
+Ce mode ne transmet aucun fichier ni aucune publication à un serveur ou au dépôt GitHub. Les lecteurs des autres navigateurs ne voient pas vos essais. Le site doit pouvoir enregistrer ses données dans votre navigateur ; l’effacement des données du site supprime aussi les essais.
+
+Le choix est explicite dans `interface/service-config.json` : `management.mode` vaut `test`. Le client local est distinct du service de publication. Pour la future mise en production, sélectionner `production` et connecter un service sécurisé avant d’activer les comptes.
+
+## Accès des administrateurs en production
 
 Le formulaire demande un **identifiant** et un **mot de passe** personnels. Les pages restent sur GitHub Pages. Les mots de passe et les droits de publication doivent être vérifiés par un service sécurisé ; aucune clé GitHub n’est demandée aux administrateurs ou embarquée dans le site.
 
-**État actuel : service non connecté, comptes non activés.** Le formulaire l’indique et reste désactivé. Les quatre personnes prévues sont Katiri Abdelah, Rbina Abdelah, Nachchat Mahmoud et Ilham Boudil. Aucun mot de passe de ces personnes n’a été créé ou publié dans le dépôt.
+**Service de production non connecté, comptes non activés.** La connexion est reportée pendant les essais. Les quatre personnes prévues sont Katiri Abdelah, Rbina Abdelah, Nachchat Mahmoud et Ilham Boudil. Aucun mot de passe de ces personnes n’a été créé ou publié dans le dépôt.
 
 L’adresse HTTPS du service se renseigne dans `interface/service-config.json`, champ `authentication.apiBase`, après son déploiement. Le code du serveur, les profils demandés, les scripts de préparation et les conditions d’activation sont disponibles dans `administration/`. Les mots de passe initiaux ne sont créés que lors de la configuration privée du service et doivent être remplacés à la première connexion. Le jeton de session reste uniquement en mémoire et expire après 30 minutes d’inactivité, au plus tard à l’expiration imposée par le serveur.
 
 ## Publier un contenu
 
-1. Ouvrir **Espace de gestion** et se connecter avec son identifiant et son mot de passe, après activation des comptes.
+1. Ouvrir **Espace de gestion**. En mode test, le formulaire s’ouvre directement.
 2. Choisir **Vidéothèque**, **Photothèque** ou **Espace médias**.
 3. Renseigner le titre, la date, la page de publication et la rubrique, puis sélectionner les supports.
 4. Vérifier l’aperçu, puis cliquer sur **Valider et publier**.
@@ -43,11 +51,11 @@ La dernière vidéo de la chaîne officielle `@Matnuhpv` est actualisée par Git
 - Sous-titres : WebVTT jusqu’à 1 Mio.
 - Publication complète : 100 Mio de fichiers maximum.
 
-Les fichiers sont validés avant l’enregistrement et à nouveau par le générateur du catalogue. Les contenus validés sont destinés à une diffusion publique sur le site et dans le dépôt GitHub.
+Les fichiers sont validés avant l’enregistrement. Les essais restent dans le navigateur ; les publications de production seront également contrôlées par le générateur du catalogue avant leur diffusion publique.
 
 ## Source et vérifications
 
-Les composants éditables se trouvent dans `interface/`. `scripts/build-interface.mjs` les assemble avec le runtime React conservé dans `site/assets/app.js`. `scripts/build-github-pages.mjs` génère `_site/` et valide les dossiers de `publications/`. Aucun serveur d’authentification distinct n’est nécessaire.
+Les composants éditables se trouvent dans `interface/`. `scripts/build-interface.mjs` les assemble avec le runtime React conservé dans `site/assets/app.js`. `scripts/build-github-pages.mjs` génère `_site/` et valide les dossiers de `publications/`. Le mode test fonctionne entièrement dans le navigateur.
 
 Avec Node.js 22.13 ou ultérieur et Python 3 :
 

@@ -357,6 +357,7 @@ function rf() {
           ],
         }),
       }),
+      MxTestAdministration && !L && mxElement('div',{className:'container mx-test-home'},mxElement(MxTestNotice,{})),
       (0, d.jsx)("main", {
         id: "main",
         children: L

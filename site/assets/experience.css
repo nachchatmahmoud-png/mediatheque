@@ -301,6 +301,16 @@ body { background:#fcfdfb; color:var(--mx-ink); }
 .mx-management-hero { position:relative; isolation:isolate; overflow:hidden; display:flex; gap:35px; align-items:center; justify-content:space-between; margin:20px 0 25px; padding:37px 38px; background:linear-gradient(115deg,#103f35,#1f5b46); color:#fff; border-radius:16px; }
 .mx-management-hero:after { content:''; pointer-events:none; position:absolute; z-index:-1; width:360px; height:360px; right:15%; top:-230px; border:1px solid #d7c28240; border-radius:60px; transform:rotate(45deg); box-shadow:0 0 0 24px #ffffff03,0 0 0 48px #ffffff03; }
 .mx-management-hero-copy { flex:1; min-width:0; max-width:690px; }
+.mx-test-notice { display:flex; align-items:center; gap:22px; padding:21px 24px; margin:0 0 25px; border:1px solid #dbce9d; border-radius:12px; background:#fcf8e9; color:#5c502b; }
+.mx-test-label { flex-shrink:0; padding:7px 10px; border:1px solid #dac88a; border-radius:5px; font-size:10px; font-weight:700; letter-spacing:1px; }
+.mx-test-notice > div { flex:1; }
+.mx-test-notice strong { font-size:13px; }
+.mx-test-notice p { margin:6px 0 0; max-width:700px; font-size:12px; line-height:1.8; }
+.mx-test-notice .button { flex-shrink:0; border-color:#d6c790; color:#5c502b; background:#fff9; padding:11px 13px; font-size:11px; }
+.mx-test-home { margin-top:24px; }
+.mx-test-content-badge { align-self:flex-start; margin:0 22px 12px; padding:5px 8px; border-radius:4px; background:#f9f1d5; color:#695727; font-size:10px; }
+@media(max-width:900px){ .mx-test-notice{flex-wrap:wrap;gap:14px;} .mx-test-notice>div{flex-basis:70%;} }
+@media(max-width:680px){ .mx-test-notice{padding:18px;gap:12px;} .mx-test-notice>div{flex-basis:100%;} .mx-test-notice .button{width:100%;justify-content:center;} }
 .mx-management-hero .eyebrow { color:#c4d7ba; font-size:10px; letter-spacing:2px; }
 .mx-management-hero h1 { font-family:var(--serif); font-size:43px; line-height:1.2; font-weight:400; letter-spacing:-.6px; margin:13px 0 12px; }
 .mx-management-hero-copy > p { max-width:535px; color:#d6e2d1; font-size:13px; line-height:1.9; margin:0; }

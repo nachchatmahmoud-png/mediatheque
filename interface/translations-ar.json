@@ -200,5 +200,11 @@
   "Langue de la fiche": "لغة البطاقة",
   "Les sous-titres se règlent dans le lecteur YouTube.": "يمكن ضبط الترجمة النصية من خلال مشغل يوتيوب.",
   "Télécharger les sous-titres": "تحميل الترجمة النصية",
-  "Ouvrir le fichier vidéo": "فتح ملف الفيديو"
+  "Ouvrir le fichier vidéo": "فتح ملف الفيديو",
+  "Mode test": "وضع التجربة",
+  "MODE TEST": "وضع التجربة",
+  "Espace de gestion ouvert sans connexion": "فضاء الإدارة متاح للتجربة دون تسجيل الدخول",
+  "Ajoutez vos supports, vérifiez l’aperçu et cliquez sur « Valider et publier ». Vos essais apparaîtront dans l’accueil de ce navigateur uniquement.": "أضيفوا المحتوى، ثم تحققوا من المعاينة واضغطوا على « تأكيد ونشر ». ستظهر المواد التجريبية في الصفحة الرئيسية لهذا المتصفح فقط.",
+  "Effacer les contenus de test": "مسح المحتويات التجريبية",
+  "Contenu de test": "محتوى تجريبي"
 }

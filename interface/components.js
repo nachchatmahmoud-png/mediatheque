@@ -99,6 +99,14 @@ function mxPublicationSuffix() {
   return Array.from(crypto.getRandomValues(new Uint8Array(6)), value => value.toString(16).padStart(2, '0')).join('');
 }
 
+function mxUuid() {
+  if(typeof crypto.randomUUID==='function')return crypto.randomUUID();
+  const bytes=crypto.getRandomValues(new Uint8Array(16));
+  bytes[6]=(bytes[6]&15)|64;bytes[8]=(bytes[8]&63)|128;
+  const hex=Array.from(bytes,value=>value.toString(16).padStart(2,'0')).join('');
+  return [hex.slice(0,8),hex.slice(8,12),hex.slice(12,16),hex.slice(16,20),hex.slice(20)].join('-');
+}
+
 async function mxCopyLink(onToast) {
   try {
     await navigator.clipboard.writeText(window.location.href);
@@ -191,7 +199,7 @@ function MxPublicationPreview({ title, date, topic, description, language, photo
       mxHttps(videoUrl) && h('a', { className: 'button secondary', href: mxHttps(videoUrl), target: '_blank', rel: 'noreferrer' }, 'Vérifier le lien vidéo', h(Oe, { size: 16 })),
       urls.press && h('a', { className: 'button secondary', href: urls.press, target: '_blank', rel: 'noreferrer' }, 'Ouvrir le PDF sélectionné', h(Oe, { size: 16 })),
       pressText && h('div', { className: 'mx-preview-text', dir: language === 'ar' ? 'rtl' : 'auto' }, pressText),
-      h('p', { className: 'mx-preview-note' }, 'Le contenu sera mis en ligne après votre clic sur « Valider et publier ».'),
+      h('p', { className: 'mx-preview-note' }, MxTestAdministration?'Cet essai sera visible dans l’accueil de ce navigateur après votre clic sur « Valider et publier ».':'Le contenu sera mis en ligne après votre clic sur « Valider et publier ».'),
       h('button', { className: 'button primary', onClick: onClose }, 'Revenir au formulaire')));
 }
 
@@ -202,12 +210,12 @@ function MxPublishedList({ items, onOpen }) {
   const published = items.filter(item => item.status === 'published'&&item.language===contentLanguage);
   const filtered = published.filter(item => Ea([item.title, item.topic, ...item.keywords].join(' ')).includes(Ea(query)));
   return h('section', { className: 'mx-published', 'aria-labelledby': 'published-heading' },
-    h('div', { className: 'mx-section-title' }, h('div', null, h('div', { className: 'eyebrow' }, 'SUIVI DES CONTENUS'), h('h2', { id: 'published-heading' }, 'Publications en ligne')), h('span', { className: 'mx-count' }, mxPlural(published.length, 'publication'))),
+    h('div', { className: 'mx-section-title' }, h('div', null, h('div', { className: 'eyebrow' }, 'SUIVI DES CONTENUS'), h('h2', { id: 'published-heading' }, MxTestAdministration?'Publications et essais locaux':'Publications en ligne')), h('span', { className: 'mx-count' }, mxPlural(published.length, 'publication'))),
     h('div',{className:'mx-management-languages',role:'group','aria-label':'Langue des publications'},h('button',{type:'button','aria-pressed':contentLanguage==='fr',onClick:()=>setContentLanguage('fr')},'Français'),h('button',{type:'button','aria-pressed':contentLanguage==='ar',onClick:()=>setContentLanguage('ar')},'العربية')),
     published.length ? h(O.Fragment, null,
       h('label', { className: 'mx-management-search' }, 'Rechercher une publication en ligne', h('input', { type: 'search', value: query, onChange: event => setQuery(event.target.value), placeholder: 'Titre, thème ou mot-clé…' })),
       h('div', { className: 'mx-published-list' }, filtered.slice(0, 30).map(item => h('article', { key: item.id },
-        h('div', null, h('small', null, nu[item.type], ' · ', Ya(item.date)), h('strong', { dir: 'auto' }, item.title)),
+        h('div', null, h('small', null, nu[item.type], ' · ', Ya(item.date), item.testOnly?' · Contenu de test':''), h('strong', { dir: 'auto' }, item.title)),
         h('div', null, h('button', { className: 'button secondary', onClick: () => onOpen(item) }, 'Consulter'),
           null)))),
 
