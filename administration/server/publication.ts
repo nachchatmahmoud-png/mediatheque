@@ -40,6 +40,7 @@ export async function preparePublication(input:unknown,accountId:string,findUplo
   };
   const record:Record<string,any>={version:1,status:'published',title:text(v.title,180,true),date,topic:v.topic,language:v.language,description:text(v.description,1200),credit:text(v.credit,200),keywords:[v.topic]};
   if(v.type==='photo'){
+    record.location=text(v.location,150);
     if(!Array.isArray(v.photos)||!v.photos.length||v.photos.length>30||v.photos.some((p:any)=>!p||typeof p!=='object'))throw new ServiceError('Sélectionnez entre 1 et 30 photographies.');
     record.photos=[];
     for(let i=0;i<v.photos.length;i++)record.photos.push({file:await asset(v.photos[i].url,'photo','photos/photo-'+String(i+1).padStart(2,'0')),caption:text(v.photos[i].caption,300)});

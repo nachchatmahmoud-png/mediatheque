@@ -28,7 +28,7 @@ test('management opens without credentials and all three supports publish locall
   const value=client();
   assert.equal((await value.api('/api/auth/session')).testMode,true);
   const image=await upload(value,new File(['LOCAL IMAGE ONLY'],'essai.png',{type:'image/png'}));
-  const photo=publication('photo',{photos:[{url:image.url,caption:'Légende de test'}],thumbnailUrl:image.url});
+  const photo=publication('photo',{photos:[{url:image.url,caption:'Légende de test'}],thumbnailUrl:image.url,location:'Rabat',credit:'Photographe de test'});
   const youtube=publication('video',{mediaUrl:'https://www.youtube.com/watch?v=abcdefghijk',spokenLanguage:'ar',description:'Résumé français de test'});
   const pdf=await upload(value,new File(['%PDF-1.4 LOCAL TEST ONLY'],'essai.pdf',{type:'application/pdf'}));
   const press=publication('press',{fileUrl:pdf.url,content:'Communiqué de test'});
@@ -37,6 +37,7 @@ test('management opens without credentials and all three supports publish locall
   assert.equal(result.isAdmin,true);assert.equal(result.items.filter(item=>item.testOnly).length,3);
   const album=result.items.find(item=>item.type==='photo');
   assert.equal(album.photos[0].caption,'Légende de test');
+  assert.equal(album.location,'Rabat');assert.equal(album.credit,'Photographe de test');
   assert.equal(album.thumbnailUrl,album.photos[0].url);
   assert.equal(await (await fetch(album.photos[0].url)).text(),'LOCAL IMAGE ONLY');
   assert.equal(await (await fetch(result.items.find(item=>item.type==='press').fileUrl)).text(),'%PDF-1.4 LOCAL TEST ONLY');

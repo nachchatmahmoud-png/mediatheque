@@ -99,7 +99,7 @@ test('photo, YouTube, imported video with captions and communiqué use the catal
  const captions=await stage('fr.vtt',new TextEncoder().encode('WEBVTT\n\n00:00.000 --> 00:02.000\nTexte de test.\n'));
  const base={title:'Publication de test',date:'2026-10-22',topic:'Vie institutionnelle',language:'fr',description:'Résumé français'};
  for(const support of [
-  {type:'photo',photos:[{url:photo,caption:'Couverture'}],thumbnailUrl:photo},
+  {type:'photo',photos:[{url:photo,caption:'Couverture'}],thumbnailUrl:photo,location:'Rabat',credit:'Photographe de test'},
   {type:'video',mediaUrl:'https://www.youtube.com/watch?v=abcdefghijk',spokenLanguage:'ar'},
   {type:'video',mediaUrl:media,thumbnailUrl:photo,spokenLanguage:'ar',captionsSource:'file',captionsLanguage:'fr',captionsValidated:true,captionsUrl:captions},
   {type:'press',fileUrl:pdf,content:'Texte du communiqué'},
@@ -108,6 +108,8 @@ test('photo, YouTube, imported video with captions and communiqué use the catal
   assert.equal(response.status,201,JSON.stringify(response.body));assert.match(response.body.id,/^publication-/);
  }
  assert.equal(value.calls.filter(call=>call.action==='publish').length,4);
+ const album=value.calls.find(call=>call.action==='publish').prepared;
+ assert.equal(album.record.location,'Rabat');assert.equal(album.record.credit,'Photographe de test');
 });
 
 test('untrusted origins, oversized login bodies and malformed subtitle files are refused',async()=>{

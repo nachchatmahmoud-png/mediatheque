@@ -60,6 +60,7 @@ function createMxTestAdministration(storage=mxBrowserTestStorage()) {
     };
     const item={id,type:input.type,title:bounded(input.title,180,true),date,topic:input.topic,language:input.language,status:'published',description:bounded(input.description,1200),credit:bounded(input.credit,200),content:'',location:'',duration:'',transcript:'',thumbnailUrl:'',mediaUrl:'',fileUrl:'',captionsUrl:'',spokenLanguage:'',captionsLanguage:'',captionsSource:'',captionsValidated:false,photos:[],keywords:[input.topic],eventId:null,testOnly:true,createdAt:new Date().toISOString()};
     if(item.type==='photo'){
+      item.location=bounded(input.location,150);
       if(!Array.isArray(input.photos)||!input.photos.length||input.photos.length>30)throw new Error('Sélectionnez entre 1 et 30 photographies.');
       item.photos=input.photos.map(photo=>({url:asset(photo?.url,'photo'),caption:bounded(photo?.caption,300)}));
       item.thumbnailUrl=item.photos.find(photo=>photo.url===input.thumbnailUrl)?.url||item.photos[0].url;

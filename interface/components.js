@@ -85,14 +85,42 @@ function MxThumbnailImage({source, title, className = ''}) {
   return h('div', {className: 'mx-thumbnail-image ' + className}, url && !failed ? h('img', {src: url, alt: title || 'Miniature de la publication', onError: () => setFailed(true)}) : h('span', null, h(pa, {size: 30}), failed ? 'Aperçu indisponible' : 'Votre miniature'));
 }
 
-function MxThumbnailField({source, pending, custom, note, onChange, onReset}) {
+function MxVideoFramePicker({file,onCapture}) {
+  const h=mxElement,url=mxUseObjectUrl(file),video=O.useRef(null);
+  const [ready,setReady]=O.useState(false),[busy,setBusy]=O.useState(false),[error,setError]=O.useState('');
+  O.useEffect(()=>{setReady(false);setError('');},[file]);
+  const capture=async()=>{
+    if(!ready||busy)return;setBusy(true);setError('');
+    try{video.current.pause();const image=await mxCaptureVideoFrame(video.current);onCapture(image);}
+    catch(exception){setError(exception.message);}finally{setBusy(false);}
+  };
+  return h('details',{className:'mx-video-frame-picker'},h('summary',null,'Choisir une autre image dans la vidéo'),
+    h('p',null,'Déplacez le curseur du lecteur jusqu’à l’image souhaitée, puis utilisez-la comme miniature.'),
+    h('video',{ref:video,src:url,controls:true,playsInline:true,preload:'auto','aria-label':'Choisir l’image de couverture de la vidéo',onLoadedData:()=>setReady(true),onError:()=>{setReady(false);setError('Le navigateur ne peut pas lire cette vidéo. Vous pouvez importer une miniature.');}}),
+    h('button',{type:'button',className:'button secondary',disabled:!ready||busy,onClick:capture},h(pa,{size:16}),busy?'Création de l’image…':'Utiliser cette image comme miniature'),error&&h('p',{role:'alert',className:'gh-error'},error));
+}
+
+function mxCaptureVideoFrame(video) {
+  return new Promise((resolve,reject)=>{
+    try{
+      if(video.readyState<2||!video.videoWidth||!video.videoHeight)throw new Error('Attendez le chargement de l’image vidéo, puis réessayez.');
+      const canvas=document.createElement('canvas'),scale=Math.min(1,1280/video.videoWidth,720/video.videoHeight);
+      canvas.width=Math.max(1,Math.round(video.videoWidth*scale));canvas.height=Math.max(1,Math.round(video.videoHeight*scale));
+      canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);
+      canvas.toBlob(blob=>blob?resolve(new File([blob],'miniature-video-'+Math.round(video.currentTime*1000)+'.jpg',{type:'image/jpeg',lastModified:Date.now()})):reject(new Error('L’image n’a pas pu être extraite. Réessayez.')),'image/jpeg',.88);
+    }catch(error){reject(error);}
+  });
+}
+
+function MxThumbnailField({source, pending, custom, fromVideo=false, videoFile=null, onFrame, note, onChange, onReset}) {
   const h = mxElement;
   return h('section', {className: 'mx-thumbnail-field', 'aria-labelledby': 'thumbnail-heading'},
-    h('div', {className: 'mx-thumbnail-heading'}, h('div', null, h('h3', {id: 'thumbnail-heading'}, 'Miniature de la vidéo *'), h('p', null, 'L’image qui présentera votre vidéo dans la médiathèque.')), source && !pending && h('span', {className: 'mx-thumbnail-status'}, h(zl, {size: 13}), custom ? 'Personnalisée' : 'Automatique')),
+    h('div', {className: 'mx-thumbnail-heading'}, h('div', null, h('h3', {id: 'thumbnail-heading'}, 'Miniature de la vidéo *'), h('p', null, 'L’image qui présentera votre vidéo dans la médiathèque.')), source && !pending && h('span', {className: 'mx-thumbnail-status'}, h(zl, {size: 13}), fromVideo?'Image de la vidéo':custom ? 'Personnalisée' : 'Automatique')),
     h('div', {className: 'mx-thumbnail-layout'}, h(MxThumbnailImage, {source}),
-      h('div', {className: 'mx-thumbnail-options'}, h('p', {role: pending ? 'status' : undefined}, pending ? 'Création de la miniature…' : custom ? 'Votre image personnalisée sera utilisée dans l’accueil.' : note || 'Importez une image pour présenter cette vidéo.'),
+      h('div', {className: 'mx-thumbnail-options'}, h('p', {role: pending ? 'status' : undefined}, pending ? 'Extraction d’une image de la vidéo…' : fromVideo?'L’image choisie dans la vidéo sera utilisée dans l’accueil.':custom ? 'Votre image personnalisée sera utilisée dans l’accueil.' : note || 'La miniature s’affichera ici dès la sélection de votre vidéo.'),
         h('label', {className: 'button secondary mx-thumbnail-upload'}, h(pa, {size: 16}), source ? 'Changer la miniature' : 'Importer une miniature', h('input', {type: 'file', accept: 'image/jpeg,image/png,image/webp', 'aria-label': 'Importer une miniature de la vidéo', onChange: event => {onChange(event.target.files?.[0]); event.target.value = '';}})),
-        h('small', null, 'JPG, PNG ou WebP · 12 Mio maximum'), custom && h('button', {type: 'button', className: 'mx-thumbnail-reset', onClick: onReset}, 'Revenir à la miniature automatique'))));
+        h('small', null, 'JPG, PNG ou WebP · 12 Mio maximum'), custom && h('button', {type: 'button', className: 'mx-thumbnail-reset', onClick: onReset}, 'Revenir à la miniature automatique'))),
+    videoFile&&h(MxVideoFramePicker,{key:videoFile.name+'-'+videoFile.size+'-'+videoFile.lastModified,file:videoFile,onCapture:onFrame}));
 }
 
 function mxPublicationSuffix() {
@@ -176,7 +204,7 @@ function MxPhotoPreview({ file, caption, index, total, cover, onCover, onCaption
         h('button', { type: 'button', className: 'mx-remove', onClick: onRemove, 'aria-label': 'Retirer ' + file.name }, 'Retirer'))));
 }
 
-function MxPublicationPreview({ title, date, topic, description, language, photos, captions, video, videoUrl, thumbnail, videoLanguages, captionsFile, press, pressText, onClose }) {
+function MxPublicationPreview({ type, title, date, topic, description, credit, location, language, photos, captions, video, videoUrl, thumbnail, videoLanguages, captionsFile, press, pressText, onClose }) {
   const h = mxElement;
   const [urls, setUrls] = O.useState({ photos: [], video: '', press: '' });
   const poster = mxUseObjectUrl(thumbnail);
@@ -194,6 +222,7 @@ function MxPublicationPreview({ title, date, topic, description, language, photo
       videoLanguages&&h(MxVideoLanguage,{item:videoLanguages}),
       thumbnail && h('div',{className:'mx-preview-cover'},h('span',{className:'eyebrow'},'MINIATURE DANS L’ACCUEIL'),h(MxThumbnailImage,{source:thumbnail,title})),
       description && h('p', { dir: language === 'ar' ? 'rtl' : 'auto' }, description),
+      (credit||location)&&h('dl',{className:'mx-preview-details'},location&&h('div',null,h('dt',null,'Lieu des prises de vue'),h('dd',{dir:'auto'},location)),credit&&h('div',null,h('dt',null,MX_PUBLICATION_FORMS[type]?.creditLabel||'Crédits'),h('dd',{dir:'auto'},credit))),
       urls.photos.length > 0 && h('div', { className: 'mx-preview-gallery' }, urls.photos.map((url, index) => h('figure', { key: url }, h('img', { src: url, alt: captions[index] || 'Photo ' + (index + 1) }), captions[index] && h('figcaption', null, captions[index])))),
       urls.video && h('video', { controls: true, preload: 'metadata', src: urls.video, poster, 'aria-label': title || 'Vidéo à publier' },subtitles&&videoLanguages?.captionsValidated&&h('track',{kind:'subtitles',src:subtitles,srcLang:videoLanguages.captionsLanguage,label:videoLanguages.captionsLanguage==='fr'?'Français':'العربية',default:true})),
       mxHttps(videoUrl) && h('a', { className: 'button secondary', href: mxHttps(videoUrl), target: '_blank', rel: 'noreferrer' }, 'Vérifier le lien vidéo', h(Oe, { size: 16 })),

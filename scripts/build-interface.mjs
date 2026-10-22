@@ -57,7 +57,7 @@ export async function buildInterface(root, output) {
     if(from<0||until<from)throw new Error('Limite du service introuvable : '+start);
     bundle=bundle.slice(0,from)+replacement+'\n'+bundle.slice(until);
   }
-  const helpers = (await Promise.all(['i18n.js','components.js','video-languages.js','admin-service.js','test-administration.js','accounts.js'].map(file=>readFile(join(root,'interface',file),'utf8')))).join('\n');
+  const helpers = (await Promise.all(['i18n.js','publication-fields.js','components.js','video-languages.js','admin-service.js','test-administration.js','accounts.js'].map(file=>readFile(join(root,'interface',file),'utf8')))).join('\n');
   const config=JSON.parse(await readFile(join(root,'interface/service-config.json'),'utf8'));
   const localizations=JSON.parse(await readFile(join(root,'site/video-localizations.json'),'utf8'));
   if(config.provider!=='github'||config.repository!=='nachchatmahmoud-png/mediatheque'||config.branch!=='main')throw new Error('Vérifiez le dépôt GitHub de publication.');
