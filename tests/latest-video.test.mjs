@@ -6,12 +6,14 @@ import {execFileSync} from 'node:child_process';
 
 test('the official video is visible on both pages with labels in the page language',async()=>{
  const source=await readFile(new URL('../interface/latest-video.js',import.meta.url),'utf8');
+ const helpers=await readFile(new URL('../interface/video-languages.js',import.meta.url),'utf8');
  const video={videoId:'abcdefghijk',title:'فيديو الوزارة',publishedAt:'2026-10-20T12:00:00Z',channelUrl:'https://www.youtube.com/@Matnuhpv'};
  for(const language of ['fr','ar']){
   const jsx=(type,props)=>({type,...props});
-  const result=vm.runInNewContext(source+';af()',{
+  const result=vm.runInNewContext(helpers+'\n'+source+';af()',{
    No:{useState:value=>[value,()=>{}],useEffect:()=>{}},ar:video,ge:{jsx,jsxs:jsx},MX_LOCALE:language,MX_ON_SERVICE:false,
    mxDetectedLanguage:()=>'ar',mxT:value=>language==='ar'?'أحدث فيديو للوزارة':value,je:value=>value,Ya:()=>'',Oe:'icon',Tl:'play',
+   MX_VIDEO_LOCALIZATIONS:{},mxElement:jsx,MxVideoLanguage:'languages',mxYoutubeThumbnail:()=>true,
   });
   assert.equal(result.className,'hero-visual ministry-video');
   const meta=result.children.find(child=>child.className==='ministry-video-meta');

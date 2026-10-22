@@ -168,7 +168,7 @@
   "Présentation de l’événement": "تقديم الفعالية",
   "Texte du communiqué": "نص البلاغ",
   "Transcription": "التفريغ النصي",
-  "Sous-titres": "النصوص المصاحبة",
+  "Sous-titres": "الترجمة النصية",
   "Mots-clés": "الكلمات المفتاحية",
   "Retour": "رجوع",
   "fr-FR": "ar-MA",
@@ -189,5 +189,16 @@
   "AR": "العربية",
   "FR": "الفرنسية",
   "ILLUSTRATION": "صورة توضيحية",
-  "Dernière vidéo du ministère": "أحدث فيديو للوزارة"
+  "Dernière vidéo du ministère": "أحدث فيديو للوزارة",
+  "Vidéo en arabe": "فيديو باللغة العربية",
+  "Vidéo en français": "فيديو باللغة الفرنسية",
+  "Vidéo en arabe et en français": "فيديو باللغتين العربية والفرنسية",
+  "Version originale": "النسخة الأصلية",
+  "Sous-titres français": "ترجمة نصية بالفرنسية",
+  "Sous-titres arabes": "ترجمة نصية بالعربية",
+  "Langue de la vidéo": "لغة الفيديو",
+  "Langue de la fiche": "لغة البطاقة",
+  "Les sous-titres se règlent dans le lecteur YouTube.": "يمكن ضبط الترجمة النصية من خلال مشغل يوتيوب.",
+  "Télécharger les sous-titres": "تحميل الترجمة النصية",
+  "Ouvrir le fichier vidéo": "فتح ملف الفيديو"
 }

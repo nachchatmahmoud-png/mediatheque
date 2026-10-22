@@ -1,4 +1,4 @@
-import {validateEvent,type MediaItem,type MediaEvent,defaultSettings} from '../app/lib/model.ts';
+import {validateEvent,validateVideoLanguages,youtubeEmbed,type MediaItem,type MediaEvent,defaultSettings} from '../app/lib/model.ts';
 
 export const MIB=1024*1024;
 const text=(v:unknown,max:number,label:string)=>{if(v===undefined)return '';if(typeof v!=='string'||v.length>max)throw new Error(label+' non valide.');return v.trim();};
@@ -27,11 +27,14 @@ export function publicationToCatalogue(raw:unknown,id:string){
  const file=(value:unknown,kind:'photo'|'video'|'press'|'captions')=>{const path=assetPath(value,kind);assets.add(path);return './medias/'+id+'/'+path;};
  const common={description:event.description,date:event.date,topic:event.topic,language,location:event.location,credit,keywords:event.keywords,eventId:id,eventTitle:event.title,eventDate:event.date,status:'published' as const,duration:'',thumbnailUrl:'',mediaUrl:'',fileUrl:'',captionsUrl:'',photos:[],content:'',transcript:''};
  const items:MediaItem[]=[],photos=records(v.photos,'Photographies',30).map(p=>({url:file(p.file,'photo'),caption:text(p.caption,300,'Légende')}));
- if(photos.length)items.push({...common,id:id+'-photos',type:'photo',title:event.title,photos,thumbnailUrl:photos[0].url});
+ if(photos.length)items.push({...common,id:id+'-photos',type:'photo',title:event.title,photos,thumbnailUrl:v.cover?file(v.cover,'photo'):photos[0].url});
  records(v.videos,'Vidéos',10).forEach((video,index)=>{
   let url='';if(video.file)url=file(video.file,'video');else{const source=text(video.url,2000,'Adresse vidéo');let parsed:URL;try{parsed=new URL(source);}catch{throw new Error('Adresse vidéo HTTPS obligatoire.');}if(parsed.protocol!=='https:'||parsed.username||parsed.password)throw new Error('Adresse vidéo HTTPS obligatoire.');url=parsed.href;}
-  const thumbnailUrl=video.cover?file(video.cover,'photo'):photos[0]?.url||'';
-  items.push({...common,id:id+'-video-'+(index+1),type:'video',title:text(video.title,180,'Titre vidéo')||event.title,mediaUrl:url,thumbnailUrl,transcript:text(video.transcript,60000,'Transcription'),captionsUrl:video.captions?file(video.captions,'captions'):''});
+  const embed=youtubeEmbed(url),youtubeThumbnail=embed?'https://i.ytimg.com/vi/'+embed.split('/').at(-1)+'/hqdefault.jpg':'';
+  const thumbnailUrl=video.cover?file(video.cover,'photo'):youtubeThumbnail||photos[0]?.url||'';
+  const captionsUrl=video.captions?file(video.captions,'captions'):'';
+  const languages=validateVideoLanguages({...video,type:'video',mediaUrl:url,captionsUrl});
+  items.push({...common,...languages,id:id+'-video-'+(index+1),type:'video',title:text(video.title,180,'Titre vidéo')||event.title,mediaUrl:url,thumbnailUrl,transcript:text(video.transcript,60000,'Transcription'),captionsUrl});
  });
  records(v.press,'Communiqués',10).forEach((press,index)=>{
   const content=text(press.text,40000,'Texte du communiqué'),fileUrl=press.file?file(press.file,'press'):'';if(!content&&!fileUrl)throw new Error('Ajoutez le PDF ou le texte du communiqué.');

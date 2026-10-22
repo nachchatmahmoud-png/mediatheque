@@ -1,6 +1,9 @@
 // Components share the retained React runtime and media readers in app.js.
 // No external service, additional framework or runtime dependency is required.
 const mxElement = (...args) => O.createElement(...args);
+function MxPreviewIcon({size=18}) {
+  return mxElement('svg',{width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.8,strokeLinecap:'round',strokeLinejoin:'round','aria-hidden':true},mxElement('path',{d:'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z'}),mxElement('circle',{cx:12,cy:12,r:3}));
+}
 const mxStorage = {
   get(key, fallback = '') { try { return localStorage.getItem(key) || fallback; } catch { return fallback; } },
   set(key, value) { try { localStorage.setItem(key, value); } catch {} },
@@ -8,8 +11,8 @@ const mxStorage = {
 const mxSize = bytes => new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 }).format(bytes / 1048576) + ' Mio';
 const mxPlural = (count, singular, plural = singular + 's') => count + ' ' + (MX_LOCALE==='ar'?(MX_MESSAGES[singular]||singular):(count > 1 ? plural : singular));
 function mxValidateFile(file, kind) {
-  const extensions = { photo: /\.(jpe?g|png|webp)$/i, video: /\.(mp4|webm)$/i, press: /\.pdf$/i };
-  const limits = { photo: 12, video: 25, press: 20 };
+  const extensions = { photo: /\.(jpe?g|png|webp)$/i, video: /\.(mp4|webm)$/i, press: /\.pdf$/i, captions: /\.vtt$/i };
+  const limits = { photo: 12, video: 25, press: 20, captions: 1 };
   if (!extensions[kind].test(file.name)) throw new Error(file.name + ' : format non accepté.');
   if (!file.size || file.size > limits[kind] * 1048576) throw new Error(file.name + ' : le fichier doit contenir entre 1 octet et ' + limits[kind] + ' Mio.');
 }
@@ -165,10 +168,11 @@ function MxPhotoPreview({ file, caption, index, total, cover, onCover, onCaption
         h('button', { type: 'button', className: 'mx-remove', onClick: onRemove, 'aria-label': 'Retirer ' + file.name }, 'Retirer'))));
 }
 
-function MxPublicationPreview({ title, date, topic, description, language, photos, captions, video, videoUrl, thumbnail, press, pressText, onClose }) {
+function MxPublicationPreview({ title, date, topic, description, language, photos, captions, video, videoUrl, thumbnail, videoLanguages, captionsFile, press, pressText, onClose }) {
   const h = mxElement;
   const [urls, setUrls] = O.useState({ photos: [], video: '', press: '' });
   const poster = mxUseObjectUrl(thumbnail);
+  const subtitles = mxUseObjectUrl(captionsFile);
   O.useEffect(() => {
     const next = { photos: photos.map(file => URL.createObjectURL(file)), video: video ? URL.createObjectURL(video) : '', press: press ? URL.createObjectURL(press) : '' };
     setUrls(next);
@@ -179,10 +183,11 @@ function MxPublicationPreview({ title, date, topic, description, language, photo
       h('div', { className: 'eyebrow' }, 'APERÇU AVANT PUBLICATION'),
       h('h2', { dir: 'auto' }, title || 'Titre à renseigner'),
       h('p', { className: 'mx-preview-meta' }, date && Ya(date), ' · ', topic),
+      videoLanguages&&h(MxVideoLanguage,{item:videoLanguages}),
       thumbnail && h('div',{className:'mx-preview-cover'},h('span',{className:'eyebrow'},'MINIATURE DANS L’ACCUEIL'),h(MxThumbnailImage,{source:thumbnail,title})),
       description && h('p', { dir: language === 'ar' ? 'rtl' : 'auto' }, description),
       urls.photos.length > 0 && h('div', { className: 'mx-preview-gallery' }, urls.photos.map((url, index) => h('figure', { key: url }, h('img', { src: url, alt: captions[index] || 'Photo ' + (index + 1) }), captions[index] && h('figcaption', null, captions[index])))),
-      urls.video && h('video', { controls: true, preload: 'metadata', src: urls.video, poster, 'aria-label': title || 'Vidéo à publier' }),
+      urls.video && h('video', { controls: true, preload: 'metadata', src: urls.video, poster, 'aria-label': title || 'Vidéo à publier' },subtitles&&videoLanguages?.captionsValidated&&h('track',{kind:'subtitles',src:subtitles,srcLang:videoLanguages.captionsLanguage,label:videoLanguages.captionsLanguage==='fr'?'Français':'العربية',default:true})),
       mxHttps(videoUrl) && h('a', { className: 'button secondary', href: mxHttps(videoUrl), target: '_blank', rel: 'noreferrer' }, 'Vérifier le lien vidéo', h(Oe, { size: 16 })),
       urls.press && h('a', { className: 'button secondary', href: urls.press, target: '_blank', rel: 'noreferrer' }, 'Ouvrir le PDF sélectionné', h(Oe, { size: 16 })),
       pressText && h('div', { className: 'mx-preview-text', dir: language === 'ar' ? 'rtl' : 'auto' }, pressText),

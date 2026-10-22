@@ -20,6 +20,38 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .mx-hero-search .mx-search-hint { font-size: 11px; line-height: 1.6; margin-top: 9px; color: #5d7267; }
 .ministry-video-screen { background: #123b32; }
 .ministry-video-cover img { object-fit: cover; }
+.mx-video-language { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:0 0 16px; }
+.mx-video-language>span { display:inline-flex; align-items:center; gap:6px; color:#476746; background:#edf3e8; border:1px solid #dce7d5; border-radius:5px; font-size:11px; padding:6px 9px; line-height:1.5; }
+.mx-video-language .mx-caption-language { color:#386653; background:#e9f3ec; border-color:#cfe2d4; }
+.mx-video-language.compact { margin:12px 0; gap:6px; }
+.mx-video-language.compact>span { font-size:10px; padding:4px 7px; }
+.ministry-video-meta .mx-video-language { justify-content:flex-start; }
+.ministry-video-meta .mx-latest-summary { color:#697c6b; font-size:12px; line-height:1.8; margin:12px 0 17px; }
+.mx-caption-help,.mx-caption-download { font-size:12px; color:#577250; line-height:1.7; margin:12px 0; }
+.mx-caption-download { display:inline-block; text-decoration:underline; text-underline-offset:3px; }
+.mx-page-language-help { color:#6a7e5c; font-size:11px; line-height:1.7; margin:13px 0 20px; }
+.mx-video-language-fields { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:18px; align-items:start; margin:22px 0; }
+.mx-caption-fields { border:1px solid #dbe5d2; border-radius:7px; padding:13px; background:#f6f8f1; }
+.mx-caption-fields summary { display:flex; align-items:center; justify-content:space-between; gap:10px; cursor:pointer; color:#45613c; font-size:12px; font-weight:600; }
+.mx-caption-fields summary small { font-size:9px; font-weight:400; color:#7c8b6e; }
+.mx-caption-fields[open] summary { margin-bottom:17px; }
+.mx-caption-fields select { font-size:11px; }
+.mx-caption-instruction { font-size:11px; line-height:1.8; color:#647b55; }
+.mx-caption-instruction a { display:inline-flex; gap:3px; align-items:center; text-decoration:underline; }
+.mx-caption-file { display:flex; flex-direction:column; gap:9px; align-items:flex-start; margin:14px 0; }
+.mx-caption-file small { font-size:10px; color:#7b8b70; }
+.mx-caption-file>div { display:flex; flex-wrap:wrap; align-items:center; gap:9px; font-size:10px; overflow-wrap:anywhere; }
+.mx-caption-file>div button { color:#8d4640; text-decoration:underline; }
+.mx-caption-review { display:flex; align-items:flex-start; gap:9px; margin:16px 0 0; font-size:10px; line-height:1.8; color:#546f46; }
+.gh-form .mx-caption-review input { width:15px; height:15px; margin:3px 0 0; padding:0; flex-shrink:0; accent-color:#396844; }
+.mx-video-summary { margin:18px 0 22px; }
+.mx-github-login-help { font-size:12px; line-height:1.8; color:#6d7e62; margin:0 0 23px; }
+.mx-github-access-help { margin-top:24px; border-top:1px solid #e0e7d8; padding-top:18px; font-size:11px; line-height:1.85; color:#607752; }
+.mx-github-access-help summary { font-size:11px; cursor:pointer; color:#3c613b; font-weight:600; }
+.mx-github-access-help a { display:inline-flex; align-items:center; gap:5px; text-decoration:underline; text-underline-offset:3px; }
+.mx-workspace-nav>span,.mx-workspace-nav>a { display:inline-flex; align-items:center; gap:8px; padding:16px 0; color:#61795a; font-size:12px; }
+.mx-workspace-nav>span.active { border-bottom:2px solid #3f7040; color:#305b34; font-weight:600; }
+@media(max-width:680px){.mx-video-language-fields{grid-template-columns:1fr;}.ministry-video-meta .mx-latest-summary{font-size:11px;}}
 .collection-label > span { color: #5d7065; }
 .mx-latest { padding-top: 48px; }
 .mx-section-title { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 24px; }

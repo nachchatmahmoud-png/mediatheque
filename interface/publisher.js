@@ -1,38 +1,20 @@
-// Administration: the server owns authentication, sessions and publication.
+// Authentication and publication are handled directly by GitHub.
 function MxAdminLogin({auth,onAuthenticated}) {
   const h=mxElement;
-  const [username,setUsername]=O.useState(auth.username||'');
-  const [password,setPassword]=O.useState('');
-  const [confirmation,setConfirmation]=O.useState('');
-  const [recover,setRecover]=O.useState(false);
-  const [busy,setBusy]=O.useState(false);
-  const [error,setError]=O.useState('');
-  const create=!auth.configured&&auth.canSetup;
-  const newPassword=create||recover;
-  const submit=async event=>{
-    event.preventDefault();setError('');setBusy(true);
-    try{
-      await Ho('/api/auth/'+(create?'setup':recover?'recover':'login'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password,confirmPassword:confirmation})});
-      const status=await Ho('/api/auth/session');
-      if(!status.authenticated)throw new Error('La session n’a pas pu être conservée. Ouvrez la gestion dans un onglet distinct, puis reconnectez-vous.');
-      setPassword('');setConfirmation('');await onAuthenticated();
-    }catch(exception){setError(exception.message);}finally{setBusy(false);}
-  };
-  return h(O.Fragment,null,h('div',{className:'mx-admin-login'},
-    h('div',{className:'mx-login-intro'},h('span',{className:'mx-login-lock'},h(Wi,{size:30})),h('div',{className:'eyebrow'},'ACCÈS RÉSERVÉ'),h('h2',null,'Espace administrateur'),h('p',null,'Connectez-vous pour ajouter et publier les contenus de la médiathèque.'),h('ul',{className:'mx-login-features'},h('li',null,h(zl,{size:16}),'Un accès nominatif pour chaque administrateur'),h('li',null,h(zl,{size:16}),'Des supports regroupés dans un même espace'),h('li',null,h(zl,{size:16}),'Une publication après votre validation')),h('p',{className:'mx-login-note'},'Service de communication · Médiathèque')),
-    !auth.configured&&!auth.canSetup?h('div',{className:'mx-login-panel'},h('h3',null,'Activer le compte administrateur'),h('p',null,'Le propriétaire doit d’abord définir l’identifiant et le mot de passe de gestion.'),h('a',{className:'button primary',href:'/signin-with-chatgpt?return_to=%2F%3Fview%3Dmanage',target:'_top'},'Accéder avec le compte propriétaire',h(wl,{size:17})))
-    :h('form',{className:'mx-login-panel',onSubmit:submit},h('h3',null,create?'Créer le compte administrateur':recover?'Réinitialiser l’accès':'Connexion'),
-      h('label',{className:'field'},'Identifiant',h('input',{name:'username',autoComplete:'username',autoCapitalize:'none',spellCheck:false,required:true,maxLength:60,minLength:3,value:username,onChange:event=>setUsername(event.target.value)})),
-      h('label',{className:'field'},newPassword?'Nouveau mot de passe':'Mot de passe',h('input',{name:'password',type:'password',autoComplete:newPassword?'new-password':'current-password',required:true,minLength:newPassword?15:undefined,maxLength:128,value:password,onChange:event=>setPassword(event.target.value)}),newPassword&&h('small',null,'Choisissez une phrase de passe de 15 caractères minimum.')),
-      newPassword&&h('label',{className:'field'},'Confirmer le mot de passe',h('input',{name:'confirmPassword',type:'password',autoComplete:'new-password',required:true,minLength:15,maxLength:128,value:confirmation,onChange:event=>setConfirmation(event.target.value)})),
-      error&&h('p',{className:'gh-error',role:'alert'},error),
-      h('button',{className:'button primary mx-auth-submit',type:'submit',disabled:busy},h(Wi,{size:16}),busy?'Connexion en cours…':create?'Créer le compte et se connecter':recover?'Enregistrer le nouvel accès':'Se connecter'),
-      auth.canRecover&&h('button',{className:'mx-recover',type:'button',disabled:busy,onClick:()=>{setRecover(!recover);setPassword('');setConfirmation('');setError('');}},recover?'Revenir à la connexion':'Réinitialiser mon accès propriétaire'))),auth.canRevealInitialCredentials&&h(MxInitialAccess,{onRefresh:onAuthenticated}));
+  const [accessKey,setAccessKey]=O.useState(''),[busy,setBusy]=O.useState(false),[error,setError]=O.useState('');
+  const submit=async event=>{event.preventDefault();setBusy(true);setError('');try{await Ho('/api/auth/login',{method:'POST',body:JSON.stringify({accessKey})});setAccessKey('');await onAuthenticated();}catch(exception){setError(exception.message);}finally{setBusy(false);}};
+  return h('div',{className:'mx-admin-login'},
+    h('div',{className:'mx-login-intro'},h('span',{className:'mx-login-lock'},h(Wi,{size:30})),h('div',{className:'eyebrow'},'ACCÈS RÉSERVÉ'),h('h2',null,'Espace administrateur'),h('p',null,'Un espace pour préparer vos vidéos, vos albums photo et vos communiqués, puis les publier sur l’accueil.'),h('ul',{className:'mx-login-features'},h('li',null,h(zl,{size:16}),'Un accès réservé aux administrateurs du dépôt'),h('li',null,h(zl,{size:16}),'Des champs adaptés à chaque support'),h('li',null,h(zl,{size:16}),'Un seul bouton pour valider et publier')),h('p',{className:'mx-login-note'},'Médiathèque · Hébergement GitHub')),
+    h('form',{className:'mx-login-panel',onSubmit:submit},h('h3',null,'Connexion avec GitHub'),h('p',{className:'mx-github-login-help'},'Utilisez votre clé personnelle GitHub autorisée à publier dans le dépôt de la médiathèque.'),
+      h('label',{className:'field'},'Clé d’accès GitHub',h('input',{type:'password',name:'github-access-key',autoComplete:'off',autoCapitalize:'none',spellCheck:false,required:true,maxLength:300,value:accessKey,onChange:event=>setAccessKey(event.target.value)}),h('small',null,'La clé reste en mémoire pendant cette session et est effacée à la déconnexion.')),
+      error&&h('p',{className:'gh-error',role:'alert'},error),h('button',{className:'button primary mx-auth-submit',type:'submit',disabled:busy},h(Wi,{size:16}),busy?'Vérification de l’accès…':'Accéder à la gestion'),
+      h('details',{className:'mx-github-access-help'},h('summary',null,'Première connexion : préparer mon accès'),h('p',null,'Votre compte doit disposer du droit d’écriture sur le dépôt ',h('strong',null,MX_SERVICE.repository),'.'),
+        h('p',null,'Propriétaire : créez une clé limitée à ce seul dépôt, avec « Contents / Read and write ».'),h('a',{href:'https://github.com/settings/personal-access-tokens/new?name=Mediatheque&target_name=nachchatmahmoud-png&expires_in=30&contents=write',target:'_blank',rel:'noreferrer'},'Préparer une clé pour le propriétaire',h(Oe,{size:13})),
+        h('p',null,'Collaborateur : GitHub demande actuellement une clé classique pour publier dans le dépôt personnel d’un autre utilisateur. Choisissez uniquement le droit « public_repo » et une date d’expiration.'),h('a',{href:'https://github.com/settings/tokens/new?scopes=public_repo&description=Mediatheque',target:'_blank',rel:'noreferrer'},'Préparer une clé de collaborateur',h(Oe,{size:13})))));
 }
 
 function nf({auth,isAdmin,loading,error,onBack,onLogout,onRefresh,onToast,onPublished,items=[],onPreview}) {
   const h=mxElement;
-  const [workspace,setWorkspace]=O.useState('publish');
   const [type,setType]=O.useState('video');
   const [title,setTitle]=O.useState('');
   const [date,setDate]=O.useState(SL);
@@ -45,6 +27,10 @@ function nf({auth,isAdmin,loading,error,onBack,onLogout,onRefresh,onToast,onPubl
   const [description,setDescription]=O.useState('');
   const [credit,setCredit]=O.useState('');
   const [language,setLanguage]=O.useState('');
+  const [spokenLanguage,setSpokenLanguage]=O.useState('');
+  const [captionsLanguage,setCaptionsLanguage]=O.useState('');
+  const [captionsFile,setCaptionsFile]=O.useState(null);
+  const [captionsValidated,setCaptionsValidated]=O.useState(false);
   const [busy,setBusy]=O.useState(false);
   const [progress,setProgress]=O.useState('');
   const [formError,setFormError]=O.useState('');
@@ -57,6 +43,9 @@ function nf({auth,isAdmin,loading,error,onBack,onLogout,onRefresh,onToast,onPubl
   const requestId=O.useRef('');
   const uploaded=O.useRef(new Map());
   const finalLanguage=language;
+  const isYoutube=type==='video'&&videoMode==='link'&&!!mxYoutubeThumbnail(videoUrl);
+  const captionsSource=type==='video'&&captionsLanguage?(isYoutube?'youtube':'file'):'';
+  const needsFrenchSummary=type==='video'&&language==='fr'&&['ar','mixed'].includes(spokenLanguage);
   const coverFile=files.includes(photoCover)?photoCover:files[0]||null;
   const thumbnail=type==='photo'?coverFile:type==='video'?(customThumbnail||(videoMode==='file'?automaticThumbnail:mxYoutubeThumbnail(videoUrl))):null;
   const thumbnailPending=type==='video'&&videoMode==='file'&&thumbnailBusy&&!customThumbnail;
@@ -68,7 +57,9 @@ function nf({auth,isAdmin,loading,error,onBack,onLogout,onRefresh,onToast,onPubl
     mxVideoThumbnail(files[0],controller.signal).then(file=>{if(!controller.signal.aborted){setAutomaticThumbnail(file);setThumbnailNote('Miniature créée à partir de votre vidéo.');}}).catch(exception=>{if(!controller.signal.aborted)setThumbnailNote(exception.message);}).finally(()=>{if(!controller.signal.aborted)setThumbnailBusy(false);});
     return ()=>controller.abort();
   },[type,videoMode,files[0]]);
-  const setKind=value=>{if(busy)return;setType(value);setFiles([]);setCaptions([]);setPhotoCover(null);setCustomThumbnail(null);setFormError('');requestId.current='';uploaded.current.clear();};
+  O.useEffect(()=>{setCaptionsValidated(false);},[type,videoMode,videoUrl,files[0]]);
+  const setKind=value=>{if(busy)return;setType(value);setFiles([]);setCaptions([]);setSpokenLanguage('');setCaptionsLanguage('');setCaptionsFile(null);setPhotoCover(null);setCustomThumbnail(null);setFormError('');requestId.current='';uploaded.current.clear();};
+  const chooseCaptions=async file=>{if(!file)return;try{await mxReadCaptions(file);setCaptionsFile(file);setCaptionsValidated(false);setFormError('');}catch(exception){setFormError(exception.message);}};
   const chooseThumbnail=file=>{if(!file)return;try{mxValidateFile(file,'photo');setCustomThumbnail(file);setFormError('');}catch(exception){setFormError(exception.message);}};
   const addFiles=list=>{
     const chosen=Array.from(list||[]);if(!chosen.length)return;
@@ -84,7 +75,7 @@ function nf({auth,isAdmin,loading,error,onBack,onLogout,onRefresh,onToast,onPubl
   const upload=async file=>{
     const key=[file.name,file.size,file.lastModified].join(':');
     if(uploaded.current.has(key))return uploaded.current.get(key);
-    const mime=file.type||({jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',mp4:'video/mp4',webm:'video/webm',pdf:'application/pdf'}[file.name.split('.').at(-1).toLowerCase()]);
+    const mime=/\.vtt$/i.test(file.name)?'text/vtt':file.type||({jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',mp4:'video/mp4',webm:'video/webm',pdf:'application/pdf'}[file.name.split('.').at(-1).toLowerCase()]);
     const result=await Ho('/api/uploads?name='+encodeURIComponent(file.name),{method:'POST',headers:{'Content-Type':mime},body:file});
     uploaded.current.set(key,result.url);return result.url;
   };
@@ -97,17 +88,22 @@ function nf({auth,isAdmin,loading,error,onBack,onLogout,onRefresh,onToast,onPubl
       if(type==='video'&&(videoMode==='file'?!files.length:!mxHttps(videoUrl)))throw new Error(videoMode==='file'?'Sélectionnez une vidéo.':'Renseignez une adresse vidéo HTTPS valide.');
       if(type==='video'&&thumbnailPending)throw new Error('La miniature est en cours de création. Patientez quelques instants.');
       if(type==='video'&&!thumbnail)throw new Error('Ajoutez une miniature pour présenter la vidéo dans l’accueil.');
+      if(type==='video'&&!['ar','fr','mixed'].includes(spokenLanguage))throw new Error('Choisissez la langue parlée dans la vidéo.');
+      if(needsFrenchSummary&&!description.trim())throw new Error('Ajoutez un bref résumé en français pour présenter cette vidéo.');
+      if(type==='video'&&captionsLanguage&&(!captionsValidated||(!isYoutube&&!captionsFile)))throw new Error(isYoutube?'Confirmez que les sous-titres ont été vérifiés et publiés sur YouTube.':'Joignez le fichier de sous-titres et confirmez sa validation.');
       if(type==='press'&&!files.length&&!pressText.trim())throw new Error('Sélectionnez un PDF ou saisissez le texte du communiqué.');
       setBusy(true);setProgress('Validation de la publication…');
       const paths=[];
       const activeFiles=type==='video'&&videoMode==='link'?[]:files;
       const extraThumbnail=type==='video'&&thumbnail&&typeof thumbnail!=='string'?thumbnail:null;
-      if(activeFiles.reduce((sum,file)=>sum+file.size,extraThumbnail?.size||0)>100*1048576)throw new Error('La publication, miniature comprise, ne peut pas dépasser 100 Mio.');
-      for(let index=0;index<activeFiles.length;index++){setProgress('Transfert des fichiers : '+(index+1)+' / '+activeFiles.length);paths.push(await upload(activeFiles[index]));}
+      if(activeFiles.reduce((sum,file)=>sum+file.size,(extraThumbnail?.size||0)+(captionsSource==='file'?captionsFile?.size||0:0))>100*1048576)throw new Error('La publication, miniature comprise, ne peut pas dépasser 100 Mio.');
+      for(let index=0;index<activeFiles.length;index++){setProgress('Préparation des fichiers : '+(index+1)+' / '+activeFiles.length);paths.push(await upload(activeFiles[index]));}
       let thumbnailUrl=type==='photo'?paths[files.indexOf(coverFile)]||'':typeof thumbnail==='string'?thumbnail:'';
       if(extraThumbnail){setProgress('Transfert de la miniature…');thumbnailUrl=await upload(extraThumbnail);}
+      let captionsUrl='';
+      if(captionsSource==='file'&&captionsFile){setProgress('Transfert des sous-titres…');captionsUrl=await upload(captionsFile);}
       requestId.current ||= crypto.randomUUID();
-      const result=await Ho('/api/publications',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId:requestId.current,type,title:title.trim(),date,topic,language:finalLanguage,description,credit,status:'published',keywords:[topic],location:'',duration:'',thumbnailUrl,mediaUrl:type==='video'?(videoMode==='link'?videoUrl.trim():paths[0]):'',fileUrl:type==='press'?paths[0]||'':'',captionsUrl:'',photos:type==='photo'?paths.map((url,index)=>({url,caption:captions[index]||''})):[],content:type==='press'?pressText:'',transcript:''})});
+      const result=await Ho('/api/publications',{method:'POST',headers:{'Content-Type':'application/json'},onProgress:setProgress,body:JSON.stringify({requestId:requestId.current,type,title:title.trim(),date,topic,language:finalLanguage,description,credit,status:'published',keywords:[topic],location:'',duration:'',thumbnailUrl,mediaUrl:type==='video'?(videoMode==='link'?videoUrl.trim():paths[0]):'',fileUrl:type==='press'?paths[0]||'':'',captionsUrl,spokenLanguage:type==='video'?spokenLanguage:'',captionsLanguage:type==='video'?captionsLanguage:'',captionsSource,captionsValidated:!!captionsSource&&captionsValidated,photos:type==='photo'?paths.map((url,index)=>({url,caption:captions[index]||''})):[],content:type==='press'?pressText:'',transcript:''})});
       if(!result.published)throw new Error('La publication n’a pas été confirmée.');
       setProgress('Publication effectuée.');onToast('La publication est en ligne et visible dans l’accueil.');
       await onPublished(result.id,finalLanguage);
@@ -119,16 +115,16 @@ function nf({auth,isAdmin,loading,error,onBack,onLogout,onRefresh,onToast,onPubl
   return h('section',{className:'container gh-management mx-simple-management'},
     h('button',{className:'button secondary',onClick:onBack},h(Xi,{size:17}),'Retour à la médiathèque'),
     h(MxManagementHero,{auth,items,onLogout,busy,onToast}),
-    loading?h('p',{role:'status'},'Chargement de l’espace de gestion…'):error?h('div',{className:'gh-error',role:'alert'},error,h('button',{className:'button secondary',onClick:onRefresh},'Réessayer')):auth.authenticated&&auth.requiresPasswordChange?h(MxPasswordChange,{auth,onSaved:onRefresh}):!auth.authenticated||!isAdmin?h(MxAdminLogin,{auth,onAuthenticated:onRefresh}):h(O.Fragment,null,
-      auth.canRevealInitialCredentials&&auth.role==='owner'&&h(MxInitialAccess,{onRefresh}),
-      h('nav',{className:'mx-workspace-nav','aria-label':'Administration'},h('button',{type:'button',disabled:busy,className:workspace==='publish'?'active':'','aria-current':workspace==='publish'?'page':undefined,onClick:()=>setWorkspace('publish')},h(Ta,{size:17}),'Publications'),auth.role==='owner'&&h('button',{type:'button',disabled:busy,className:workspace==='accounts'?'active':'',onClick:()=>setWorkspace('accounts')},h(Wi,{size:17}),'Comptes administrateurs'),h('button',{type:'button',disabled:busy,className:workspace==='password'?'active':'',onClick:()=>setWorkspace('password')},'Mon mot de passe')),
-      workspace==='accounts'&&auth.role==='owner'?h(MxAccountsManager,{}):workspace==='password'?h(MxPasswordChange,{auth,onSaved:async()=>{await onRefresh();setWorkspace('publish');onToast('Votre mot de passe a été mis à jour.');},onCancel:()=>setWorkspace('publish')}):h(O.Fragment,null,
+    loading?h('p',{role:'status'},'Chargement de l’espace de gestion…'):error?h('div',{className:'gh-error',role:'alert'},error,h('button',{className:'button secondary',onClick:onRefresh},'Réessayer')):!auth.authenticated||!isAdmin?h(MxAdminLogin,{auth,onAuthenticated:onRefresh}):h(O.Fragment,null,
+      h('nav',{className:'mx-workspace-nav','aria-label':'Administration'},h('span',{className:'active'},h(Ta,{size:17}),'Publications'),h('a',{href:'https://github.com/'+MX_SERVICE.repository+'/actions',target:'_blank',rel:'noreferrer'},'Suivi de la mise en ligne',h(Oe,{size:14})),auth.canManageAccess&&h('a',{href:'https://github.com/'+MX_SERVICE.repository+'/settings/access',target:'_blank',rel:'noreferrer'},'Gérer les accès',h(Oe,{size:14}))),
       h('div',{className:'transfer-shortcuts gh-type-choices',role:'group','aria-label':'Type de support'},...yL.map(({type:kind,Icon,label})=>h('button',{key:kind,type:'button',disabled:busy,className:'transfer-shortcut gh-type-card '+kind+(type===kind?' selected':''),'aria-pressed':type===kind,onClick:()=>setKind(kind)},h('span',{className:'transfer-shortcut-icon'},h(Icon,{size:26})),h('strong',null,label),type===kind&&h(zl,{size:20})))),
       h('div',{className:'mx-publication-workspace'},h('form',{className:'gh-form mx-simple-form',onSubmit:publish},
         h('fieldset',{disabled:busy},h('legend',null,'Nouvelle publication'),
           h('div',{className:'gh-fields'},input('Titre *',title,setTitle,{required:true,maxLength:180,placeholder:'Titre de la vidéo, de l’album ou du communiqué',dir:'auto'}),input('Date *',date,setDate,{type:'date',required:true}),
-            h('label',{className:'field'},'Langue de publication *',h('select',{value:language,required:true,onChange:event=>setLanguage(event.target.value)},h('option',{value:'',disabled:true},'Choisir la langue…'),h('option',{value:'fr'},'Français'),h('option',{value:'ar'},'العربية'))),
+            h('label',{className:'field'},'Page de publication *',h('select',{value:language,required:true,onChange:event=>setLanguage(event.target.value)},h('option',{value:'',disabled:true},'Choisir la langue…'),h('option',{value:'fr'},'Français'),h('option',{value:'ar'},'العربية'))),
             h('label',{className:'field gh-wide'},'Rubrique *',h('select',{required:true,value:topic,onChange:event=>setTopic(event.target.value)},...el.map(value=>h('option',{key:value,value},value))))),
+          language&&h('p',{className:'mx-page-language-help'},'Rédigez le titre'+(type==='video'?' et le résumé':'')+' '+(language==='fr'?'en français pour la page française.':'en arabe pour la page arabe.')),
+          type==='video'&&h(O.Fragment,null,h(MxVideoLanguageFields,{spokenLanguage,onSpokenLanguage:setSpokenLanguage,captionsLanguage,onCaptionsLanguage:value=>{setCaptionsLanguage(value);setCaptionsValidated(false);},captionsFile,onCaptionsFile:chooseCaptions,validated:captionsValidated,onValidated:setCaptionsValidated,onRemove:()=>{setCaptionsFile(null);setCaptionsValidated(false);},isYoutube}),h('label',{className:'field mx-video-summary'},(language==='ar'?'Résumé en arabe':'Résumé en français')+(needsFrenchSummary?' *':' (facultatif)'),h('textarea',{rows:3,maxLength:1200,value:description,required:needsFrenchSummary,onChange:event=>setDescription(event.target.value),dir:language==='ar'?'rtl':'auto',placeholder:language==='ar'?'ملخص موجز لمضمون الفيديو':'Présentez brièvement le sujet de la vidéo.'}))),
           type==='video'&&h('div',{className:'mx-video-mode',role:'group','aria-label':'Source de la vidéo'},h('button',{type:'button','aria-pressed':videoMode==='file',onClick:()=>setVideoMode('file')},'Importer un fichier'),h('button',{type:'button','aria-pressed':videoMode==='link',onClick:()=>setVideoMode('link')},'Utiliser un lien vidéo')),
           type==='video'&&videoMode==='link'?input('Adresse HTTPS de la vidéo *',videoUrl,setVideoUrl,{type:'url',required:true,maxLength:2000,placeholder:'https://…'}):h('div',{className:'mx-support-upload'},
             h('label',{className:'gh-file-label'},h(type==='photo'?pa:type==='video'?Ta:ma,{size:22}),attachmentLabel,h('input',{type:'file',accept:type==='photo'?'image/jpeg,image/png,image/webp':type==='video'?'video/mp4,video/webm':'application/pdf',multiple:type==='photo',onChange:event=>{addFiles(event.target.files);event.target.value='';}})),
@@ -137,11 +133,11 @@ function nf({auth,isAdmin,loading,error,onBack,onLogout,onRefresh,onToast,onPubl
           files.length>0&&!(type==='video'&&videoMode==='link')&&h('div',{className:'mx-selected-files'},type==='photo'?h('div',{className:'mx-photo-grid'},...files.map((file,index)=>h(MxPhotoPreview,{key:file.name+'-'+file.size+'-'+file.lastModified,file,caption:captions[index]||'',index,total:files.length,cover:file===coverFile,onCover:()=>setPhotoCover(file),onCaption:value=>setCaptions(captions.map((note,position)=>position===index?value:note)),onRemove:()=>{setFiles(files.filter((_,position)=>position!==index));setCaptions(captions.filter((_,position)=>position!==index));},onMove:destination=>move(index,destination)}))):h('div',null,h('strong',null,files[0].name),h('small',null,mxSize(files[0].size)),h('button',{type:'button',className:'mx-remove',onClick:()=>setFiles([])},'Retirer'))),
           type==='video'&&h(MxThumbnailField,{source:thumbnail,pending:thumbnailPending,custom:!!customThumbnail,note:videoMode==='link'&&mxYoutubeThumbnail(videoUrl)?'Miniature récupérée depuis le lien YouTube.':thumbnailNote,onChange:chooseThumbnail,onReset:()=>setCustomThumbnail(null)}),
           type==='press'&&h('label',{className:'field mx-press-text'},'Texte du communiqué'+(!files.length?' *':' (facultatif)'),h('textarea',{rows:5,maxLength:40000,value:pressText,required:!files.length,onChange:event=>setPressText(event.target.value),dir:'auto',placeholder:'Saisissez le texte si vous ne joignez pas de PDF.'}))),
-        h('details',{className:'mx-optional-fields'},h('summary',null,'Informations complémentaires',h('small',null,'Facultatif')),h('div',{className:'gh-fields'},h('label',{className:'field gh-wide'},'Courte description',h('textarea',{rows:3,maxLength:1200,value:description,disabled:busy,onChange:event=>setDescription(event.target.value)})),input('Crédits / auteur',credit,setCredit,{maxLength:200,disabled:busy}))),
+        h('details',{className:'mx-optional-fields'},h('summary',null,'Informations complémentaires',h('small',null,'Facultatif')),h('div',{className:'gh-fields'},type!=='video'&&h('label',{className:'field gh-wide'},'Courte description',h('textarea',{rows:3,maxLength:1200,value:description,disabled:busy,onChange:event=>setDescription(event.target.value)})),input('Crédits / auteur',credit,setCredit,{maxLength:200,disabled:busy}))),
         formError&&h('p',{className:'gh-error',role:'alert'},formError),
-        h('div',{className:'mx-publish-footer'},h('button',{className:'button secondary',type:'button',disabled:busy,onClick:()=>setPreview(true)},h(au,{size:17}),'Aperçu'),h('button',{className:'button primary mx-publish-button',type:'submit',disabled:busy||thumbnailPending},h(zl,{size:20}),busy?'Publication en cours…':'Valider et publier')),
+        h('div',{className:'mx-publish-footer'},h('button',{className:'button secondary',type:'button',disabled:busy,onClick:()=>setPreview(true)},h(MxPreviewIcon,{size:17}),'Aperçu'),h('button',{className:'button primary mx-publish-button',type:'submit',disabled:busy||thumbnailPending},h(zl,{size:20}),busy?'Publication en cours…':'Valider et publier')),
         busy&&h('p',{className:'mx-publishing-status',role:'status','aria-live':'polite'},progress)),
       h('aside',{className:'mx-publication-guide'},h('div',{className:'eyebrow'},'VOTRE PUBLICATION'),(type==='video'||type==='photo')&&h('div',{className:'mx-guide-cover'},h(MxThumbnailImage,{source:thumbnailPreviewUrl,title}),h('small',null,'Miniature dans l’accueil')),h('span',{className:'mx-guide-format'},h(Oo,{type,size:22}),nu[type]),h('h2',{dir:'auto'},title.trim()||'Un nouveau contenu à partager'),h('dl',null,h('div',null,h('dt',null,'Date'),h('dd',null,date?Ya(date):'À renseigner')),h('div',null,h('dt',null,'Rubrique'),h('dd',null,topic)),h('div',null,h('dt',null,'Support'),h('dd',null,type==='video'&&videoMode==='link'?'Lien vidéo HTTPS':files.length?mxPlural(files.length,'fichier'):type==='press'&&pressText?'Texte du communiqué':'À sélectionner'))),h('div',{className:'mx-guide-note'},h(Wi,{size:17}),h('p',null,'Vérifiez votre contenu dans l’aperçu. Le bouton « Valider et publier » confirme sa mise en ligne.')))),
-      preview&&h(MxPublicationPreview,{title,date,topic,description,language:finalLanguage,thumbnail,photos:type==='photo'?files:[],captions,video:type==='video'&&videoMode==='file'?files[0]||null:null,videoUrl:type==='video'&&videoMode==='link'?videoUrl:'',press:type==='press'?files[0]||null:null,pressText:type==='press'?pressText:'',onClose:()=>setPreview(false)}),
-      h(MxPublishedList,{items,onOpen:onPreview}))));
+      preview&&h(MxPublicationPreview,{title,date,topic,description,language:finalLanguage,thumbnail,videoLanguages:{type,spokenLanguage,captionsLanguage,captionsSource,captionsValidated,captionsUrl:captionsSource==='file'&&captionsFile?'selected':'',mediaUrl:isYoutube?videoUrl:''},captionsFile:captionsSource==='file'?captionsFile:null,photos:type==='photo'?files:[],captions,video:type==='video'&&videoMode==='file'?files[0]||null:null,videoUrl:type==='video'&&videoMode==='link'?videoUrl:'',press:type==='press'?files[0]||null:null,pressText:type==='press'?pressText:'',onClose:()=>setPreview(false)}),
+      h(MxPublishedList,{items,onOpen:onPreview})));
 }

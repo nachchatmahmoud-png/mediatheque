@@ -6,7 +6,7 @@ function mxPageUrl(language,origin){
  const root=origin?new URL('/',origin):new URL('.',document.baseURI);
  return new URL((language==='ar'?'ar':'fr')+'/',root);
 }
-function mxManagementUrl(){const url=mxPageUrl('fr',MX_SERVICE.origin);url.searchParams.set('view','manage');return url;}
+function mxManagementUrl(){const url=mxPageUrl('fr');url.searchParams.set('view','manage');return url;}
 function mxDetectedLanguage(value){return /[\u0600-\u06ff]/u.test(value||'')?'ar':/[a-zA-ZÀ-ÿ]/u.test(value||'')?'fr':null;}
 function mxLocaleCatalogue(catalogue){
  const items=(catalogue.items||[]).filter(item=>item.language===MX_LOCALE).map(item=>({...item,topic:mxT(item.topic),keywords:(item.keywords||[]).map(mxT)}));

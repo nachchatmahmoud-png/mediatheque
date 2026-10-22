@@ -6,7 +6,7 @@ function af() {
   ((0, No.useEffect)(() => {
     let i = new AbortController(),
       u = () =>
-        fetch(MX_ON_SERVICE?new URL('latest-video.json',MX_SERVICE.publicHome).href:je("/latest-video.json"), {
+        fetch(je("/latest-video.json"), {
           cache: "no-cache",
           signal: i.signal,
         })
@@ -26,8 +26,8 @@ function af() {
   }, []),
     (0, No.useEffect)(() => { l(!1); setImageFailed(false); }, [e.videoId]));
   let o = "https://www.youtube.com/watch?v=" + e.videoId;
-  const displayTitle=mxDetectedLanguage(e.title)===MX_LOCALE?e.title:mxT('Dernière vidéo du ministère');
-  const localThumbnail=typeof e.thumbnailUrl==='string'&&e.thumbnailUrl==='/images/youtube-'+e.videoId+'.jpg'?(MX_ON_SERVICE?new URL('.'+e.thumbnailUrl,MX_SERVICE.publicHome).href:je(e.thumbnailUrl)):'';
+  const presentation=mxLatestPresentation(e),displayTitle=presentation.title;
+  const localThumbnail=typeof e.thumbnailUrl==='string'&&e.thumbnailUrl==='/images/youtube-'+e.videoId+'.jpg'?je(e.thumbnailUrl):'';
   return (0, ge.jsxs)("div", {
     className: "hero-visual ministry-video",
     "aria-label":
@@ -57,9 +57,7 @@ function af() {
         children: t
           ? (0, ge.jsx)("iframe", {
                 src:
-                "https://www.youtube-nocookie.com/embed/" +
-                e.videoId +
-                "?autoplay=1&rel=0&playsinline=1",
+                mxVideoEmbedUrl(presentation.item,"https://www.youtube-nocookie.com/embed/"+e.videoId)+"&autoplay=1&rel=0&playsinline=1",
               title: mxT("Vidéo du Ministère : ") + displayTitle,
               allow:
                 "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",
@@ -99,6 +97,8 @@ function af() {
         className: "ministry-video-meta",
         children: [
           (0, ge.jsx)("h2", { dir: "auto", children: displayTitle }),
+          mxElement(MxVideoLanguage,{item:presentation.item,compact:true}),
+          presentation.description&&(0,ge.jsx)('p',{className:'mx-latest-summary',children:presentation.description}),
           (0, ge.jsxs)("div", {
             children: [
               (0, ge.jsxs)("time", {

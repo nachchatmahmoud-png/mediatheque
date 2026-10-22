@@ -1,11 +1,11 @@
-// Sessions and mutations remain on the administration service's origin.
-// Public GitHub Pages visitors only request the public catalogue.
+// Public reads stay on GitHub Pages; authenticated writes go to GitHub's API.
 async function cL() {
   if(!er){
-    const live=MX_ON_SERVICE||MX_SERVICE.publicFeedEnabled;
-    const url=live?new URL('/api/library',MX_API_ORIGIN):new URL('./catalogue.json',document.baseURI);
-    if(live)url.searchParams.set('lang',MX_LOCALE);
-    er=fetch(url,{cache:'no-store',credentials:MX_ON_SERVICE?'include':'omit'}).then(async response=>{if(!response.ok)throw new Error('Le catalogue est momentanément indisponible.');return mxLocaleCatalogue(await response.json());}).catch(error=>{er=undefined;throw error;});
+    const url=new URL('./catalogue.json',document.baseURI);url.searchParams.set('v',String(Date.now()));
+    er=fetch(url,{cache:'no-store',credentials:'omit'}).then(async response=>{
+      if(!response.ok)throw new Error('Le catalogue est momentanément indisponible.');
+      return {...mxLocaleCatalogue(await response.json()),isAdmin:MxGitHub.current().authenticated};
+    }).catch(error=>{er=undefined;throw error;});
   }
   return er;
 }
@@ -13,19 +13,18 @@ async function cL() {
 async function Ho(path,options={}) {
   const method=options.method||'GET';
   if(path.startsWith('/api/search?'))return pL(await cL(),new URL(path,'https://local.invalid').searchParams.get('q')||'');
-  if(method==='GET'&&path.startsWith('/api/library')&&!new URL(path,'https://local.invalid').searchParams.has('manage'))return cL();
-  if(!MX_ON_SERVICE){
-    if(path==='/api/auth/session')return {...$n,configured:true};
-    if(method!=='GET')throw new Error('Connectez-vous dans l’espace administrateur pour publier.');
-    if(path.startsWith('/api/library'))return cL();
-    throw new Error('Opération non disponible depuis l’accueil public.');
+  if(path==='/api/auth/session')return MxGitHub.current();
+  if(path==='/api/auth/login'&&method==='POST'){const result=await MxGitHub.login(JSON.parse(options.body||'{}').accessKey);er=undefined;return result;}
+  if(path==='/api/auth/logout'&&method==='POST'){er=undefined;return MxGitHub.logout();}
+  if(method==='GET'&&path.startsWith('/api/library')){
+    if(new URL(path,'https://local.invalid').searchParams.has('manage')){
+      MxGitHub.requireAccess();const url=new URL('./catalogue.json',document.baseURI);url.searchParams.set('v',String(Date.now()));const response=await fetch(url,{cache:'no-store',credentials:'omit'});
+      if(!response.ok)throw new Error('Le catalogue est momentanément indisponible.');return {...await response.json(),isAdmin:true};
+    }
+    return cL();
   }
-  const response=await fetch(new URL(path,MX_API_ORIGIN),{...options,credentials:'include',cache:'no-store'});
-  const result=await response.json().catch(()=>({error:'Le service est momentanément indisponible.'}));
-  if(!response.ok){
-    if(response.status===403&&method!=='GET'&&!path.startsWith('/api/auth/'))window.dispatchEvent(new Event('management-session-expired'));
-    throw new Error(typeof result.error==='string'?mxT(result.error):'L’opération n’a pas abouti.');
-  }
-  if(method!=='GET')er=undefined;
-  return result;
+  MxGitHub.requireAccess();
+  if(path.startsWith('/api/uploads?')&&method==='POST')return MxGitHub.stage(options.body);
+  if(path==='/api/publications'&&method==='POST')return MxGitHub.publish(JSON.parse(options.body||'{}'),options.onProgress);
+  throw new Error('Cette opération se gère depuis les autorisations du dépôt GitHub.');
 }

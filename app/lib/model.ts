@@ -3,6 +3,7 @@ export type MediaType = 'video' | 'photo' | 'press';
 export type MediaItem = {
  id:string;type:MediaType;title:string;description:string;date:string;topic:string;language:string;status:'draft'|'published';
  content:string;location:string;credit:string;duration:string;thumbnailUrl:string;mediaUrl:string;fileUrl:string;captionsUrl:string;
+ spokenLanguage?:string;captionsLanguage?:string;captionsSource?:string;captionsValidated?:boolean;
  photos:{url:string;caption:string}[];keywords:string[];transcript:string;eventId:string|null;eventTitle?:string;eventDate?:string;createdAt?:string;updatedAt?:string;demo?:boolean;
 };
 export type MediaEvent={id:string;title:string;description:string;date:string;topic:string;location:string;keywords:string[]};
@@ -36,14 +37,28 @@ export function youtubeEmbed(value:string):string|null{
  try{const u=new URL(value);let id='';if(u.hostname==='youtu.be')id=u.pathname.slice(1);else if(['youtube.com','www.youtube.com','m.youtube.com','www.youtube-nocookie.com'].includes(u.hostname))id=u.searchParams.get('v')||u.pathname.split('/').filter(Boolean).at(-1)||'';if(/^[\w-]{11}$/.test(id))return 'https://www.youtube-nocookie.com/embed/'+id;}catch{}return null;
 }
 function bounded(v:unknown,name:string,max:number,required=false){const s=typeof v==='string'?v.trim():'';if((required&&!s)||s.length>max)throw new Error(name+' : '+(s.length>max?'longueur maximale de '+max+' caractères.':'champ obligatoire.'));return s;}
-export function validateMedia(input:unknown):MediaItem{
+export function validateVideoLanguages(v:Record<string,unknown>){
+ const spokenLanguage=bounded(v.spokenLanguage,'Langue parlée',10),captionsLanguage=bounded(v.captionsLanguage,'Langue des sous-titres',10),captionsSource=bounded(v.captionsSource,'Source des sous-titres',10),captionsValidated=v.captionsValidated===true;
+ if(spokenLanguage&&!['ar','fr','mixed'].includes(spokenLanguage))throw new Error('La langue parlée est non valide.');
+ if(captionsLanguage&&!['ar','fr'].includes(captionsLanguage))throw new Error('La langue des sous-titres est non valide.');
+ if(captionsSource&&!['file','youtube'].includes(captionsSource))throw new Error('La source des sous-titres est non valide.');
+ if(captionsSource||captionsLanguage||captionsValidated){
+  if(v.type!=='video'||!captionsLanguage||!captionsSource||!captionsValidated)throw new Error('Vérifiez les sous-titres et confirmez leur validation avant publication.');
+  const youtube=youtubeEmbed(String(v.mediaUrl||''));
+  if(captionsSource==='youtube'&&(!youtube||v.captionsUrl))throw new Error('Les sous-titres YouTube doivent être publiés sur la vidéo YouTube correspondante.');
+  if(captionsSource==='file'&&(!v.captionsUrl||youtube))throw new Error('Pour une vidéo YouTube, ajoutez les sous-titres dans YouTube Studio.');
+ }
+ return {spokenLanguage:v.type==='video'?spokenLanguage:'',captionsLanguage,captionsSource,captionsValidated};
+}
+export function validateMedia(input:unknown,{requireDescription=true}:{requireDescription?:boolean}={}):MediaItem{
  if(!input||typeof input!=='object')throw new Error('Publication non valide.');const v=input as Record<string,unknown>;
  if(!['video','photo','press'].includes(String(v.type)))throw new Error('Type de publication non valide.');
  if(!['draft','published'].includes(String(v.status)))throw new Error('État de publication non valide.');
  const date=bounded(v.date,'Date',10,true);if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(Date.parse(date))||new Date(date).toISOString().slice(0,10)!==date)throw new Error('La date de publication est non valide.');
  const photos=Array.isArray(v.photos)?v.photos.map(p=>({url:safeMediaUrl(p?.url),caption:bounded(p?.caption,'Légende',300)})).filter(p=>p.url):[];
  if(photos.length>30)throw new Error('Un album peut contenir au maximum 30 photographies.');
- const item:MediaItem={id:'',type:v.type as MediaType,title:bounded(v.title,'Titre',180,true),description:bounded(v.description,'Description',1200,true),date,topic:bounded(v.topic,'Classification',100,true),language:bounded(v.language,'Langue',10,true),status:v.status as MediaItem['status'],content:bounded(v.content,'Texte du communiqué',40000),location:bounded(v.location,'Lieu',150),credit:bounded(v.credit,'Crédit',200),duration:bounded(v.duration,'Durée',20),thumbnailUrl:safeMediaUrl(v.thumbnailUrl),mediaUrl:safeMediaUrl(v.mediaUrl),fileUrl:safeMediaUrl(v.fileUrl),captionsUrl:safeMediaUrl(v.captionsUrl),photos,keywords:keywords(v.keywords),transcript:bounded(v.transcript,'Transcription',60000),eventId:bounded(v.eventId,'Événement',80)||null};
+ const item:MediaItem={id:'',type:v.type as MediaType,title:bounded(v.title,'Titre',180,true),description:bounded(v.description,'Description',1200,requireDescription),date,topic:bounded(v.topic,'Classification',100,true),language:bounded(v.language,'Langue',10,true),status:v.status as MediaItem['status'],content:bounded(v.content,'Texte du communiqué',40000),location:bounded(v.location,'Lieu',150),credit:bounded(v.credit,'Crédit',200),duration:bounded(v.duration,'Durée',20),thumbnailUrl:safeMediaUrl(v.thumbnailUrl),mediaUrl:safeMediaUrl(v.mediaUrl),fileUrl:safeMediaUrl(v.fileUrl),captionsUrl:safeMediaUrl(v.captionsUrl),photos,keywords:keywords(v.keywords),transcript:bounded(v.transcript,'Transcription',60000),eventId:bounded(v.eventId,'Événement',80)||null};
+ Object.assign(item,validateVideoLanguages({...v,mediaUrl:item.mediaUrl,captionsUrl:item.captionsUrl}));
  if(!topics.includes(item.topic))throw new Error('Choisissez une rubrique de la classification.');
  if(item.status==='published'&&!item.keywords.length)throw new Error('Renseignez au moins un mot-clé avant de publier ce contenu.');
  if(item.type==='video'&&!item.mediaUrl)throw new Error('Ajoutez un fichier vidéo ou son adresse HTTPS.');

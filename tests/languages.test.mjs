@@ -31,6 +31,10 @@ test('language navigation keeps the hosting base and never reuses the other page
  assert.equal(String(client.mxPageUrl('ar')),'https://example.test/mediatheque/ar/');
  assert.equal(String(client.mxPageUrl('fr','https://admin.example.test')),'https://admin.example.test/fr/');
 });
+test('management uses the same GitHub Pages origin and base path',()=>{
+ const client=vm.runInNewContext(source+';({mxManagementUrl})',{URL,document:{documentElement:{lang:'ar'},baseURI:'https://nachchatmahmoud-png.github.io/mediatheque/'}});
+ assert.equal(String(client.mxManagementUrl()),'https://nachchatmahmoud-png.github.io/mediatheque/fr/?view=manage');
+});
 test('French and Arabic pages use separate bundles with valid syntax and matching document directions',async()=>{
  const output=await mkdtemp(join(tmpdir(),'mediatheque-languages-'));
  try{

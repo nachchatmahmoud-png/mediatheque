@@ -25,6 +25,14 @@ export async function buildInterface(root, output) {
   if(latest.channelId!=='UCIKc_HXIZnAmfO9ulxf80EQ'||latest.channelUrl!=='https://www.youtube.com/@Matnuhpv'||!/^[-\w]{11}$/.test(latest.videoId)||typeof latest.title!=='string'||!latest.title.trim()||Number.isNaN(Date.parse(latest.publishedAt)))throw new Error('La dernière vidéo officielle est non valide.');
   bundle=bundle.replace(/var ar=\{[\s\S]*?\};var ge=/,()=> 'var ar='+JSON.stringify(latest)+';var ge=');
   bundle=bundle.replaceAll('e.language.toUpperCase()','(e.language==="ar"?"العربية":"Français")');
+  const readerStart=bundle.indexOf('e.type==="video"&&(0,A.jsxs)("div",{className:"video-frame"');
+  const readerEnd=bundle.indexOf(',e.type==="photo"&&(0,A.jsxs)("div",{className:"album-view"',readerStart);
+  if(readerStart<0||readerEnd<readerStart)throw new Error('Limite du lecteur vidéo introuvable.');
+  bundle=bundle.slice(0,readerStart)+'e.type==="video"&&mxElement(MxVideoReader,{item:e})'+bundle.slice(readerEnd);
+  const cardMarker=',(0,U.jsxs)("div",{className:"card-bottom"';
+  if(!bundle.includes(cardMarker))throw new Error('Carte de publication introuvable.');
+  bundle=bundle.replace(cardMarker,',mxElement(MxVideoLanguage,{item:e,compact:true})'+cardMarker);
+  bundle=bundle.replace('className:"language-tag",children:','className:"language-tag",title:mxT("Langue de la fiche"),children:');
   const sections = [
     ['latest-video.js', 'function af(){', 'var F=Y(ze(),1);'],
     ['publisher.js', 'function nf(', 'var d=Y(ze(),1),CL='],
@@ -49,9 +57,11 @@ export async function buildInterface(root, output) {
     if(from<0||until<from)throw new Error('Limite du service introuvable : '+start);
     bundle=bundle.slice(0,from)+replacement+'\n'+bundle.slice(until);
   }
-  const helpers = await readFile(join(root, 'interface/i18n.js'), 'utf8')+'\n'+await readFile(join(root, 'interface/components.js'), 'utf8')+'\n'+await readFile(join(root,'interface/accounts.js'),'utf8');
+  const helpers = await readFile(join(root, 'interface/i18n.js'), 'utf8')+'\n'+await readFile(join(root, 'interface/components.js'), 'utf8')+'\n'+await readFile(join(root,'interface/video-languages.js'),'utf8')+'\n'+await readFile(join(root,'interface/github-service.js'),'utf8')+'\n'+await readFile(join(root,'interface/accounts.js'),'utf8');
   const config=JSON.parse(await readFile(join(root,'interface/service-config.json'),'utf8'));
-  const configuration='const MX_SERVICE='+JSON.stringify(config)+'; const MX_ON_SERVICE=document.querySelector(\'meta[name="mediatheque-service"]\')?.content==="enabled"||window.location.origin===new URL(MX_SERVICE.origin).origin; const MX_API_ORIGIN=MX_ON_SERVICE?window.location.origin:MX_SERVICE.origin;\n';
+  const localizations=JSON.parse(await readFile(join(root,'site/video-localizations.json'),'utf8'));
+  if(config.provider!=='github'||config.repository!=='nachchatmahmoud-png/mediatheque'||config.branch!=='main')throw new Error('Vérifiez le dépôt GitHub de publication.');
+  const configuration='const MX_SERVICE='+JSON.stringify(config)+'; const MX_VIDEO_LOCALIZATIONS='+JSON.stringify(localizations)+';\n';
   bundle = bundle.replace('function rf()', configuration+helpers + '\nfunction rf()');
   const messages=JSON.parse(await readFile(join(root,'interface/translations-ar.json'),'utf8'));
   const french=bundle.replace('/*__MX_MESSAGES__*/','const MX_MESSAGES='+JSON.stringify(messages)+';');

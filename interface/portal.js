@@ -50,7 +50,7 @@ function rf() {
   ((0, O.useEffect)(() => {
     let b = new URLSearchParams(window.location.search),
       D = b.get("view") === "manage";
-    if(D&&(!MX_ON_SERVICE||MX_LOCALE==='ar')){window.location.replace(mxManagementUrl());return;}
+    if(D&&MX_LOCALE==='ar'){window.location.replace(mxManagementUrl());return;}
     return (
       z(D),
       ["video", "photo", "press", "event"].includes(b.get("type") || "") &&
@@ -242,7 +242,7 @@ function rf() {
         history.replaceState(null, "", b));
     },
     Mg = () => {
-      if(!MX_ON_SERVICE||MX_LOCALE==='ar'){window.location.assign(mxManagementUrl());return;}
+      if(MX_LOCALE==='ar'){window.location.assign(mxManagementUrl());return;}
       (z(!0), B(!1), Ha(null), i(null));
       let b = new URL(window.location.href);
       ((b.search = "?view=manage"),
@@ -376,7 +376,7 @@ function rf() {
                 onToast: St,
                 onPreview: Ha,
                 onSettings: m,
-                onPublished: async (id,language) => { if(language!==MX_LOCALE){window.location.assign(mxPageUrl(language));return;} er=undefined; await Da(false); ff(); Fe('all',false); window.scrollTo({top:0,behavior:'smooth'}); },
+                onPublished: async (id,language) => { if(language!==MX_LOCALE){window.location.assign(mxPageUrl(language));return;} await Da(false); ff(); Fe('all',false); window.scrollTo({top:0,behavior:'smooth'}); },
               },
               e.authenticated ? "connected" : "disconnected",
             )
