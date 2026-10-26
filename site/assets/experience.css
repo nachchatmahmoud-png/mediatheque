@@ -337,6 +337,13 @@ body { background:#fcfdfb; color:var(--mx-ink); }
 .mx-login-panel .mx-local-scope,.mx-local-management-note { border:1px solid #d7e2d6; border-radius:8px; padding:13px 15px; background:#f2f6ef; color:#3e5d45; font-size:12px; line-height:1.8; }
 .mx-login-panel .mx-auth-success { padding:12px 15px; border-left:3px solid #3f8156; background:#eff8ee; color:#255137; font-size:13px; }
 .mx-auth-switch { white-space:normal; text-align:center; }
+.mx-password-field { display:flex; flex-direction:column; gap:9px; }
+.mx-password-control { position:relative; width:100%; }
+.mx-password-control input { width:100%; padding-inline-end:58px; }
+.mx-login-panel .mx-password-control input { padding-inline-end:58px; }
+.mx-password-toggle { position:absolute; inset-inline-end:6px; top:50%; transform:translateY(-50%); width:44px; height:44px; display:flex; align-items:center; justify-content:center; color:#45674f; border-radius:6px; }
+.mx-password-toggle:hover { background:#e9f0e5; }
+.mx-password-toggle:disabled { cursor:not-allowed; }
 .mx-local-management-note { margin-bottom:24px; }
 .mx-local-management-note p { margin-top:4px; }
 .mx-workspace-nav { display:flex; gap:25px; border-bottom:1px solid #d5dfd2; margin-bottom:25px; overflow-x:auto; }

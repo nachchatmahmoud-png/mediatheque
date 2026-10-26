@@ -1,3 +1,18 @@
+// Passwords remain masked until the user explicitly reveals an individual field.
+function MxPasswordField({id,label,hint,showLabel='Afficher le mot de passe',hideLabel='Masquer le mot de passe',...inputProps}){
+ const h=mxElement;
+ const [visible,setVisible]=O.useState(false);
+ O.useEffect(()=>{if(!inputProps.value||inputProps.disabled)setVisible(false);},[inputProps.value,inputProps.disabled]);
+ const action=visible?hideLabel:showLabel;
+ return h('div',{className:'field mx-password-field'},
+  h('label',{htmlFor:id},label),
+  h('div',{className:'mx-password-control'},
+   h('input',{...inputProps,id,type:visible?'text':'password','aria-describedby':hint?id+'-hint':undefined}),
+   h('button',{className:'mx-password-toggle',type:'button',disabled:inputProps.disabled,'aria-label':action,'aria-controls':id,'aria-pressed':visible,title:action,onClick:()=>setVisible(value=>!value)},
+    h('svg',{width:20,height:20,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.8,strokeLinecap:'round',strokeLinejoin:'round','aria-hidden':true},h('path',{d:'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z'}),h('circle',{cx:12,cy:12,r:3}),visible&&h('path',{d:'m3 3 18 18'})))),
+  hint&&h('small',{id:id+'-hint'},hint));
+}
+
 // The administration service verifies the account and publication rights.
 function MxPasswordChange({onAuthenticated}){
  const h=mxElement;
@@ -10,9 +25,9 @@ function MxPasswordChange({onAuthenticated}){
   catch(exception){setError(exception.message);}finally{setBusy(false);}
  };
  return h('form',{className:'mx-password-card',onSubmit:submit},h('div',{className:'eyebrow'},'PREMIÈRE CONNEXION'),h('h2',null,'Choisir mon mot de passe'),h('p',null,'Remplacez votre mot de passe initial par un mot de passe personnel avant de publier.'),
-  h('label',{className:'field'},'Mot de passe initial',h('input',{type:'password',autoComplete:'current-password',required:true,maxLength:512,disabled:busy,value:currentPassword,onChange:event=>setCurrentPassword(event.target.value)})),
-  h('label',{className:'field'},'Nouveau mot de passe',h('input',{type:'password',autoComplete:'new-password',required:true,minLength:15,maxLength:128,disabled:busy,value:password,onChange:event=>setPassword(event.target.value)}),h('small',null,'15 à 128 caractères. Vous pouvez utiliser une phrase de plusieurs mots.')),
-  h('label',{className:'field'},'Confirmer le nouveau mot de passe',h('input',{type:'password',autoComplete:'new-password',required:true,minLength:15,maxLength:128,disabled:busy,value:confirmPassword,onChange:event=>setConfirmPassword(event.target.value)})),
+  h(MxPasswordField,{id:'mx-current-password',label:'Mot de passe initial',autoComplete:'current-password',required:true,maxLength:512,disabled:busy,value:currentPassword,onChange:event=>setCurrentPassword(event.target.value)}),
+  h(MxPasswordField,{id:'mx-new-password',label:'Nouveau mot de passe',autoComplete:'new-password',required:true,minLength:15,maxLength:128,disabled:busy,value:password,onChange:event=>setPassword(event.target.value),hint:'15 à 128 caractères. Vous pouvez utiliser une phrase de plusieurs mots.'}),
+  h(MxPasswordField,{id:'mx-confirm-new-password',label:'Confirmer le nouveau mot de passe',showLabel:'Afficher la confirmation du mot de passe',hideLabel:'Masquer la confirmation du mot de passe',autoComplete:'new-password',required:true,minLength:15,maxLength:128,disabled:busy,value:confirmPassword,onChange:event=>setConfirmPassword(event.target.value)}),
   error&&h('p',{className:'gh-error',role:'alert'},error),h('button',{className:'button primary',type:'submit',disabled:busy},h(Wi,{size:17}),busy?'Enregistrement…':'Valider mon mot de passe'));
 }
 function MxManagementHero({auth,items,onLogout,busy,onToast}){
