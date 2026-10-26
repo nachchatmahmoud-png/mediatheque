@@ -48,6 +48,29 @@ test('a private owner link preserves existing credentials despite earlier reject
  const other=setup();assert.equal((await other.request('/api/auth/register',{method:'POST',activation:secret,body:{...existing,keepExistingAccess:false,confirmPassword:existing.password}})).status,400);
 });
 
+test('an existing reserved identifier is preserved while the named administrator keeps a separate account',async()=>{
+ for(const username of ['katiri.abdelah','rbina.abdelah','ilham.boudil']){
+  const value=setup(),created=await value.request('/api/auth/register',{method:'POST',activation:secret,body:{username,password:'Ancien2026',keepExistingAccess:true}});
+  assert.equal(created.status,201,JSON.stringify(created.body));assert.equal(created.body.username,username);
+  const owner=await value.request('/api/auth/login',{method:'POST',body:{username,password:'Ancien2026'}});assert.equal(owner.status,200);assert.equal(owner.body.role,'owner');
+  const token=owner.body.sessionToken,accounts=(await value.request('/api/accounts',{token})).body.accounts;
+  assert.equal(accounts.length,4);assert.equal(new Set(accounts.map(account=>account.username)).size,4);
+  assert.equal(accounts.filter(account=>account.active).length,1);
+  const colleague=accounts.find(account=>account.username===username+'.admin');assert.ok(colleague);assert.equal(colleague.active,false);
+  assert.equal((await value.request('/api/accounts/invite',{method:'POST',token,body:{username}})).status,400);
+  const invite=await value.request('/api/accounts/invite',{method:'POST',token,body:{username:colleague.username}});assert.equal(invite.status,201);
+  assert.equal((await value.request('/api/auth/register',{method:'POST',activation:invite.body.activationToken,body:{username:colleague.username,password,confirmPassword:password}})).status,201);
+  const admin=await value.request('/api/auth/login',{method:'POST',body:{username:colleague.username,password}});assert.equal(admin.status,200);assert.equal(admin.body.role,'admin');assert.equal(admin.body.displayName,colleague.displayName);
+  assert.equal((await value.request('/api/accounts',{token:admin.body.sessionToken})).status,403);
+  assert.equal((await value.request('/api/auth/login',{method:'POST',body:{username,password:'Ancien2026'}})).status,200);
+ }
+ const legacy=setup(),salt='b'.repeat(32),passwordHash=pbkdf2Sync(password,Buffer.from(salt,'hex'),600000,32,'sha256').toString('hex');
+ assert.equal((await legacy.request('/api/auth/register',{method:'POST',activation:secret,body:{username:'katiri.abdelah',legacyVerifier:{salt,passwordHash,iterations:600000}}})).status,201);
+ assert.equal((await legacy.request('/api/auth/login',{method:'POST',body:{username:'katiri.abdelah',password}})).status,200);
+ const fresh=setup();assert.equal((await fresh.request('/api/auth/register',{method:'POST',body:{username:'katiri.abdelah',password,confirmPassword:password}})).status,403);
+ assert.equal((await fresh.request('/api/auth/register',{method:'POST',activation:secret,body:{username:'katiri.abdelah',password,confirmPassword:password}})).status,201);
+});
+
 test('shared publications become public immediately, uploads stay private and video range reads work',async()=>{
  const value=setup();await value.register();const {sessionToken}= (await value.login()).body;
  const png=new Uint8Array(await readFile(new URL('../site/images/logo-ministere.png',import.meta.url)));

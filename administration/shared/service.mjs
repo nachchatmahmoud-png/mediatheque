@@ -5,6 +5,7 @@ import {publicationToCatalogue,emptyCatalogue} from '../../github-pages/catalogu
 
 export const portalOrigin='https://nachchatmahmoud-png.github.io';
 const roster=[{username:'katiri.abdelah',displayName:'Katiri Abdelah'},{username:'rbina.abdelah',displayName:'Rbina Abdelah'},{username:'ilham.boudil',displayName:'Ilham Boudil'}];
+const rosterForOwner=username=>roster.map(person=>({...person,username:person.username===username?person.username+'.admin':person.username}));
 const encoder=new TextEncoder(),idle=30*60*1000;
 const hash=value=>digest(encoder.encode(value));
 const same=(a,b)=>typeof a==='string'&&typeof b==='string'&&a.length===b.length&&timingSafeEqual(Buffer.from(a),Buffer.from(b));
@@ -105,7 +106,6 @@ export function createSharedHandler(env){
     const value=await body(request),username=typeof value.username==='string'?value.username.trim().toLowerCase():'';
     const preserved=allowed.owner&&value.keepExistingAccess===true;
     if(!(preserved?/^[\p{L}\p{N}][\p{L}\p{M}\p{N}._@ -]{2,59}$/u:/^[a-z0-9][a-z0-9._@-]{2,59}$/).test(username))throw new ServiceError('Renseignez votre identifiant habituel, de 3 à 60 caractères.');
-    if(allowed.owner&&roster.some(item=>item.username===username))throw new ServiceError('Cet identifiant est réservé à un autre administrateur.');
     if(!allowed.owner&&username!==allowed.username)throw new ServiceError('Utilisez l’identifiant indiqué dans votre invitation.');
     let salt,verifier;
     if(allowed.owner&&value.legacyVerifier){
@@ -124,13 +124,13 @@ export function createSharedHandler(env){
    }
    if(path==='/api/accounts'&&request.method==='GET'){
     const owner=await store.authenticate(request);if(owner.role!=='owner')throw new ServiceError('Cette opération est réservée au propriétaire.',403);
-    const existing=(await store.db.prepare('SELECT username,display_name,enabled FROM administrators').all()).results;
-    return json({accounts:[{username:owner.username,displayName:owner.displayName,active:true,owner:true},...roster.map(person=>({...person,active:existing.some(item=>item.username===person.username&&item.enabled)}))]},200,origin);
+    const existing=(await store.db.prepare('SELECT username,display_name,role,enabled FROM administrators').all()).results;
+    return json({accounts:[{username:owner.username,displayName:owner.displayName,active:true,owner:true},...rosterForOwner(owner.username).map(person=>({...person,active:existing.some(item=>item.username===person.username&&item.role==='admin'&&item.enabled)}))]},200,origin);
    }
    if(path==='/api/accounts/invite'&&request.method==='POST'){
     const owner=await store.authenticate(request);if(owner.role!=='owner')throw new ServiceError('Cette opération est réservée au propriétaire.',403);
     if(!await store.allow(await hash('invite:'+owner.id),20))throw new ServiceError('Trop de demandes. Patientez avant de réessayer.',429);
-    const value=await body(request),person=roster.find(item=>item.username===value.username);if(!person)throw new ServiceError('Administrateur non prévu.');
+    const value=await body(request),person=rosterForOwner(owner.username).find(item=>item.username===value.username);if(!person)throw new ServiceError('Administrateur non prévu.');
     if(await store.account(person.username))throw new ServiceError('Ce compte est déjà activé.');
     const token=randomBytes(32).toString('hex'),expiresAt=Date.now()+7*24*60*60*1000;
     await store.db.prepare('INSERT INTO invitations(username,display_name,token_hash,expires_at) VALUES(?,?,?,?) ON CONFLICT(username) DO UPDATE SET token_hash=excluded.token_hash,expires_at=excluded.expires_at').bind(person.username,person.displayName,await hash(token),expiresAt).run();
