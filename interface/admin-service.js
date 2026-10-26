@@ -18,12 +18,12 @@ const MxAdministration=(()=>{
     window.addEventListener?.('hashchange',()=>{if(receiveActivation()){clear();setupInfo={};window.dispatchEvent(new Event('management-activation-received'));}});
   }
   const pending=new Map();
-  const anonymous=()=>({authenticated:false,configured:!!apiBase,canSetup:setupInfo.canSetup===true,setupRequired:setupInfo.setupRequired===true,canRecover:false,username:'',sharedMode,registrationUsername:setupInfo.registrationUsername||''});
+  const anonymous=()=>({authenticated:false,canPublish:false,openPublishing:false,configured:!!apiBase,canSetup:setupInfo.canSetup===true,setupRequired:setupInfo.setupRequired===true,canRecover:false,username:'',sharedMode,registrationUsername:setupInfo.registrationUsername||''});
   const clear=()=>{token='';identity=null;expiresAt=0;pending.clear();clearTimeout(idleTimer);};
   const expire=()=>{clear();window.dispatchEvent(new Event('management-session-expired'));};
-  const touch=()=>{clearTimeout(idleTimer);idleTimer=setTimeout(expire,Math.max(0,Math.min(30*60*1000,expiresAt-Date.now())));};
-  const current=()=>{if(identity&&expiresAt<=Date.now())clear();return identity?{...identity}:anonymous();};
-  const requireAccess=()=>{if(!current().authenticated)throw new Error('Connectez-vous à l’espace de gestion.');touch();};
+  const touch=()=>{if(identity?.openPublishing)return;clearTimeout(idleTimer);idleTimer=setTimeout(expire,Math.max(0,Math.min(30*60*1000,expiresAt-Date.now())));};
+  const current=()=>{if(identity&&!identity.openPublishing&&expiresAt<=Date.now())clear();return identity?{...identity}:anonymous();};
+  const requireAccess=()=>{if(!current().authenticated&&!current().canPublish)throw new Error('Connectez-vous à l’espace de gestion.');touch();};
   function installSession(result,username){
     const expiry=Date.parse(result.expiresAt);
     if(result.authenticated!==true||!['owner','admin'].includes(result.role)||typeof result.sessionToken!=='string'||! /^[A-Za-z0-9._~-]{32,4096}$/.test(result.sessionToken)||!Number.isFinite(expiry)||expiry<=Date.now()||expiry>Date.now()+8*60*60*1000)throw new Error('La connexion n’a pas été confirmée. Réessayez.');
@@ -35,7 +35,7 @@ const MxAdministration=(()=>{
     if(!apiBase)throw new Error(unavailable);
     if(authenticated)requireAccess();
     const outgoing={...headers,Accept:'application/json'};
-    if(authenticated)outgoing.Authorization='Bearer '+token;
+    if(authenticated&&!identity?.openPublishing)outgoing.Authorization='Bearer '+token;
     let response;
     try{response=await fetch(apiBase+path,{method,headers:outgoing,body,credentials:'omit',redirect:'error',referrerPolicy:'no-referrer',cache:'no-store'});}
     catch{throw new Error('La connexion est momentanément indisponible. Réessayez.');}
@@ -75,17 +75,26 @@ const MxAdministration=(()=>{
     return installSession(result,username);
   }
   async function session(){
-    if(!current().authenticated){
-      if(sharedMode&&apiBase){try{setupInfo=await request('/api/auth/options',{authenticated:false,headers:activationToken?{Authorization:'Activation '+activationToken}:{}});}catch(error){return {...anonymous(),configured:false,error:error.message};}}
-      return current();
+    if(sharedMode&&apiBase&&(!current().authenticated||identity?.openPublishing)){
+      try{
+        setupInfo=await request('/api/auth/options',{authenticated:false,headers:activationToken?{Authorization:'Activation '+activationToken}:{}});
+        if(setupInfo.openPublishing===true){
+          clear();
+          mxRemoveLocalAccounts().catch(()=>{});
+          identity={authenticated:false,canPublish:true,openPublishing:true,configured:true,sharedMode:true,canManageAccess:false,requiresPasswordChange:false,username:'',displayName:'Gestion des contenus'};
+          return current();
+        }
+        if(identity?.openPublishing)clear();
+      }catch(error){clear();return {...anonymous(),configured:false,error:error.message};}
     }
+    if(!current().authenticated)return current();
     const result=await request('/api/auth/session');
     if(result.authenticated!==true){clear();return current();}
     identity.requiresPasswordChange=result.requiresPasswordChange===true;
     return current();
   }
   async function logout(){
-    try{if(current().authenticated)await request('/api/auth/logout',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});}finally{clear();}
+    try{if(current().authenticated&&!identity?.openPublishing)await request('/api/auth/logout',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});}finally{clear();}
     return {ok:true};
   }
   async function catalogue(base){
@@ -120,7 +129,7 @@ const MxAdministration=(()=>{
       try{
         const url=new URL('./catalogue.json',document.baseURI);url.searchParams.set('v',String(Date.now()));
         const response=await fetch(url,{cache:'no-store',credentials:'omit'});
-        if(response.ok){const published=await catalogue(await response.json());if(published.items?.some(item=>item.id===publication.id)){er=Promise.resolve({...mxLocaleCatalogue(published),isAdmin:current().authenticated});return {id:publication.id,published:true};}}
+        if(response.ok){const published=await catalogue(await response.json());if(published.items?.some(item=>item.id===publication.id)){er=Promise.resolve({...mxLocaleCatalogue(published),isAdmin:current().authenticated||current().canPublish});return {id:publication.id,published:true};}}
       }catch{}
       await new Promise(resolve=>setTimeout(resolve,5000));
     }while(Date.now()<deadline);

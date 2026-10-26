@@ -9,7 +9,7 @@ async function cL() {
         try{catalogue=await mxManagementClient().catalogue(catalogue);}
         catch(error){if(MX_SERVICE.authentication?.shared!==true)throw error;}
       }
-      return {...mxLocaleCatalogue(catalogue),isAdmin:mxManagementClient().current().authenticated};
+      return {...mxLocaleCatalogue(catalogue),isAdmin:mxManagementClient().current().authenticated||mxManagementClient().current().canPublish};
     }).catch(error=>{er=undefined;throw error;});
   }
   return er;

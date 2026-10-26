@@ -7,6 +7,9 @@ export const portalOrigin='https://nachchatmahmoud-png.github.io';
 const roster=[{username:'katiri.abdelah',displayName:'Katiri Abdelah'},{username:'rbina.abdelah',displayName:'Rbina Abdelah'},{username:'ilham.boudil',displayName:'Ilham Boudil'}];
 const rosterForOwner=username=>roster.map(person=>({...person,username:person.username===username?person.username+'.admin':person.username}));
 const encoder=new TextEncoder(),idle=30*60*1000;
+// Content entry is open until authentication is explicitly enabled again.
+// The public publisher is an internal attribution key; it creates no account or session.
+const publicPublisher={id:'00000000-0000-4000-8000-000000000001',username:'publication-ouverte',authEmail:'publication-ouverte@mediatheque.invalid',displayName:'Gestion des contenus',role:'admin',enabled:true,requiresPasswordChange:false,version:1};
 const hash=value=>digest(encoder.encode(value));
 const same=(a,b)=>typeof a==='string'&&typeof b==='string'&&a.length===b.length&&timingSafeEqual(Buffer.from(a),Buffer.from(b));
 const passwordHash=(password,salt)=>scryptSync(password,salt,64,{N:32768,r:8,p:3,maxmem:64*1024*1024}).toString('hex');
@@ -87,15 +90,25 @@ async function media(store,request,url){
  const data=await store.bucket.get(asset.key,range?{range}:undefined);return new Response(data.body,{status,headers});
 }
 export function createSharedHandler(env){
- const store=new SharedStore(env.DB,env.BUCKET),normal=createAdminHandler({store,passwords:new SharedPasswords(store),publisher:new SharedPublisher(store)});
+ const openPublishing=env.REQUIRE_AUTHENTICATION!=='true';
+ const store=new SharedStore(env.DB,env.BUCKET),normal=createAdminHandler({store,passwords:new SharedPasswords(store),publisher:new SharedPublisher(store),...(openPublishing?{publicationAccess:async()=>({...publicPublisher})}:{})});
+ let accountRemoval;
+ async function removeAccounts(){
+  // D1 batch is atomic. Publications and transferred files are deliberately retained.
+  accountRemoval??=store.db.batch([store.db.prepare('DELETE FROM sessions'),store.db.prepare('DELETE FROM invitations'),store.db.prepare('DELETE FROM administrators')]).catch(error=>{accountRemoval=undefined;throw error;});
+  await accountRemoval;
+ }
  return async request=>{
   const url=new URL(request.url),origin=request.headers.get('origin')||'',path=url.pathname;
   try{
-   if(path==='/api/health'&&request.method==='GET'){await store.countAccounts();return json({configured:true,shared:true},200,origin);}
+   if(openPublishing&&request.method!=='OPTIONS'&&(origin===portalOrigin||['/api/health','/api/catalogue'].includes(path)||path.startsWith('/api/media/')))await removeAccounts();
+   if(path==='/api/health'&&request.method==='GET'){await store.countAccounts();return json({configured:true,shared:true,openPublishing},200,origin);}
    if(path==='/api/catalogue'&&request.method==='GET')return json(await catalogue(store,url),200,origin);
    if(path.startsWith('/api/media/')&&['GET','HEAD'].includes(request.method))return await media(store,request,url);
    if(origin!==portalOrigin)return normal(request);
    if(request.method==='OPTIONS')return normal(request);
+   if(openPublishing&&path==='/api/auth/options'&&request.method==='GET')return json({configured:true,shared:true,openPublishing:true,authenticationRequired:false,setupRequired:false,canSetup:false},200,origin);
+   if(openPublishing&&path.startsWith('/api/auth/'))return json({error:'La connexion est désactivée pendant l’ajout des contenus.'},410,origin);
    if(path==='/api/auth/options'&&request.method==='GET'){const allowed=await activation(store,env,request);return json({configured:true,shared:true,setupRequired:await store.countAccounts()===0,canSetup:!!allowed,registrationUsername:allowed?.username||'',registrationDisplayName:allowed?.display_name||''},200,origin);}
    if(path==='/api/auth/login'&&request.method==='POST'&&await store.countAccounts()===0)return json({error:'Votre accès partagé n’est pas encore activé. Ouvrez votre lien personnel, puis connectez-vous avec votre identifiant et votre mot de passe habituels.',code:'SETUP_REQUIRED'},409,origin);
    if(path==='/api/auth/register'&&request.method==='POST'){

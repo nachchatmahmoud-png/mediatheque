@@ -111,3 +111,14 @@ function createMxLocalAdministration(storage=mxLocalAccountStorage(),contentStor
 }
 
 const MxLocalAdministration=MX_SERVICE.management?.mode==='local'?createMxLocalAdministration():null;
+
+async function mxRemoveLocalAccounts(){
+  // Remove earlier browser credentials while retaining the separate content database.
+  try{sessionStorage.removeItem('mediatheque-session-locale-v1');}catch{}
+  if(typeof indexedDB==='undefined')return;
+  await new Promise(resolve=>{
+    let request;
+    try{request=indexedDB.deleteDatabase('mediatheque-acces-local-v1');}catch{resolve();return;}
+    request.onsuccess=request.onerror=request.onblocked=()=>resolve();
+  });
+}

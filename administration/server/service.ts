@@ -19,7 +19,7 @@ export interface PasswordProvider {
   verify(email:string,password:string):Promise<string|null>;
   change(id:string,password:string):Promise<void>;
 }
-export type AdminDependencies={store:AdminStore;passwords:PasswordProvider;publisher:Pick<GitHubPublisher,'configured'|'publish'>};
+export type AdminDependencies={store:AdminStore;passwords:PasswordProvider;publisher:Pick<GitHubPublisher,'configured'|'publish'>;publicationAccess?:()=>Promise<Account>};
 const origin='https://nachchatmahmoud-png.github.io';
 const sessionDuration=8*60*60*1000;
 const jsonHeaders={'Cache-Control':'no-store','Content-Type':'application/json; charset=utf-8','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'};
@@ -44,13 +44,15 @@ export function validateNewPassword(value:unknown){
   return value;
 }
 
-export function createAdminHandler({store,passwords,publisher}:AdminDependencies){
+export function createAdminHandler({store,passwords,publisher,publicationAccess}:AdminDependencies){
   async function issue(account:Account){
     const sessionToken=token(),expiresAt=new Date(Date.now()+sessionDuration).toISOString();
     await store.createSession(await hashToken(sessionToken),account,expiresAt);
     return {...info(account),sessionToken,expiresAt};
   }
   async function authenticate(request:Request,allowInitial=false){
+    // Only uploads and publication use this access; accounts and sessions keep their own checks.
+    if(!allowInitial&&publicationAccess)return {account:await publicationAccess(),hash:''};
     const authorization=request.headers.get('authorization')||'';
     if(!/^Bearer [a-f0-9]{64}$/.test(authorization))throw new ServiceError('Reconnectez-vous à l’espace de gestion.',401);
     const hash=await hashToken(authorization.slice(7)),account=await store.session(hash);

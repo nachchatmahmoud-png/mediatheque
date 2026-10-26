@@ -11,7 +11,7 @@ const sessionToken='LOCAL_TEST_SESSION_TOKEN_NEVER_VALID_123456789';
 const credentials={username:'  Admin.Test  ',password:'Mot de passe de test non utilisable'};
 const publication={requestId:'12345678-1234-1234-1234-123456789abc',type:'video',title:'Publication de test',language:'fr'};
 
-function client({base=apiBase,denyLogin=false,denyWrite=false,badSession=false,logoutFailure=false,initialPassword=false,shared=false,setupRequired=false,serviceFailure=false,staticItems=[],localAccount=null,activation='c'.repeat(64)}={}){
+function client({openPublishing=false,base=apiBase,denyLogin=false,denyWrite=false,badSession=false,logoutFailure=false,initialPassword=false,shared=false,setupRequired=false,serviceFailure=false,staticItems=[],localAccount=null,activation='c'.repeat(64)}={}){
   const calls=[],events=[],timers=[],listeners=new Map();let live=false,checks=0,registered=false,expectedActivation=activation;const history=[];
   const response=(status,value)=>({ok:status>=200&&status<300,status,json:async()=>value});
   const context=vm.createContext({URL,URLSearchParams,Event,File,Date,TextEncoder,Uint8Array,crypto:webcrypto,er:undefined,MX_SERVICE:{authentication:{apiBase:base,shared}},
@@ -28,11 +28,11 @@ function client({base=apiBase,denyLogin=false,denyWrite=false,badSession=false,l
       }
       const path=url.slice(apiBase.length);
       if(serviceFailure)throw new Error('offline');
-      if(path==='/api/auth/options')return response(200,{configured:true,shared:true,setupRequired:setupRequired&&!registered,canSetup:!registered&&!!options.headers.Authorization});
+      if(path==='/api/auth/options')return response(200,{configured:true,shared:true,openPublishing,setupRequired:setupRequired&&!registered,canSetup:!registered&&!!options.headers.Authorization});
       if(path==='/api/auth/register'){assert.equal(options.headers.Authorization,'Activation '+expectedActivation);registered=true;return response(201,{created:true,username:'admin.test',shared:true});}
-      if(path==='/api/catalogue'){assert.equal(options.headers.Authorization,undefined);return response(200,{items:[{id:'shared-fr',language:'fr'},{id:'shared-ar',language:'ar'}],events:[]});}
+      if(path==='/api/catalogue'){assert.equal(options.headers.Authorization,undefined);return response(200,{items:[{id:'shared-fr',language:'fr'},{id:'shared-ar',language:'ar'},...(live?[{id:'publication-test-video-1',language:'fr'}]:[])],events:[]});}
       if(path==='/api/auth/login'){if(setupRequired&&!registered)return response(409,{code:'SETUP_REQUIRED',error:'Votre accès partagé n’est pas encore activé. Ouvrez votre lien personnel.'});return response(denyLogin?401:200,{authenticated:true,sessionToken,expiresAt:new Date(Date.now()+3600000).toISOString(),role:badSession?'reader':'admin',displayName:'Administrateur de test',requiresPasswordChange:initialPassword});}
-      assert.equal(options.headers.Authorization,'Bearer '+sessionToken);
+      assert.equal(options.headers.Authorization,openPublishing?undefined:'Bearer '+sessionToken);
       if(path==='/api/auth/session')return response(200,{authenticated:true,requiresPasswordChange:initialPassword});
       if(path==='/api/auth/change-password'){initialPassword=false;return response(200,{authenticated:true,sessionToken,expiresAt:new Date(Date.now()+3600000).toISOString(),role:'admin',requiresPasswordChange:false});}
       if(path==='/api/auth/logout'){if(logoutFailure)throw new Error('offline');return response(200,{ok:true});}
@@ -205,3 +205,31 @@ test('the first-login password requirement is preserved until the server confirm
   const publicRead=value.calls.find(call=>call.url.endsWith('/api/catalogue'));assert.equal(publicRead.options.headers.Authorization,undefined);
   assert.ok(value.calls.every(call=>!call.url.includes('c'.repeat(64))));
  });
+
+test('server-confirmed open publication needs no account, password, token, or local-only storage',async()=>{
+ const value=client({shared:true,openPublishing:true,activation:''});
+ const state=await value.context.Ho('/api/auth/session');
+ assert.equal(state.authenticated,false);assert.equal(state.canPublish,true);assert.equal(state.openPublishing,true);assert.equal(state.canManageAccess,false);
+ assert.equal((await value.context.Ho('/api/library?manage=1')).isAdmin,true);
+ const upload=await value.context.Ho('/api/uploads?name=photo.png',{method:'POST',body:new File(['fixture'],'photo.png',{type:'image/png'})});
+ assert.match(upload.url,/^admin-upload:/);
+ const published=await value.context.Ho('/api/publications',{method:'POST',body:JSON.stringify(publication)});
+ assert.equal(published.published,true);
+ assert.ok(value.calls.every(call=>call.options.headers?.Authorization===undefined));
+ assert.equal(value.calls.some(call=>/\/api\/auth\/(?:login|register|session|logout)$/.test(call.url)),false);
+ assert.equal((await value.context.Ho('/api/auth/session')).canPublish,true);
+});
+
+test('management displays the three content forms directly when publication is open',async()=>{
+ const value=client({shared:true,openPublishing:true,activation:''});
+ const auth=await value.context.Ho('/api/auth/session');
+ const h=(tag,props,...children)=>({tag,props:props||{},children:children.flat(Infinity).filter(Boolean)});
+ Object.assign(value.context,{O:{Fragment:'fragment',useState:initial=>[initial,()=>{}]},mxElement:h,Xi:'Xi',Ta:'Ta',Oe:'Oe',zl:'zl',MxManagementHero:'MxManagementHero',MxLocalImport:'MxLocalImport',MxPublishedList:'MxPublishedList',yL:['video','photo','press'].map(type=>({type,Icon:type})),MX_PUBLICATION_FORMS:Object.fromEntries(['video','photo','press'].map(type=>[type,{label:type,hint:type}]))});
+ vm.runInContext(await readFile(new URL('../interface/publisher.js',import.meta.url),'utf8'),value.context);
+ const tree=value.context.nf({auth,isAdmin:true,items:[]});
+ const nodes=node=>node&&typeof node==='object'?[node,...node.children.flatMap(nodes)]:[];
+ const all=nodes(tree);
+ assert.equal(all.some(node=>node.tag===value.context.MxAdminLogin),false);
+ assert.equal(all.filter(node=>node.tag===value.context.MxPublicationEditor).length,3);
+ assert.deepEqual(all.filter(node=>node.tag===value.context.MxPublicationEditor).map(node=>node.props.type),['video','photo','press']);
+});

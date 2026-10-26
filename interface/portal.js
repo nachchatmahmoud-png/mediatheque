@@ -35,7 +35,7 @@ function rf() {
         let D = await Ho("/api/auth/session");
         a(D);
         let j = await Ho(
-          "/api/library" + (b && D.authenticated && !D.requiresPasswordChange ? "?manage=1" : ""),
+          "/api/library" + (b && (D.authenticated || D.canPublish) && !D.requiresPasswordChange ? "?manage=1" : ""),
         );
         (C(j.items), m(j.settings), g(j.isAdmin));
       } catch (D) {

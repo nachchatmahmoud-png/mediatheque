@@ -6,19 +6,19 @@ import {readFile} from 'node:fs/promises';
 import {createSharedHandler,portalOrigin} from '../administration/shared/service.mjs';
 const schema=await readFile(new URL('../administration/shared/schema.sql',import.meta.url),'utf8');
 const secret='a'.repeat(64),password='Phrase privée de contrôle 2026';
-function setup(){
+function setup({openPublishing=false}={}){
  const sqlite=new DatabaseSync(':memory:');sqlite.exec(schema);const files=new Map();
  const statement=(sql,values=[])=>({bind:(...next)=>statement(sql,next),first:async()=>sqlite.prepare(sql).get(...values)||null,all:async()=>({results:sqlite.prepare(sql).all(...values)}),run:async()=>{const result=sqlite.prepare(sql).run(...values);return {meta:{changes:Number(result.changes)}};}});
  const DB={prepare:statement,batch:async statements=>{sqlite.exec('BEGIN');try{const results=[];for(const item of statements)results.push(await item.run());sqlite.exec('COMMIT');return results;}catch(error){sqlite.exec('ROLLBACK');throw error;}}};
  const BUCKET={put:async(key,value)=>{files.set(key,new Uint8Array(value));},delete:async key=>files.delete(key),head:async key=>files.has(key)?{size:files.get(key).length,httpEtag:'"fixture"'}:null,get:async(key,options)=>{if(!files.has(key))return null;const full=files.get(key),bytes=options?.range?full.slice(options.range.offset,options.range.offset+options.range.length):full;return {arrayBuffer:async()=>bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),body:bytes};}};
- const handler=createSharedHandler({DB,BUCKET,OWNER_SETUP_SECRET:secret});
+ const handler=createSharedHandler({DB,BUCKET,OWNER_SETUP_SECRET:secret,REQUIRE_AUTHENTICATION:openPublishing?'false':'true'});
  async function request(path,{method='GET',body,token,activation,origin=portalOrigin,headers={}}={}){
   const response=await handler(new Request('https://service.example'+path,{method,headers:{Origin:origin,...(token?{Authorization:'Bearer '+token}:{}),...(activation?{Authorization:'Activation '+activation}:{}),...(body!==undefined?{'Content-Type':body instanceof Uint8Array?'application/octet-stream':'application/json'}:{}),...headers},...(body===undefined?{}:{body:body instanceof Uint8Array?body:JSON.stringify(body)})}));
   return {status:response.status,headers:response.headers,body:response.headers.get('Content-Type')?.includes('application/json')?await response.json():new Uint8Array(await response.arrayBuffer())};
  }
  const register=()=>request('/api/auth/register',{method:'POST',activation:secret,body:{username:'mahmoud',password,confirmPassword:password}});
  const login=()=>request('/api/auth/login',{method:'POST',body:{username:'MAHMOUD',password}});
- return {request,register,login,sqlite,files,DB};
+ return {request,register,login,sqlite,files,DB,BUCKET};
 }
 
 test('the first shared account requires its private activation link and works from independent clients',async()=>{
@@ -135,3 +135,45 @@ test('only the owner can invite the three designated administrators, and activat
  assert.equal(value.sqlite.prepare('SELECT password_hash FROM administrators').get().password_hash.startsWith('pbkdf2:'),false);
  assert.equal((await value.login()).status,200);
  });
+
+test('open management removes accounts and publishes shared content without a login or session',async()=>{
+ const value=setup({openPublishing:true});
+ value.sqlite.prepare('INSERT INTO administrators(id,username,display_name,role,salt,password_hash) VALUES(?,?,?,?,?,?)').run('old-account','ancien.compte','Ancien compte','owner','fixture','fixture');
+ value.sqlite.prepare('INSERT INTO sessions(id,account_id,account_version,expires_at,last_seen) VALUES(?,?,?,?,?)').run('old-session','old-account',1,Date.now()+100000,Date.now());
+ value.sqlite.prepare('INSERT INTO invitations(username,display_name,token_hash,expires_at) VALUES(?,?,?,?)').run('invitation','Invitation','fixture',Date.now()+100000);
+ const options=await value.request('/api/auth/options');
+ assert.equal(options.body.openPublishing,true);assert.equal(options.body.authenticationRequired,false);assert.equal(options.body.canSetup,false);
+ for(const table of ['administrators','sessions','invitations'])assert.equal(value.sqlite.prepare('SELECT COUNT(*) AS count FROM '+table).get().count,0);
+ assert.equal((await value.login()).status,410);
+ const png=new Uint8Array(await readFile(new URL('../site/images/logo-ministere.png',import.meta.url)));
+ const upload=await value.request('/api/uploads?name=couverture.png',{method:'POST',body:png});
+ assert.equal(upload.status,201,JSON.stringify(upload.body));
+ const input={requestId:crypto.randomUUID(),type:'photo',title:'Album publié sans connexion',date:'2026-10-26',topic:'Vie institutionnelle',language:'fr',thumbnailUrl:upload.body.url,photos:[{url:upload.body.url,caption:'Rabat'}]};
+ const published=await value.request('/api/publications',{method:'POST',body:input});
+ assert.equal(published.status,201,JSON.stringify(published.body));
+ const anotherBrowser=await value.request('/api/catalogue',{origin:''});
+ assert.equal(anotherBrowser.body.items.length,1);assert.equal(anotherBrowser.body.items[0].id,published.body.id);
+ assert.equal((await value.request(new URL(anotherBrowser.body.items[0].thumbnailUrl).pathname,{origin:''})).status,200);
+ assert.equal((await value.request('/api/accounts')).status,401);
+ assert.equal((await value.request('/api/accounts/invite',{method:'POST',body:{username:'katiri.abdelah'}})).status,401);
+ assert.equal((await value.request('/api/publications',{method:'POST',origin:'https://untrusted.example',body:input})).status,403);
+ assert.equal(value.sqlite.prepare('SELECT COUNT(*) AS count FROM sessions').get().count,0);
+ const protectedHandler=createSharedHandler({DB:value.DB,BUCKET:value.BUCKET,OWNER_SETUP_SECRET:secret,REQUIRE_AUTHENTICATION:'true'});
+ const protectedUpload=await protectedHandler(new Request('https://service.example/api/uploads?name=test.png',{method:'POST',headers:{Origin:portalOrigin},body:png}));
+ assert.equal(protectedUpload.status,401);
+});
+
+test('removing all accounts retains already published documents and their files',async()=>{
+ const value=setup();await value.register();const token=(await value.login()).body.sessionToken;
+ const png=new Uint8Array(await readFile(new URL('../site/images/logo-ministere.png',import.meta.url)));
+ const upload=await value.request('/api/uploads?name=photo.png',{method:'POST',body:png,token});
+ const input={requestId:crypto.randomUUID(),type:'photo',title:'Publication existante',date:'2026-10-26',topic:'Vie institutionnelle',language:'fr',thumbnailUrl:upload.body.url,photos:[{url:upload.body.url,caption:''}]};
+ const saved=await value.request('/api/publications',{method:'POST',body:input,token});assert.equal(saved.status,201);
+ const openHandler=createSharedHandler({DB:value.DB,BUCKET:value.BUCKET,REQUIRE_AUTHENTICATION:'false'});
+ const response=await openHandler(new Request('https://service.example/api/auth/options',{headers:{Origin:portalOrigin}}));assert.equal(response.status,200);
+ assert.equal(value.sqlite.prepare('SELECT COUNT(*) AS count FROM administrators').get().count,0);
+ assert.equal(value.sqlite.prepare('SELECT COUNT(*) AS count FROM publications').get().count,1);
+ assert.equal(value.sqlite.prepare('SELECT COUNT(*) AS count FROM uploads').get().count,1);
+ const catalogue=await (await openHandler(new Request('https://service.example/api/catalogue'))).json();assert.equal(catalogue.items[0].id,saved.body.id);
+ const file=await openHandler(new Request(catalogue.items[0].thumbnailUrl));assert.equal(file.status,200);assert.deepEqual(new Uint8Array(await file.arrayBuffer()),png);
+});
