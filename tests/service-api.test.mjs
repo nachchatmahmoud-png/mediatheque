@@ -10,12 +10,12 @@ const sessionToken='LOCAL_TEST_SESSION_TOKEN_NEVER_VALID_123456789';
 const credentials={username:'  Admin.Test  ',password:'Mot de passe de test non utilisable'};
 const publication={requestId:'12345678-1234-1234-1234-123456789abc',type:'video',title:'Publication de test',language:'fr'};
 
-function client({base=apiBase,denyLogin=false,denyWrite=false,badSession=false,logoutFailure=false,initialPassword=false,shared=false,serviceFailure=false,staticItems=[],activation='c'.repeat(64)}={}){
-  const calls=[],events=[],timers=[];let live=false,checks=0,registered=false;const history=[];
+function client({base=apiBase,denyLogin=false,denyWrite=false,badSession=false,logoutFailure=false,initialPassword=false,shared=false,setupRequired=false,serviceFailure=false,staticItems=[],activation='c'.repeat(64)}={}){
+  const calls=[],events=[],timers=[],listeners=new Map();let live=false,checks=0,registered=false,expectedActivation=activation;const history=[];
   const response=(status,value)=>({ok:status>=200&&status<300,status,json:async()=>value});
   const context=vm.createContext({URL,URLSearchParams,Event,File,Date,er:undefined,MX_SERVICE:{authentication:{apiBase:base,shared}},
     mxLocaleCatalogue:value=>({...value,items:value.items.filter(item=>item.language==='fr')}),document:{baseURI:'https://nachchatmahmoud-png.github.io/mediatheque/'},
-    history:{replaceState:(_state,_title,url)=>history.push(url)},window:{location:{hash:activation?'#activation='+activation:'',pathname:'/mediatheque/fr/',search:'?view=manage'},dispatchEvent:event=>events.push(event.type)},localStorage:{getItem(){throw new Error('No session storage');},setItem(){throw new Error('No session storage');}},
+    history:{replaceState:(_state,_title,url)=>history.push(url)},window:{location:{hash:activation?'#activation='+activation:'',pathname:'/mediatheque/fr/',search:'?view=manage'},addEventListener:(name,callback)=>listeners.set(name,callback),dispatchEvent:event=>events.push(event.type)},localStorage:{getItem(){throw new Error('No session storage');},setItem(){throw new Error('No session storage');}},
     setTimeout:(callback,delay)=>{if(delay<10000)queueMicrotask(callback);else timers.push(callback);return 1;},clearTimeout(){},
     fetch:async(url,options={})=>{
       url=String(url);calls.push({url,options});
@@ -27,10 +27,10 @@ function client({base=apiBase,denyLogin=false,denyWrite=false,badSession=false,l
       }
       const path=url.slice(apiBase.length);
       if(serviceFailure)throw new Error('offline');
-      if(path==='/api/auth/options')return response(200,{configured:true,shared:true,canSetup:!registered&&!!options.headers.Authorization});
-      if(path==='/api/auth/register'){assert.equal(options.headers.Authorization,'Activation '+activation);registered=true;return response(201,{created:true,username:'admin.test',shared:true});}
+      if(path==='/api/auth/options')return response(200,{configured:true,shared:true,setupRequired:setupRequired&&!registered,canSetup:!registered&&!!options.headers.Authorization});
+      if(path==='/api/auth/register'){assert.equal(options.headers.Authorization,'Activation '+expectedActivation);registered=true;return response(201,{created:true,username:'admin.test',shared:true});}
       if(path==='/api/catalogue'){assert.equal(options.headers.Authorization,undefined);return response(200,{items:[{id:'shared-fr',language:'fr'},{id:'shared-ar',language:'ar'}],events:[]});}
-      if(path==='/api/auth/login')return response(denyLogin?401:200,{authenticated:true,sessionToken,expiresAt:new Date(Date.now()+3600000).toISOString(),role:badSession?'reader':'admin',displayName:'Administrateur de test',requiresPasswordChange:initialPassword});
+      if(path==='/api/auth/login'){if(setupRequired&&!registered)return response(409,{code:'SETUP_REQUIRED',error:'Votre accès partagé n’est pas encore activé. Ouvrez votre lien personnel.'});return response(denyLogin?401:200,{authenticated:true,sessionToken,expiresAt:new Date(Date.now()+3600000).toISOString(),role:badSession?'reader':'admin',displayName:'Administrateur de test',requiresPasswordChange:initialPassword});}
       assert.equal(options.headers.Authorization,'Bearer '+sessionToken);
       if(path==='/api/auth/session')return response(200,{authenticated:true,requiresPasswordChange:initialPassword});
       if(path==='/api/auth/change-password'){initialPassword=false;return response(200,{authenticated:true,sessionToken,expiresAt:new Date(Date.now()+3600000).toISOString(),role:'admin',requiresPasswordChange:false});}
@@ -42,7 +42,7 @@ function client({base=apiBase,denyLogin=false,denyWrite=false,badSession=false,l
     },
   });
   vm.runInContext(source,context);
-  return {context,calls,events,timers,history};
+  return {context,calls,events,timers,history,receiveActivation:value=>{expectedActivation=value;context.window.location.hash='#activation='+value;listeners.get('hashchange')?.();}};
 }
 const login=value=>value.context.Ho('/api/auth/login',{method:'POST',body:JSON.stringify(credentials)});
 
@@ -96,6 +96,25 @@ test('incorrect credentials and unauthorized login responses never open manageme
   const malformed=client({badSession:true});await assert.rejects(login(malformed),/pas été confirmée/);
   assert.equal((await malformed.context.Ho('/api/auth/session')).authenticated,false);
   const insecure=client({base:'http://administration.example.test'});await assert.rejects(login(insecure),/pas encore activé/);assert.equal(insecure.calls.length,0);
+});
+
+test('an unactivated shared account explains activation instead of reporting an incorrect password',async()=>{
+  const value=client({shared:true,setupRequired:true,activation:''});
+  const state=await value.context.Ho('/api/auth/session');assert.equal(state.setupRequired,true);assert.equal(state.canSetup,false);
+  await assert.rejects(login(value),/pas encore activé/);
+  assert.equal((await value.context.Ho('/api/auth/session')).authenticated,false);
+});
+
+test('an activation link opened while management is already displayed enables account transfer',async()=>{
+  const value=client({shared:true,setupRequired:true,activation:''});
+  assert.equal((await value.context.Ho('/api/auth/session')).canSetup,false);
+  value.receiveActivation('c'.repeat(64));
+  assert.ok(value.events.includes('management-activation-received'));
+  assert.deepEqual(value.history,['/mediatheque/fr/?view=manage']);
+  assert.equal((await value.context.Ho('/api/auth/session')).canSetup,true);
+  await value.context.Ho('/api/auth/register',{method:'POST',body:JSON.stringify({...credentials,confirmPassword:credentials.password})});
+  assert.equal((await value.context.Ho('/api/auth/session')).setupRequired,false);
+  assert.equal((await login(value)).authenticated,true);
 });
 
 test('server rejection revokes the browser session and prevents further uploads',async()=>{

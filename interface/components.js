@@ -149,24 +149,20 @@ function MxHeroSearch({ value, onChange, onSubmit }) {
   return h('form', { className: 'mx-hero-search', role: 'search', onSubmit: event => { event.preventDefault(); onSubmit(); } },
     h('label', { htmlFor: 'hero-query' }, 'Que souhaitez-vous consulter ?'),
     h('div', { className: 'mx-hero-search-box' }, h($t, { size: 20 }),
-      h('input', { id: 'hero-query', type: 'search', value, onChange: event => onChange(event.target.value), maxLength: 240, placeholder: 'Un événement, un thème, un mot-clé…', dir: 'auto' }),
+      h('input', { id: 'hero-query', type: 'search', value, onChange: event => onChange(event.target.value), maxLength: 240, placeholder: 'Un titre, un thème, un mot-clé…', dir: 'auto' }),
       h('button', { className: 'button primary', type: 'submit' }, 'Rechercher', h(wl, { size: 17 }))),
-    h('p', { className: 'mx-search-hint' }, 'Vidéos, albums photo, communiqués et dossiers d’événements.'));
+    h('p', { className: 'mx-search-hint' }, 'Vidéos, albums photo et communiqués de presse.'));
 }
 
-function MxLatestPublications({ items, events, onOpen, onEvent, onExplore }) {
+function MxLatestPublications({ items, onOpen, onExplore }) {
   const h = mxElement;
   if (!items.length) return null;
   const latest = [...items].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3);
-  const recentEvent = [...events].sort((a, b) => b.date.localeCompare(a.date))[0];
   return h('section', { className: 'container mx-latest', 'aria-labelledby': 'latest-heading' },
     h('div', { className: 'mx-section-title' },
       h('div', null, h('div', { className: 'eyebrow' }, 'À DÉCOUVRIR'), h('h2', { id: 'latest-heading' }, 'Les dernières publications')),
       h('button', { className: 'button secondary', onClick: onExplore }, 'Tout consulter', h(wl, { size: 16 }))),
-    h('div', { className: 'media-grid' }, latest.map(item => h(su, { key: item.id, item, onOpen }))),
-    recentEvent && h('button', { className: 'mx-event-spotlight', onClick: () => onEvent(recentEvent) },
-      h(Qa, { size: 24 }), h('span', null, h('small', null, 'LES SUPPORTS D’UN MÊME ÉVÉNEMENT'), h('strong', { dir: 'auto' }, recentEvent.title)),
-      h('span', { className: 'mx-event-count' }, mxPlural(items.filter(item => item.eventId === recentEvent.id).length, 'publication')), h(Oe, { size: 21 })));
+    h('div', { className: 'media-grid' }, latest.map(item => h(su, { key: item.id, item, onOpen }))));
 }
 
 function MxCatalogueFilters({ query, onQuery, topic, onTopic, year, onYear, language, onLanguage, years, inputRef }) {
@@ -179,7 +175,7 @@ function MxCatalogueFilters({ query, onQuery, topic, onTopic, year, onYear, lang
   return h('div', { className: 'mx-catalog-filters' },
     h('div', { className: 'mx-search-row' },
       h('div', { className: 'search-field' }, h($t, { size: 21 }),
-        h('input', { ref: inputRef, type: 'search', value: query, onChange: event => onQuery(event.target.value), placeholder: 'Rechercher un titre, un mot-clé ou un événement…', maxLength: 240, 'aria-label': 'Rechercher dans les publications', dir: 'auto' }),
+        h('input', { ref: inputRef, type: 'search', value: query, onChange: event => onQuery(event.target.value), placeholder: 'Rechercher un titre ou un mot-clé…', maxLength: 240, 'aria-label': 'Rechercher dans les publications', dir: 'auto' }),
         query && h('button', { 'aria-label': 'Effacer la recherche', onClick: () => onQuery('') }, h(xa, { size: 16 }))),
       h('button', { className: 'button secondary mx-refine', 'aria-expanded': expanded, 'aria-controls': 'advanced-filters', onClick: () => setExpanded(!expanded) }, h(lu, { size: 17 }), 'Affiner', active > 0 && h('span', { className: 'mx-count' }, active), h(Zi, { size: 16 }))),
     h('div', { className: 'mx-advanced-filters', id: 'advanced-filters', hidden: !expanded },

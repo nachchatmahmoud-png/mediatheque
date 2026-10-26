@@ -8,12 +8,17 @@ const MxAdministration=(()=>{
   let token='',identity=null,idleTimer=null,expiresAt=0,setupInfo={};
   const sharedMode=MX_SERVICE.authentication?.shared===true;
   let activationToken='';
-  if(sharedMode&&typeof window!=='undefined'){
+  function receiveActivation(){
     const fragment=new URLSearchParams(window.location.hash.slice(1)),candidate=fragment.get('activation')||'';
-    if(/^[a-f0-9]{64}$/.test(candidate)){activationToken=candidate;history.replaceState(null,'',window.location.pathname+window.location.search);}
+    if(!/^[a-f0-9]{64}$/.test(candidate))return false;
+    activationToken=candidate;history.replaceState(null,'',window.location.pathname+window.location.search);return true;
+  }
+  if(sharedMode&&typeof window!=='undefined'){
+    receiveActivation();
+    window.addEventListener?.('hashchange',()=>{if(receiveActivation()){clear();setupInfo={};window.dispatchEvent(new Event('management-activation-received'));}});
   }
   const pending=new Map();
-  const anonymous=()=>({authenticated:false,configured:!!apiBase,canSetup:setupInfo.canSetup===true,canRecover:false,username:'',sharedMode,registrationUsername:setupInfo.registrationUsername||''});
+  const anonymous=()=>({authenticated:false,configured:!!apiBase,canSetup:setupInfo.canSetup===true,setupRequired:setupInfo.setupRequired===true,canRecover:false,username:'',sharedMode,registrationUsername:setupInfo.registrationUsername||''});
   const clear=()=>{token='';identity=null;expiresAt=0;pending.clear();clearTimeout(idleTimer);};
   const expire=()=>{clear();window.dispatchEvent(new Event('management-session-expired'));};
   const touch=()=>{clearTimeout(idleTimer);idleTimer=setTimeout(expire,Math.max(0,Math.min(30*60*1000,expiresAt-Date.now())));};

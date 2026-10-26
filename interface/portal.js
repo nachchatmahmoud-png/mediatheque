@@ -1,10 +1,7 @@
 // Source de l’interface publique ; assemblée par scripts/build-interface.mjs.
 function rf() {
   let [e, a] = (0, O.useState)($n),
-    [t, l] = (0, O.useState)([]),
-    [o, i] = (0, O.useState)(null),
     [u, n] = (0, O.useState)(null),
-    [r, f] = (0, O.useState)(null),
     [x, h] = (0, O.useState)(!1),
     [s, p] = (0, O.useState)(""),
     [S, C] = (0, O.useState)([]),
@@ -40,7 +37,7 @@ function rf() {
         let j = await Ho(
           "/api/library" + (b && D.authenticated && !D.requiresPasswordChange ? "?manage=1" : ""),
         );
-        (C(j.items), l(j.events || []), m(j.settings), g(j.isAdmin));
+        (C(j.items), m(j.settings), g(j.isAdmin));
       } catch (D) {
         H(D instanceof Error ? D.message : "Le chargement a échoué.");
       } finally {
@@ -53,7 +50,7 @@ function rf() {
     if(D&&MX_LOCALE==='ar'){window.location.replace(mxManagementUrl());return;}
     return (
       z(D),
-      ["video", "photo", "press", "event"].includes(b.get("type") || "") &&
+      ["video", "photo", "press"].includes(b.get("type") || "") &&
         _e(b.get("type")),
       tl((b.get("q") || "").slice(0, 240)),
       ll(mxStorage.get("media-view") === "list" ? "list" : "grid"),
@@ -70,15 +67,16 @@ function rf() {
     (0, O.useEffect)(() => {
       let b = () => {
         (Ha(null),
-          i(null),
           C([]),
           g(!1),
           a((D) => ({ ...D, authenticated: !1 })),
           Da(!0));
       };
+      const activation=()=>{z(true);B(false);Ha(null);a($n);C([]);Da(true);};
       return (
         window.addEventListener("management-session-expired", b),
-        () => window.removeEventListener("management-session-expired", b)
+        window.addEventListener("management-activation-received", activation),
+        () => {window.removeEventListener("management-session-expired", b);window.removeEventListener("management-activation-received", activation);}
       );
     }, [Da]));
   O.useEffect(() => {
@@ -87,6 +85,7 @@ function rf() {
     const values = {type: k === 'all' ? '' : k, q: te, year: ke, topic: ye, lang: '', sort: Ja === 'newest' ? '' : Ja};
     for (const [name, value] of Object.entries(values)) value ? url.searchParams.set(name, value) : url.searchParams.delete(name);
     url.searchParams.delete('view');
+    url.searchParams.delete('event');
     history.replaceState(null, '', url);
   }, [R, L, k, te, ke, ye, Ae, Ja]);
   let tr = async () => {
@@ -96,7 +95,6 @@ function rf() {
         body: "{}",
       }),
         Ha(null),
-        i(null),
         C([]),
         g(!1),
         a((b) => ({ ...b, authenticated: !1 })),
@@ -105,13 +103,9 @@ function rf() {
     },
     pu = (0, O.useMemo)(() => S.filter((b) => b.status === "published" && b.language === MX_LOCALE), [S]),
     mu = !1,
-    Se = pu,
-    ga = (0, O.useMemo)(
-      () => t.filter((b) => Se.some((D) => D.eventId === b.id)),
-      [t, Se],
-    );
+    Se = pu;
   (0, O.useEffect)(() => {
-    if ((n(null), f(null), p(""), !te.trim() || L)) {
+    if ((n(null), p(""), !te.trim() || L)) {
       h(!1);
       return;
     }
@@ -122,7 +116,7 @@ function rf() {
         let j = await Ho("/api/search?q=" + encodeURIComponent(te), {
           signal: b.signal,
         });
-        (n(j.ids), f(j.eventIds));
+        n(j.ids);
       } catch (j) {
         b.signal.aborted || p(j.message);
       } finally {
@@ -135,7 +129,7 @@ function rf() {
   }, [te, L]);
   let Ce = (0, O.useMemo)(() => {
       let b = gg(Se, {
-        type: k === "event" ? "all" : k,
+        type: k,
         query: u === null ? te : "",
         year: ke,
         topic: ye,
@@ -144,49 +138,16 @@ function rf() {
       });
       return te.trim() && u !== null ? b.filter((D) => u.includes(D.id)) : b;
     }, [Se, k, te, ke, ye, Ae, Ja, u]),
-    ha = (0, O.useMemo)(() => {
-      let b = Ea(te).match(/[\p{L}\p{N}]+/gu) || [];
-      return ga
-        .filter((D) => {
-          let j = Se.filter(($a) => $a.eventId === D.id);
-          if (
-            (ke && !D.date.startsWith(ke)) ||
-            (ye && D.topic !== ye && !j.some(($a) => $a.topic === ye)) ||
-            (Ae && !j.some(($a) => $a.language === Ae))
-          )
-            return !1;
-          if (te.trim() && r !== null) return r.includes(D.id);
-          let _o = Ea(
-            [
-              D.title,
-              D.description,
-              D.topic,
-              D.location,
-              ...D.keywords,
-              ...j.map(($a) => Eo($a)),
-            ].join(" "),
-          );
-          return b.every(($a) => _o.includes($a));
-        })
-        .sort((D, j) =>
-          Ja === "oldest"
-            ? D.date.localeCompare(j.date)
-            : Ja === "title"
-              ? D.title.localeCompare(j.title, MX_LOCALE)
-              : j.date.localeCompare(D.date),
-        );
-    }, [ga, Se, ke, ye, Ae, te, r, Ja]),
     lr = (0, O.useMemo)(
       () =>
         Array.from(
           new Set([
             ...Se.map((b) => b.date.slice(0, 4)),
-            ...ga.map((b) => b.date.slice(0, 4)),
           ]),
         )
           .sort()
           .reverse(),
-      [Se, ga],
+      [Se],
     ),
     or = el;
   (0, O.useEffect)(() => {
@@ -196,12 +157,7 @@ function rf() {
       let j = Se.find((_o) => _o.id === b);
       j ? Ha(j) : St("Cette publication n’est pas disponible.");
     }
-    let D = new URLSearchParams(window.location.search).get("event");
-    if (D) {
-      let j = ga.find((_o) => _o.id === D);
-      j && i(j);
-    }
-  }, [R, Se, ga, St]);
+  }, [R, Se, St]);
   let Fe = (b, D = !0) => {
       (_e(b), He(6), B(!1));
       let j = new URL(window.location.href);
@@ -221,21 +177,14 @@ function rf() {
           ));
     },
     Po = (b) => {
-      (i(null), Ha(b));
+      Ha(b);
       let D = new URL(window.location.href);
       (D.searchParams.delete("event"),
         D.searchParams.set("media", b.id),
         history.replaceState(null, "", D));
     },
-    df = (b) => {
-      (Ha(null), i(b));
-      let D = new URL(window.location.href);
-      (D.searchParams.delete("media"),
-        D.searchParams.set("event", b.id),
-        history.replaceState(null, "", D));
-    },
     sf = () => {
-      (Ha(null), i(null));
+      Ha(null);
       let b = new URL(window.location.href);
       (b.searchParams.delete("media"),
         b.searchParams.delete("event"),
@@ -243,7 +192,7 @@ function rf() {
     },
     Mg = () => {
       if(MX_LOCALE==='ar'){window.location.assign(mxManagementUrl());return;}
-      (z(!0), B(!1), Ha(null), i(null));
+      (z(!0), B(!1), Ha(null));
       let b = new URL(window.location.href);
       ((b.search = "?view=manage"),
         history.replaceState(null, "", b),
@@ -316,13 +265,13 @@ function rf() {
                   onClick: () => Fe("all", !1),
                   children: "Accueil",
                 }),
-                ["video", "photo", "press", "event"].map((b) =>
+                ["video", "photo", "press"].map((b) =>
                   (0, d.jsx)(
                     "button",
                     {
                       className: !L && k === b ? "active" : "",
                       onClick: () => Fe(b),
-                      children: b === 'event' ? 'Événements' : nu[b],
+                      children: nu[b],
                     },
                     b,
                   ),
@@ -367,7 +316,6 @@ function rf() {
                 auth: e,
                 onLogout: tr,
                 items: S,
-                events: t,
                 settings: T,
                 isAdmin: c,
                 loading: R,
@@ -480,7 +428,7 @@ function rf() {
                     ),
                   ),
                 }),
-                !R && !M && k === 'all' && !xu && mxElement(MxLatestPublications, {items: Se, events: ga, onOpen: Po, onEvent: df, onExplore: () => Fe('all')}),
+                !R && !M && k === 'all' && !xu && mxElement(MxLatestPublications, {items: Se, onOpen: Po, onExplore: () => Fe('all')}),
                 (0, d.jsxs)("section", {
                   className: "catalog-section container",
                   id: "publications",
@@ -498,17 +446,13 @@ function rf() {
                               children:
                                 k === "all"
                                   ? "Toutes nos publications"
-                                  : k === "event"
-                                    ? "Événements"
-                                    : nu[k],
+                                  : nu[k],
                             }),
                             (0, d.jsx)("p", {
                               children:
                                 k === "all"
-                                  ? "Retrouvez un contenu ou tous les supports d’un même événement."
-                                  : k === "event"
-                                    ? "Vidéos, albums photo et communiqués réunis par événement."
-                                    : CL[k],
+                                  ? "Retrouvez nos vidéos, albums photo et communiqués de presse."
+                                  : CL[k],
                             }),
                           ],
                         }),
@@ -531,7 +475,6 @@ function rf() {
                         { id: "video", label: "Vidéothèque", Icon: Ta },
                         { id: "photo", label: "Photothèque", Icon: pa },
                         { id: "press", label: "Espace médias", Icon: ma },
-                        { id: "event", label: "Événements", Icon: Ma },
                       ].map(({ id: b, label: D, Icon: j }) =>
                         (0, d.jsxs)(
                           "button",
@@ -546,9 +489,7 @@ function rf() {
                                 children:
                                   b === "all"
                                     ? Se.length
-                                    : b === "event"
-                                      ? ga.length
-                                      : cf[b],
+                                    : cf[b],
                               }),
                             ],
                           },
@@ -610,34 +551,12 @@ function rf() {
                             ? "Chargement des publications…"
                             : x
                               ? "Recherche dans l’index…"
-                              : k === "event"
-                                ? (0, d.jsxs)(d.Fragment, {
-                                    children: [
-                                      (0, d.jsx)("strong", {
-                                        children: ha.length,
-                                      }),
-                                      ha.length > 1 ? " événements" : " événement",
-                                    ],
-                                  })
-                                : (0, d.jsxs)(d.Fragment, {
-                                    children: [
-                                      (0, d.jsx)("strong", {
-                                        children: Ce.length,
-                                      }),
-                                      Ce.length > 1 ? " publications" : " publication",
-                                      te.trim() &&
-                                        k === "all" &&
-                                        (0, d.jsxs)(d.Fragment, {
-                                          children: [
-                                            " · ",
-                                            (0, d.jsx)("strong", {
-                                              children: ha.length,
-                                            }),
-                                            ha.length > 1 ? " événements" : " événement",
-                                          ],
-                                        }),
-                                    ],
-                                  }),
+                              : (0, d.jsxs)(d.Fragment, {
+                                  children: [
+                                    (0, d.jsx)("strong", { children: Ce.length }),
+                                    Ce.length > 1 ? " publications" : " publication",
+                                  ],
+                                }),
                         }),
                         (0, d.jsxs)("div", {
                           children: [
@@ -742,62 +661,9 @@ function rf() {
                           })
                         : (0, d.jsxs)(d.Fragment, {
                             children: [
-                              (k === "event" ||
-                                (k === "all" && !!te.trim())) &&
-                                ha.length > 0 &&
-                                (0, d.jsxs)("div", {
-                                  className: "event-results",
-                                  children: [
-                                    k !== "event" &&
-                                      (0, d.jsx)("h3", {
-                                        children:
-                                          "Événements associés à votre recherche",
-                                      }),
-                                    (0, d.jsx)("div", {
-                                      className:
-                                        "event-grid" +
-                                        (Oa === "list" ? " event-list" : ""),
-                                      children: ha
-                                        .slice(0, Ze)
-                                        .map((b) =>
-                                          (0, d.jsx)(
-                                            yg,
-                                            {
-                                              event: b,
-                                              items: Se,
-                                              onOpen: df,
-                                            },
-                                            b.id,
-                                          ),
-                                        ),
-                                    }),
-                                    k === "event" &&
-                                      ha.length > Ze &&
-                                      (0, d.jsx)("div", {
-                                        className: "load-more",
-                                        children: (0, d.jsxs)("button", {
-                                          className: "button secondary",
-                                          onClick: () => He((b) => b + 6),
-                                          children: [
-                                            "Voir plus d’événements",
-                                            (0, d.jsx)(wl, { size: 17 }),
-                                          ],
-                                        }),
-                                      }),
-                                  ],
-                                }),
-                              k !== "event" &&
-                                Ce.length > 0 &&
+                              Ce.length > 0 &&
                                 (0, d.jsxs)(d.Fragment, {
                                   children: [
-                                    te.trim() &&
-                                      ha.length > 0 &&
-                                      k === "all" &&
-                                      (0, d.jsx)("h3", {
-                                        className: "matching-heading",
-                                        children:
-                                          "Publications correspondantes",
-                                      }),
                                     (0, d.jsx)("div", {
                                       className:
                                         Oa === "grid"
@@ -838,10 +704,7 @@ function rf() {
                                       }),
                                   ],
                                 }),
-                              (k === "event"
-                                ? ha.length === 0
-                                : Ce.length === 0 &&
-                                  !(k === "all" && te.trim() && ha.length)) &&
+                              Ce.length === 0 &&
                                 (0, d.jsxs)("div", {
                                   className: "empty-state",
                                   children: [
@@ -849,9 +712,7 @@ function rf() {
                                     (0, d.jsx)("h3", {
                                       children: xu
                                         ? "Aucun résultat ne correspond à votre recherche"
-                                        : k === "event"
-                                          ? "Aucun événement publié pour le moment"
-                                          : "Les publications seront bientôt disponibles",
+                                        : "Les publications seront bientôt disponibles",
                                     }),
                                     (0, d.jsx)("p", {
                                       children: xu
@@ -1008,17 +869,6 @@ function rf() {
           item: Wa,
           onClose: sf,
           onToast: St,
-          onEvent: (b) => {
-            let D = ga.find((j) => j.id === b) || t.find((j) => j.id === b);
-            D && df(D);
-          },
-        }),
-      o &&
-        (0, d.jsx)(Sg, {
-          event: o,
-          items: L ? S : Se,
-          onClose: sf,
-          onOpenMedia: Po,
         }),
       P &&
         (0, d.jsx)(Ul, {

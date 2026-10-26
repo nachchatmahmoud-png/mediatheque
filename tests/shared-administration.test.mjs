@@ -24,9 +24,12 @@ function setup(){
 test('the first shared account requires its private activation link and works from independent clients',async()=>{
  const value=setup();
  assert.equal((await value.request('/api/auth/options')).body.canSetup,false);
+ assert.equal((await value.request('/api/auth/options')).body.setupRequired,true);
+ const inactive=await value.login();assert.equal(inactive.status,409);assert.equal(inactive.body.code,'SETUP_REQUIRED');assert.match(inactive.body.error,/pas encore activé/);
  assert.equal((await value.request('/api/auth/options',{activation:secret})).body.canSetup,true);
  assert.equal((await value.request('/api/auth/register',{method:'POST',body:{username:'mahmoud',password,confirmPassword:password}})).status,403);
  assert.equal((await value.register()).status,201);
+ assert.equal((await value.request('/api/auth/options')).body.setupRequired,false);
  assert.equal((await value.request('/api/auth/options',{activation:secret})).body.canSetup,false);
  const first=await value.login(),second=await value.login();
  assert.equal(first.status,200);assert.equal(second.status,200);assert.notEqual(first.body.sessionToken,second.body.sessionToken);

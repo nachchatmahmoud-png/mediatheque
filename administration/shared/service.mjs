@@ -95,7 +95,8 @@ export function createSharedHandler(env){
    if(path.startsWith('/api/media/')&&['GET','HEAD'].includes(request.method))return await media(store,request,url);
    if(origin!==portalOrigin)return normal(request);
    if(request.method==='OPTIONS')return normal(request);
-   if(path==='/api/auth/options'&&request.method==='GET'){const allowed=await activation(store,env,request);return json({configured:true,shared:true,canSetup:!!allowed,registrationUsername:allowed?.username||'',registrationDisplayName:allowed?.display_name||''},200,origin);}
+   if(path==='/api/auth/options'&&request.method==='GET'){const allowed=await activation(store,env,request);return json({configured:true,shared:true,setupRequired:await store.countAccounts()===0,canSetup:!!allowed,registrationUsername:allowed?.username||'',registrationDisplayName:allowed?.display_name||''},200,origin);}
+   if(path==='/api/auth/login'&&request.method==='POST'&&await store.countAccounts()===0)return json({error:'Votre accès partagé n’est pas encore activé. Ouvrez votre lien personnel et choisissez « Conserver mon accès existant » ou « Créer mon accès », puis connectez-vous.',code:'SETUP_REQUIRED'},409,origin);
    if(path==='/api/auth/register'&&request.method==='POST'){
     const ip=(request.headers.get('cf-connecting-ip')||'unknown').slice(0,128);if(!await store.allow(await hash('setup:'+ip),10))throw new ServiceError('Trop de tentatives. Patientez avant de réessayer.',429);
     const allowed=await activation(store,env,request);if(!allowed)throw new ServiceError('Ce lien d’activation n’est plus valide. Demandez un nouveau lien au responsable de la médiathèque.',403);
