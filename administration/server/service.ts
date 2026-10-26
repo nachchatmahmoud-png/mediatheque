@@ -72,7 +72,7 @@ export function createAdminHandler({store,passwords,publisher}:AdminDependencies
       }
       if(path==='/api/auth/login'&&request.method==='POST'){
         const body=await bodyJSON(request),username=typeof body.username==='string'?body.username.trim().toLowerCase():'';
-        if(!/^[a-z0-9][a-z0-9._@-]{2,59}$/.test(username)||!passwordValue(body.password))throw new ServiceError('Identifiant ou mot de passe incorrect.',401);
+        if(!/^[\p{L}\p{N}][\p{L}\p{M}\p{N}._@ -]{2,59}$/u.test(username)||!passwordValue(body.password))throw new ServiceError('Identifiant ou mot de passe incorrect.',401);
         const ip=(request.headers.get('cf-connecting-ip')||request.headers.get('x-forwarded-for')?.split(',')[0]||'unknown').slice(0,128);
         // Per-account limits remain effective even if a caller spoofs an IP header.
         if(!await store.allow(await hashToken('login:account:'+username),20)||!await store.allow(await hashToken('login:ip:'+ip),10))throw new ServiceError('Trop de tentatives. Patientez avant de réessayer.',429);

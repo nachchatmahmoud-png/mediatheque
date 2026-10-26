@@ -96,18 +96,26 @@ export function createSharedHandler(env){
    if(origin!==portalOrigin)return normal(request);
    if(request.method==='OPTIONS')return normal(request);
    if(path==='/api/auth/options'&&request.method==='GET'){const allowed=await activation(store,env,request);return json({configured:true,shared:true,setupRequired:await store.countAccounts()===0,canSetup:!!allowed,registrationUsername:allowed?.username||'',registrationDisplayName:allowed?.display_name||''},200,origin);}
-   if(path==='/api/auth/login'&&request.method==='POST'&&await store.countAccounts()===0)return json({error:'Votre accès partagé n’est pas encore activé. Ouvrez votre lien personnel et choisissez « Conserver mon accès existant » ou « Créer mon accès », puis connectez-vous.',code:'SETUP_REQUIRED'},409,origin);
+   if(path==='/api/auth/login'&&request.method==='POST'&&await store.countAccounts()===0)return json({error:'Votre accès partagé n’est pas encore activé. Ouvrez votre lien personnel, puis connectez-vous avec votre identifiant et votre mot de passe habituels.',code:'SETUP_REQUIRED'},409,origin);
    if(path==='/api/auth/register'&&request.method==='POST'){
-    const ip=(request.headers.get('cf-connecting-ip')||'unknown').slice(0,128);if(!await store.allow(await hash('setup:'+ip),10))throw new ServiceError('Trop de tentatives. Patientez avant de réessayer.',429);
-    const allowed=await activation(store,env,request);if(!allowed)throw new ServiceError('Ce lien d’activation n’est plus valide. Demandez un nouveau lien au responsable de la médiathèque.',403);
-    const value=await body(request),username=typeof value.username==='string'?value.username.trim().toLowerCase():'';if(!/^[a-z0-9][a-z0-9._@-]{2,59}$/.test(username))throw new ServiceError('Choisissez un identifiant de 3 à 60 caractères, sans espace ni accent.');
+    const allowed=await activation(store,env,request),ip=(request.headers.get('cf-connecting-ip')||'unknown').slice(0,128);
+    const rateKey=allowed?'setup-authorized:'+request.headers.get('authorization'):'setup:'+ip;
+    if(!await store.allow(await hash(rateKey),10))throw new ServiceError('Trop de tentatives. Patientez avant de réessayer.',429);
+    if(!allowed)throw new ServiceError('Ce lien d’activation n’est plus valide. Demandez un nouveau lien au responsable de la médiathèque.',403);
+    const value=await body(request),username=typeof value.username==='string'?value.username.trim().toLowerCase():'';
+    const preserved=allowed.owner&&value.keepExistingAccess===true;
+    if(!(preserved?/^[\p{L}\p{N}][\p{L}\p{M}\p{N}._@ -]{2,59}$/u:/^[a-z0-9][a-z0-9._@-]{2,59}$/).test(username))throw new ServiceError('Renseignez votre identifiant habituel, de 3 à 60 caractères.');
     if(allowed.owner&&roster.some(item=>item.username===username))throw new ServiceError('Cet identifiant est réservé à un autre administrateur.');
     if(!allowed.owner&&username!==allowed.username)throw new ServiceError('Utilisez l’identifiant indiqué dans votre invitation.');
     let salt,verifier;
     if(allowed.owner&&value.legacyVerifier){
      const legacy=value.legacyVerifier;if(legacy.iterations!==600000||typeof legacy.salt!=='string'||!/^[a-f0-9]{32}$/.test(legacy.salt)||typeof legacy.passwordHash!=='string'||!/^[a-f0-9]{64}$/.test(legacy.passwordHash))throw new ServiceError('Cet accès local ne peut pas être transféré. Choisissez un mot de passe personnel.');
      salt=legacy.salt;verifier='pbkdf2:'+legacy.passwordHash;
-    }else{const password=validateNewPassword(value.password);if(password!==value.confirmPassword)throw new ServiceError('Les deux mots de passe ne correspondent pas.');salt=randomBytes(16).toString('hex');verifier=passwordHash(password,salt);}
+    }else{
+     const password=preserved?value.password:validateNewPassword(value.password);
+     if(preserved&&(typeof password!=='string'||!password||encoder.encode(password).length>512))throw new ServiceError('Renseignez votre mot de passe habituel.');
+     if(!preserved&&password!==value.confirmPassword)throw new ServiceError('Les deux mots de passe ne correspondent pas.');salt=randomBytes(16).toString('hex');verifier=passwordHash(password,salt);
+    }
     const id=crypto.randomUUID(),displayName=allowed.owner?'Nachchat Mahmoud':allowed.display_name,role=allowed.owner?'owner':'admin';
     const insert=allowed.owner?store.db.prepare('INSERT INTO administrators(id,username,display_name,role,salt,password_hash) SELECT ?,?,?,?,?,? WHERE NOT EXISTS(SELECT 1 FROM administrators)').bind(id,username,displayName,role,salt,verifier):store.db.prepare('INSERT INTO administrators(id,username,display_name,role,salt,password_hash) SELECT ?,?,?,?,?,? WHERE EXISTS(SELECT 1 FROM invitations WHERE token_hash=? AND expires_at>?)').bind(id,username,displayName,role,salt,verifier,allowed.tokenHash,Date.now());
     const result=allowed.owner?await insert.run():(await store.db.batch([insert,store.db.prepare('DELETE FROM invitations WHERE token_hash=?').bind(allowed.tokenHash)]))[0];

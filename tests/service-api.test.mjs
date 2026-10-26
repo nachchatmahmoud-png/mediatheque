@@ -3,17 +3,18 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFile} from 'node:fs/promises';
 import {File} from 'node:buffer';
+import {webcrypto,pbkdf2Sync} from 'node:crypto';
 
-const source=(await Promise.all(['admin-service.js','test-administration.js','service-api.js'].map(name=>readFile(new URL('../interface/'+name,import.meta.url),'utf8')))).join('\n');
+const source=(await Promise.all(['admin-service.js','test-administration.js','local-administration.js','service-api.js'].map(name=>readFile(new URL('../interface/'+name,import.meta.url),'utf8')))).join('\n');
 const apiBase='https://administration.example.test/functions/v1/mediatheque';
 const sessionToken='LOCAL_TEST_SESSION_TOKEN_NEVER_VALID_123456789';
 const credentials={username:'  Admin.Test  ',password:'Mot de passe de test non utilisable'};
 const publication={requestId:'12345678-1234-1234-1234-123456789abc',type:'video',title:'Publication de test',language:'fr'};
 
-function client({base=apiBase,denyLogin=false,denyWrite=false,badSession=false,logoutFailure=false,initialPassword=false,shared=false,setupRequired=false,serviceFailure=false,staticItems=[],activation='c'.repeat(64)}={}){
+function client({base=apiBase,denyLogin=false,denyWrite=false,badSession=false,logoutFailure=false,initialPassword=false,shared=false,setupRequired=false,serviceFailure=false,staticItems=[],localAccount=null,activation='c'.repeat(64)}={}){
   const calls=[],events=[],timers=[],listeners=new Map();let live=false,checks=0,registered=false,expectedActivation=activation;const history=[];
   const response=(status,value)=>({ok:status>=200&&status<300,status,json:async()=>value});
-  const context=vm.createContext({URL,URLSearchParams,Event,File,Date,er:undefined,MX_SERVICE:{authentication:{apiBase:base,shared}},
+  const context=vm.createContext({URL,URLSearchParams,Event,File,Date,TextEncoder,Uint8Array,crypto:webcrypto,er:undefined,MX_SERVICE:{authentication:{apiBase:base,shared}},
     mxLocaleCatalogue:value=>({...value,items:value.items.filter(item=>item.language==='fr')}),document:{baseURI:'https://nachchatmahmoud-png.github.io/mediatheque/'},
     history:{replaceState:(_state,_title,url)=>history.push(url)},window:{location:{hash:activation?'#activation='+activation:'',pathname:'/mediatheque/fr/',search:'?view=manage'},addEventListener:(name,callback)=>listeners.set(name,callback),dispatchEvent:event=>events.push(event.type)},localStorage:{getItem(){throw new Error('No session storage');},setItem(){throw new Error('No session storage');}},
     setTimeout:(callback,delay)=>{if(delay<10000)queueMicrotask(callback);else timers.push(callback);return 1;},clearTimeout(){},
@@ -42,6 +43,7 @@ function client({base=apiBase,denyLogin=false,denyWrite=false,badSession=false,l
     },
   });
   vm.runInContext(source,context);
+  context.mxLocalAccountStorage=()=>({account:async()=>localAccount});
   return {context,calls,events,timers,history,receiveActivation:value=>{expectedActivation=value;context.window.location.hash='#activation='+value;listeners.get('hashchange')?.();}};
 }
 const login=value=>value.context.Ho('/api/auth/login',{method:'POST',body:JSON.stringify(credentials)});
@@ -115,6 +117,35 @@ test('an activation link opened while management is already displayed enables ac
   await value.context.Ho('/api/auth/register',{method:'POST',body:JSON.stringify({...credentials,confirmPassword:credentials.password})});
   assert.equal((await value.context.Ho('/api/auth/session')).setupRequired,false);
   assert.equal((await login(value)).authenticated,true);
+});
+
+test('signing in with a private owner link keeps the existing identifier and password automatically',async()=>{
+  const salt='b'.repeat(32),localAccount={username:'admin.test',salt,iterations:600000,passwordHash:pbkdf2Sync(credentials.password,Buffer.from(salt,'hex'),600000,32,'sha256').toString('hex')};
+  const value=client({shared:true,setupRequired:true,localAccount});
+  const auth=await login(value);assert.equal(auth.authenticated,true);assert.equal(auth.username,localAccount.username);
+  const transfer=value.calls.find(call=>call.url.endsWith('/api/auth/register'));assert.ok(transfer);
+  const data=JSON.parse(transfer.options.body);assert.equal(data.username,localAccount.username);assert.equal(data.password,undefined);assert.equal(data.legacyVerifier.passwordHash,localAccount.passwordHash);
+  const remoteLogin=value.calls.find(call=>call.url.endsWith('/api/auth/login'));assert.equal(JSON.parse(remoteLogin.options.body).password,credentials.password);
+  const denied=client({shared:true,setupRequired:true,localAccount});
+  await assert.rejects(denied.context.Ho('/api/auth/login',{method:'POST',body:JSON.stringify({...credentials,password:'incorrect'})}),/incorrect/);
+  assert.equal(denied.calls.some(call=>call.url.endsWith('/api/auth/register')),false);
+  const unapproved=client({shared:true,setupRequired:true,localAccount,activation:''});await assert.rejects(login(unapproved),/pas encore activé/);assert.equal(unapproved.calls.some(call=>call.url.endsWith('/api/auth/register')),false);
+});
+
+test('the connection form preserves an existing password without asking to create or confirm a new one',async()=>{
+  const value=client({shared:true,setupRequired:true}),hooks=[];let cursor=0,opened=0;
+  Object.assign(value.context,{O:{useState(initial){const index=cursor++;if(!(index in hooks))hooks[index]=initial;return [hooks[index],next=>{hooks[index]=typeof next==='function'?next(hooks[index]):next;}];},useEffect(){}},mxElement:(tag,props,...children)=>({tag,props:props||{},children:children.flat(Infinity).filter(Boolean)}),Wi:'Wi',zl:'zl',MxPasswordField:'MxPasswordField'});
+  vm.runInContext(await readFile(new URL('../interface/publisher.js',import.meta.url),'utf8'),value.context);
+  const render=()=>{cursor=0;return value.context.MxAdminLogin({auth:{configured:true,sharedMode:true,canSetup:true,setupRequired:true},onAuthenticated:async()=>{opened++;}});};
+  const nodes=tree=>[tree,...tree.children.flatMap(child=>child&&typeof child==='object'?nodes(child):[])];
+  let tree=render();const field=(tag,name)=>nodes(tree).find(node=>node.tag===tag&&node.props.name===name);
+  assert.equal(nodes(tree).some(node=>node.tag==='button'&&node.children.includes('Créer mon accès')),false);
+  assert.equal(nodes(tree).filter(node=>node.tag==='MxPasswordField').length,1);
+  assert.equal(field('MxPasswordField','password').props.autoComplete,'current-password');assert.equal(field('MxPasswordField','password').props.minLength,undefined);
+  field('input','username').props.onChange({target:{value:'Nachchat Mahmoud'}});field('MxPasswordField','password').props.onChange({target:{value:'Ancien2026'}});
+  tree=render();await nodes(tree).find(node=>node.tag==='form').props.onSubmit({preventDefault(){}});
+  assert.equal(opened,1);const payload=JSON.parse(value.calls.find(call=>call.url.endsWith('/api/auth/register')).options.body);
+  assert.equal(payload.username,'nachchat mahmoud');assert.equal(payload.password,'Ancien2026');assert.equal(payload.keepExistingAccess,true);assert.equal(payload.confirmPassword,undefined);
 });
 
 test('server rejection revokes the browser session and prevents further uploads',async()=>{

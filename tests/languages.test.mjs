@@ -43,7 +43,7 @@ test('French and Arabic pages use separate bundles with valid syntax and matchin
    const html=await readFile(join(output,language,'index.html'),'utf8');
    assert.match(html,new RegExp('lang="'+language+'" dir="'+(language==='ar'?'rtl':'ltr')+'"'));
    assert.match(html,/<base href="\.\.\/">/);
-   assert.match(html,new RegExp('app-'+language+'\\.js'));
+   assert.match(html,new RegExp('app-'+language+'\\.js\\?v=[a-f0-9]{16}'));
    const bundle=await readFile(join(output,'assets/app-'+language+'.js'),'utf8');
    assert.doesNotThrow(()=>new vm.Script(bundle));
    assert.ok(bundle.includes(language==='ar'?'مكتبة الفيديو':'Vidéothèque'));

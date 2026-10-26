@@ -40,6 +40,14 @@ test('the first shared account requires its private activation link and works fr
  assert.equal((await value.request('/api/auth/session',{token:second.body.sessionToken})).status,200);
 });
 
+test('a private owner link preserves existing credentials despite earlier rejected setup attempts',async()=>{
+ const value=setup(),existing={username:'Nachchat Mahmoud',password:'Ancien2026',keepExistingAccess:true};
+ for(let index=0;index<11;index++)assert.equal((await value.request('/api/auth/register',{method:'POST',body:existing})).status,index<10?403:429);
+ const created=await value.request('/api/auth/register',{method:'POST',activation:secret,body:existing});assert.equal(created.status,201,JSON.stringify(created.body));assert.equal(created.body.username,'nachchat mahmoud');
+ for(let index=0;index<2;index++)assert.equal((await value.request('/api/auth/login',{method:'POST',body:{username:existing.username,password:existing.password}})).status,200);
+ const other=setup();assert.equal((await other.request('/api/auth/register',{method:'POST',activation:secret,body:{...existing,keepExistingAccess:false,confirmPassword:existing.password}})).status,400);
+});
+
 test('shared publications become public immediately, uploads stay private and video range reads work',async()=>{
  const value=setup();await value.register();const {sessionToken}= (await value.login()).body;
  const png=new Uint8Array(await readFile(new URL('../site/images/logo-ministere.png',import.meta.url)));
@@ -86,6 +94,7 @@ test('only the owner can invite the three designated administrators, and activat
  const value=setup();await value.register();const owner=(await value.login()).body.sessionToken;
  assert.equal((await value.request('/api/accounts/invite',{method:'POST',body:{username:'katiri.abdelah'}})).status,401);
  const invite=await value.request('/api/accounts/invite',{method:'POST',token:owner,body:{username:'katiri.abdelah'}});assert.equal(invite.status,201);
+ assert.equal((await value.request('/api/auth/register',{method:'POST',activation:invite.body.activationToken,body:{username:'katiri.abdelah',password:'court',confirmPassword:'court',keepExistingAccess:true}})).status,400);
  assert.equal((await value.request('/api/auth/options',{activation:invite.body.activationToken})).body.registrationUsername,'katiri.abdelah');
  const created=await value.request('/api/auth/register',{method:'POST',activation:invite.body.activationToken,body:{username:'katiri.abdelah',password,confirmPassword:password}});assert.equal(created.status,201);
  assert.equal((await value.request('/api/auth/options',{activation:invite.body.activationToken})).body.canSetup,false);

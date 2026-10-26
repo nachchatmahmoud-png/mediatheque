@@ -27,6 +27,18 @@ function mxLocalAccountStorage() {
   return {account:()=>run('account','readonly',store=>store.get('owner')),create:account=>run('account','readwrite',store=>store.add(account,'owner')),save:account=>run('account','readwrite',store=>store.put(account,'owner')),session:id=>run('sessions','readonly',store=>store.get(id)),saveSession:session=>run('sessions','readwrite',store=>store.put(session)),deleteSession:id=>run('sessions','readwrite',store=>store.delete(id))};
 }
 
+async function mxExistingAccountProof(account,username,password){
+  if(!account||account.username!==username)throw new Error('Identifiant ou mot de passe incorrect.');
+  if(account.iterations!==600000||!/^[a-f0-9]{32}$/.test(account.salt||'')||!/^[a-f0-9]{64}$/.test(account.passwordHash||''))throw new Error('L’accès enregistré dans ce navigateur ne peut pas encore être transféré.');
+  const salt=new Uint8Array(account.salt.match(/../g).map(byte=>parseInt(byte,16)));
+  const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveBits']);
+  const bytes=new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',salt,iterations:account.iterations,hash:'SHA-256'},key,256));
+  const derived=Array.from(bytes,byte=>byte.toString(16).padStart(2,'0')).join('');let difference=0;
+  for(let index=0;index<derived.length;index++)difference|=derived.charCodeAt(index)^account.passwordHash.charCodeAt(index);
+  if(difference)throw new Error('Identifiant ou mot de passe incorrect.');
+  return {salt:account.salt,passwordHash:account.passwordHash,iterations:account.iterations};
+}
+
 function createMxLocalAdministration(storage=mxLocalAccountStorage(),contentStorage=mxBrowserTestStorage('mediatheque-contenus-locaux-v1')) {
   const contents=createMxTestAdministration(contentStorage,{localMode:true});
   const key='mediatheque-session-locale-v1',idle=30*60*1000,lifetime=8*60*60*1000,iterations=600000;

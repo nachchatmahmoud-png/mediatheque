@@ -51,7 +51,15 @@ const MxAdministration=(()=>{
     if(!apiBase)throw new Error(unavailable);
     const username=typeof credentials?.username==='string'?credentials.username.trim().toLowerCase():'';
     const password=credentials?.password;
-    if(!/^[a-z0-9][a-z0-9._@-]{2,59}$/.test(username)||typeof password!=='string'||!password||password.length>512)throw new Error('Renseignez votre identifiant et votre mot de passe.');
+    if(!/^[\p{L}\p{N}][\p{L}\p{M}\p{N}._@ -]{2,59}$/u.test(username)||typeof password!=='string'||!password||new TextEncoder().encode(password).length>512)throw new Error('Renseignez votre identifiant et votre mot de passe.');
+    if(sharedMode&&activationToken){
+      setupInfo=await request('/api/auth/options',{authenticated:false,headers:{Authorization:'Activation '+activationToken}});
+      if(setupInfo.canSetup&&setupInfo.setupRequired&&!setupInfo.registrationUsername){
+        let account;try{account=await mxLocalAccountStorage().account();}catch{}
+        const proof=account?await mxExistingAccountProof(account,username,password):null;
+        await register({username,...(proof?{legacyVerifier:proof}:{keepExistingAccess:true,password})});
+      }
+    }
     const result=await request('/api/auth/login',{method:'POST',authenticated:false,headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
     return installSession(result,username);
   }
