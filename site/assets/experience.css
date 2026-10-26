@@ -505,3 +505,25 @@ html[dir=rtl] .mx-language-feature p { font-size:14px; line-height:2; }
 .mx-existing-local-access strong { font-size:14px; }
 .mx-login-panel .mx-existing-local-access p { font-size:12px; line-height:1.8; }
 .mx-existing-local-access .button { white-space:normal; text-align:center; }
+
+/* One video shared by the selected language pages. */
+.mx-video-pages { margin-bottom:24px; padding:20px; background:#f1f6f0; border:1px solid var(--mx-line); border-radius:12px; }
+.mx-video-pages>strong { display:block; color:var(--mx-green); font-size:15px; margin-bottom:12px; }
+.mx-video-pages>small { display:block; color:#536b60; line-height:1.6; margin-top:12px; }
+.mx-video-page-choices { display:flex; flex-wrap:wrap; gap:12px; }
+.mx-video-page-choice { display:flex; align-items:center; gap:10px; min-height:48px; min-width:140px; padding:10px 16px; background:#fff; border:1px solid #cbd9ce; border-radius:8px; cursor:pointer; }
+.mx-video-page-choice.selected { border-color:var(--mx-green); box-shadow:inset 0 0 0 1px var(--mx-green); color:var(--mx-green); }
+.mx-video-page-choice input { width:18px; height:18px; margin:0; accent-color:var(--mx-green); }
+.mx-video-page-choice span { font-weight:600; }
+.mx-video-editions { display:grid; gap:18px; margin-top:22px; }
+.mx-video-edition { padding:22px; border:1px solid var(--mx-line); border-radius:12px; background:#fff; min-width:0; }
+.mx-video-edition h3 { margin:0 0 8px; color:var(--mx-green); font-size:17px; }
+.mx-video-edition>p { color:#637369; margin:0 0 18px; font-size:13px; line-height:1.7; }
+.mx-video-edition .field+.field { margin-top:16px; }
+.mx-guide-editions p { display:grid; gap:5px; padding-bottom:12px; border-bottom:1px solid var(--mx-line); }
+.mx-guide-editions small { color:#6c7a70; font-size:11px; }
+.mx-guide-editions span { color:#254f40; font-size:14px; line-height:1.6; }
+.mx-preview-language-choices { display:flex; gap:8px; margin:14px 0 22px; }
+.mx-preview-language-choices button { border:1px solid var(--mx-line); border-radius:8px; padding:10px 18px; background:#fff; color:var(--mx-green); cursor:pointer; font:inherit; }
+.mx-preview-language-choices button[aria-pressed=true] { background:var(--mx-green); color:#fff; border-color:var(--mx-green); }
+@media(max-width:600px) { .mx-video-pages,.mx-video-edition { padding:16px; } .mx-video-page-choice { min-width:0; flex:1; } }

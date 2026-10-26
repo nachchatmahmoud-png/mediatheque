@@ -60,6 +60,7 @@ function createMxTestAdministration(storage=mxBrowserTestStorage(),{localMode=fa
       mxValidateFile(file,expected);assets.set(ref,{id:ref,blob:file,name:file.name});return ref;
     };
     const item={id,type:input.type,title:bounded(input.title,180,true),date,topic:input.topic,language:input.language,status:'published',description:bounded(input.description,1200),credit:bounded(input.credit,200),content:'',location:'',duration:'',transcript:'',thumbnailUrl:'',mediaUrl:'',fileUrl:'',captionsUrl:'',spokenLanguage:'',captionsLanguage:'',captionsSource:'',captionsValidated:false,photos:[],keywords:[input.topic],eventId:null,...(localMode?{localOnly:true}:{testOnly:true}),createdAt:new Date().toISOString()};
+    if(input.type==='video'&&input.translations!==undefined)Object.assign(item,mxVideoEditions(Object.keys(input.translations),input.translations));
     if(item.type==='photo'){
       item.location=bounded(input.location,150);
       if(!Array.isArray(input.photos)||!input.photos.length||input.photos.length>30)throw new Error('Sélectionnez entre 1 et 30 photographies.');
@@ -73,7 +74,7 @@ function createMxTestAdministration(storage=mxBrowserTestStorage(),{localMode=fa
       if(!item.thumbnailUrl)throw new Error('Ajoutez une miniature pour présenter la vidéo.');
       if(!['fr','ar','mixed'].includes(input.spokenLanguage))throw new Error('Choisissez la langue parlée dans la vidéo.');
       item.spokenLanguage=input.spokenLanguage;
-      if(item.language==='fr'&&item.spokenLanguage!=='fr'&&!item.description)throw new Error('Ajoutez un bref résumé en français.');
+      if(!item.translations&&item.language==='fr'&&item.spokenLanguage!=='fr'&&!item.description)throw new Error('Ajoutez un bref résumé en français.');
       if(input.captionsLanguage){
         if(!['fr','ar'].includes(input.captionsLanguage)||input.captionsValidated!==true)throw new Error('Vérifiez et validez les sous-titres.');
         const youtube=!!mxYoutubeThumbnail(item.mediaUrl);
@@ -100,7 +101,11 @@ function createMxTestAdministration(storage=mxBrowserTestStorage(),{localMode=fa
       if(!objectUrls.has(ref))objectUrls.set(ref,URL.createObjectURL(assets.get(ref)));
       return objectUrls.get(ref);
     };
-    const items=data.items.map(item=>({...item,thumbnailUrl:hydrate(item.thumbnailUrl),mediaUrl:hydrate(item.mediaUrl),fileUrl:hydrate(item.fileUrl),captionsUrl:hydrate(item.captionsUrl),photos:item.photos.map(photo=>({...photo,url:hydrate(photo.url)}))}));
+    const items=data.items.flatMap(item=>{
+      const hydrated={...item,thumbnailUrl:hydrate(item.thumbnailUrl),mediaUrl:hydrate(item.mediaUrl),fileUrl:hydrate(item.fileUrl),captionsUrl:hydrate(item.captionsUrl),photos:item.photos.map(photo=>({...photo,url:hydrate(photo.url)}))};
+      if(!item.translations)return [hydrated];
+      return Object.entries(item.translations).map(([language,fields])=>({...hydrated,...fields,language,id:language===item.language?item.id:item.id+'-'+language}));
+    });
     return {...base,items:[...items,...(base.items||[])]};
   }
   async function reset() {

@@ -1,5 +1,5 @@
 import {publicationToCatalogue,validateAsset,MIB} from '../../github-pages/catalogue.ts';
-import {topics,youtubeEmbed} from '../../app/lib/model.ts';
+import {topics,youtubeEmbed,validateVideoTranslations} from '../../app/lib/model.ts';
 
 export class ServiceError extends Error {
   status:number;
@@ -39,6 +39,12 @@ export async function preparePublication(input:unknown,accountId:string,findUplo
     const path=name+'.'+ext;paths.set(ref,path);assets.push({path,upload});return path;
   };
   const record:Record<string,any>={version:1,status:'published',title:text(v.title,180,true),date,topic:v.topic,language:v.language,description:text(v.description,1200),credit:text(v.credit,200),keywords:[v.topic]};
+  if(v.translations!==undefined){
+    if(v.type!=='video')throw new ServiceError('Les versions linguistiques concernent les vidéos.');
+    try{record.translations=validateVideoTranslations(v.translations);}catch(error){throw new ServiceError(error instanceof Error?error.message:'Vérifiez les traductions de la vidéo.');}
+    const primary=record.translations[v.language];if(!primary)throw new ServiceError('La page principale doit être sélectionnée.');
+    Object.assign(record,primary);
+  }
   if(v.type==='photo'){
     record.location=text(v.location,150);
     if(!Array.isArray(v.photos)||!v.photos.length||v.photos.length>30||v.photos.some((p:any)=>!p||typeof p!=='object'))throw new ServiceError('Sélectionnez entre 1 et 30 photographies.');
@@ -51,7 +57,7 @@ export async function preparePublication(input:unknown,accountId:string,findUplo
     const media=uploaded?{file:await asset(v.mediaUrl,'video','videos/video')}:{url:https(v.mediaUrl)};
     const isYoutube=!!youtubeEmbed('url' in media?media.url||'':'');
     if(!['ar','fr','mixed'].includes(v.spokenLanguage))throw new ServiceError('Choisissez la langue parlée dans la vidéo.');
-    if(v.language==='fr'&&v.spokenLanguage!=='fr'&&!record.description)throw new ServiceError('Ajoutez un bref résumé en français.');
+    if(!record.translations&&v.language==='fr'&&v.spokenLanguage!=='fr'&&!record.description)throw new ServiceError('Ajoutez un bref résumé en français.');
     const video:Record<string,unknown>={...media,title:record.title,spokenLanguage:v.spokenLanguage,captionsLanguage:v.captionsLanguage||'',captionsSource:v.captionsSource||'',captionsValidated:v.captionsValidated===true};
     if(typeof v.thumbnailUrl==='string'&&v.thumbnailUrl.startsWith('admin-upload:'))video.cover=await asset(v.thumbnailUrl,'photo','photos/miniature');
     else if(!isYoutube)throw new ServiceError('Ajoutez une miniature pour cette vidéo.');

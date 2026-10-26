@@ -90,3 +90,21 @@ test('browser ZIP writer produces a readable dossier accepted by the public cata
     assert.throws(() => publicationToCatalogue({...record, photos: [{file: '../private.png'}]}, folder));
   } finally { await rm(temporary, {recursive: true, force: true}); }
 });
+
+test('the GitHub catalogue builds two language pages from one video dossier and one set of files',async()=>{
+ const temporary=await mkdtemp(join(tmpdir(),'mediatheque-bilingual-'));
+ try{
+  const id='video-bilingue',folder=join(temporary,'source',id),video=new Uint8Array([0,0,0,20,102,116,121,112,0,0,0,0]);
+  const cover=await readFile(join(root,'site/images/logo-ministere.png'));
+  await mkdir(join(folder,'videos'),{recursive:true});await mkdir(join(folder,'photos'),{recursive:true});
+  const record={version:1,status:'published',title:'Programme de logement',date:'2026-10-26',topic:'Vie institutionnelle',keywords:['Vie institutionnelle'],language:'fr',translations:{fr:{title:'Programme de logement'},ar:{title:'برنامج السكن'}},videos:[{file:'videos/video.mp4',cover:'photos/miniature.png',spokenLanguage:'ar'}]};
+  await writeFile(join(folder,'publication.json'),JSON.stringify(record));await writeFile(join(folder,'videos/video.mp4'),video);await writeFile(join(folder,'photos/miniature.png'),cover);
+  const normalized=publicationToCatalogue(record,id);assert.equal(normalized.assets.length,2);
+  const catalogue=await buildCatalogue(join(temporary,'source'),join(temporary,'output'));
+  assert.equal(catalogue.items.length,2);assert.equal(catalogue.events.length,2);
+  const fr=catalogue.items.find(item=>item.language==='fr'),ar=catalogue.items.find(item=>item.language==='ar');
+  assert.equal(fr.title,'Programme de logement');assert.equal(ar.title,'برنامج السكن');assert.equal(fr.mediaUrl,ar.mediaUrl);assert.equal(fr.thumbnailUrl,ar.thumbnailUrl);
+  assert.equal(catalogue.events.find(event=>event.id===fr.eventId).title,fr.title);assert.equal(catalogue.events.find(event=>event.id===ar.eventId).title,ar.title);
+  assert.deepEqual(new Uint8Array(await readFile(join(temporary,'output/medias',id,'videos/video.mp4'))),video);
+ }finally{await rm(temporary,{recursive:true,force:true});}
+});

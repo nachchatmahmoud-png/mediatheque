@@ -1,4 +1,4 @@
-import {validateEvent,validateVideoLanguages,youtubeEmbed,type MediaItem,type MediaEvent,defaultSettings} from '../app/lib/model.ts';
+import {validateEvent,validateVideoLanguages,validateVideoTranslations,youtubeEmbed,type MediaItem,type MediaEvent,defaultSettings} from '../app/lib/model.ts';
 
 export const MIB=1024*1024;
 const text=(v:unknown,max:number,label:string)=>{if(v===undefined)return '';if(typeof v!=='string'||v.length>max)throw new Error(label+' non valide.');return v.trim();};
@@ -16,11 +16,23 @@ export function validateAsset(bytes:Uint8Array,file:string){
  const valid=ext==='jpg'||ext==='jpeg'?bytes[0]===255&&bytes[1]===216&&bytes[2]===255:ext==='png'?bytes[0]===137&&head.slice(1,4)==='PNG'&&bytes[4]===13&&bytes[5]===10&&bytes[6]===26&&bytes[7]===10:ext==='webp'?head.startsWith('RIFF')&&head.slice(8,12)==='WEBP':ext==='mp4'?head.slice(4,8)==='ftyp':ext==='webm'?bytes[0]===0x1a&&bytes[1]===0x45&&bytes[2]===0xdf&&bytes[3]===0xa3:ext==='pdf'?head.startsWith('%PDF-'):new TextDecoder().decode(bytes.subarray(0,100)).replace(/^\uFEFF/,'').startsWith('WEBVTT');
  if(!valid)throw new Error(file+' : le contenu ne correspond pas au format annoncé.');
 }
-export function publicationToCatalogue(raw:unknown,id:string){
+export function publicationToCatalogue(raw:unknown,id:string):{event:MediaEvent;events:MediaEvent[];items:MediaItem[];assets:string[];published:boolean}{
  if(!/^[a-z0-9][a-z0-9-]{2,79}$/.test(id))throw new Error('Le nom du dossier doit comporter 3 à 80 lettres minuscules, chiffres ou tirets.');
  if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('Fiche de publication non valide.');
  const v=raw as Record<string,unknown>;
  if(v.version!==1||!['draft','published'].includes(String(v.status)))throw new Error('Version ou état de la publication non valide.');
+ const translations=validateVideoTranslations(v.translations);
+ if(translations){
+  const videos=records(v.videos,'Vidéos',10);
+  if(videos.length!==1||records(v.photos,'Photographies',30).length||records(v.press,'Communiqués',10).length)throw new Error('Les versions linguistiques doivent concerner une seule vidéo.');
+  if(id.length>77||!Object.hasOwn(translations,String(v.language)))throw new Error('Vérifiez la langue principale et le nom du dossier de la vidéo.');
+  const editions=Object.entries(translations).map(([language,fields])=>{
+   const edition=publicationToCatalogue({...v,translations:undefined,language,...fields,videos:[{...videos[0],title:fields.title,transcript:''}]},id);
+   const event={...edition.event,id:id+'-'+language};
+   return {...edition,event,items:edition.items.map(item=>({...item,id:item.id+'-'+language,eventId:event.id,eventTitle:fields.title}))};
+  });
+  return {event:editions[0].event,events:editions.map(edition=>edition.event),items:editions.flatMap(edition=>edition.items),assets:[...new Set(editions.flatMap(edition=>edition.assets))],published:v.status==='published'};
+ }
  const event:MediaEvent={...validateEvent(v,{requireDescription:false}),id};
  if(v.language!==undefined&&!['fr','ar'].includes(String(v.language)))throw new Error('Langue non valide.');
  const credit=text(v.credit,200,'Crédit'),language=v.language==='ar'?'ar':'fr',assets=new Set<string>();
@@ -41,6 +53,6 @@ export function publicationToCatalogue(raw:unknown,id:string){
   items.push({...common,id:id+'-press-'+(index+1),type:'press',title:text(press.title,180,'Titre du communiqué')||event.title,content,fileUrl});
  });
  if(v.status==='published'&&!items.length)throw new Error('Ajoutez au moins une vidéo, un album ou un communiqué.');
- return {event,items,assets:[...assets],published:v.status==='published'};
+ return {event,events:[event],items,assets:[...assets],published:v.status==='published'};
 }
 export const emptyCatalogue=()=>({items:[] as MediaItem[],events:[] as MediaEvent[],settings:{...defaultSettings},isAdmin:false as const});

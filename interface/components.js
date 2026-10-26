@@ -204,9 +204,12 @@ function MxPhotoPreview({ file, caption, index, total, cover, onCover, onCaption
         h('button', { type: 'button', className: 'mx-remove', onClick: onRemove, 'aria-label': 'Retirer ' + file.name }, 'Retirer'))));
 }
 
-function MxPublicationPreview({ type, title, date, topic, description, credit, location, language, photos, captions, video, videoUrl, thumbnail, videoLanguages, captionsFile, press, pressText, onClose }) {
+function MxPublicationPreview({ type, title, date, topic, description, credit, location, language, editions, photos, captions, video, videoUrl, thumbnail, videoLanguages, captionsFile, press, pressText, onClose }) {
   const h = mxElement;
   const [urls, setUrls] = O.useState({ photos: [], video: '', press: '' });
+  const [previewLanguage,setPreviewLanguage]=O.useState(language==='ar'?'ar':'fr');
+  const currentLanguage=editions?(editions[previewLanguage]?previewLanguage:Object.keys(editions)[0]||language):language;
+  const currentEdition=editions?.[currentLanguage],currentTitle=currentEdition?.title??title,currentDescription=currentEdition?.description??description,currentCredit=currentEdition?.credit??credit;
   const poster = mxUseObjectUrl(thumbnail);
   const subtitles = mxUseObjectUrl(captionsFile);
   O.useEffect(() => {
@@ -217,14 +220,15 @@ function MxPublicationPreview({ type, title, date, topic, description, credit, l
   return h(Ul, { label: 'Aperçu de la publication', onClose, wide: true },
     h('div', { className: 'mx-publication-preview' },
       h('div', { className: 'eyebrow' }, 'APERÇU AVANT PUBLICATION'),
-      h('h2', { dir: 'auto' }, title || 'Titre à renseigner'),
+      editions&&Object.keys(editions).length>1&&h('div',{className:'mx-preview-language-choices',role:'group','aria-label':'Langue de l’aperçu'},...Object.keys(editions).map(locale=>h('button',{key:locale,type:'button','aria-pressed':locale===currentLanguage,onClick:()=>setPreviewLanguage(locale),lang:locale},locale==='fr'?'Français':'العربية'))),
+      h('h2', { dir: currentLanguage==='ar'?'rtl':'auto',lang:currentLanguage }, currentTitle || 'Titre à renseigner'),
       h('p', { className: 'mx-preview-meta' }, date && Ya(date), ' · ', topic),
       videoLanguages&&h(MxVideoLanguage,{item:videoLanguages}),
-      thumbnail && h('div',{className:'mx-preview-cover'},h('span',{className:'eyebrow'},'MINIATURE DANS L’ACCUEIL'),h(MxThumbnailImage,{source:thumbnail,title})),
-      description && h('p', { dir: language === 'ar' ? 'rtl' : 'auto' }, description),
-      (credit||location)&&h('dl',{className:'mx-preview-details'},location&&h('div',null,h('dt',null,'Lieu des prises de vue'),h('dd',{dir:'auto'},location)),credit&&h('div',null,h('dt',null,MX_PUBLICATION_FORMS[type]?.creditLabel||'Crédits'),h('dd',{dir:'auto'},credit))),
+      thumbnail && h('div',{className:'mx-preview-cover'},h('span',{className:'eyebrow'},'MINIATURE DANS L’ACCUEIL'),h(MxThumbnailImage,{source:thumbnail,title:currentTitle})),
+      currentDescription && h('p', { dir: currentLanguage === 'ar' ? 'rtl' : 'auto',lang:currentLanguage }, currentDescription),
+      (currentCredit||location)&&h('dl',{className:'mx-preview-details'},location&&h('div',null,h('dt',null,'Lieu des prises de vue'),h('dd',{dir:'auto'},location)),currentCredit&&h('div',null,h('dt',null,MX_PUBLICATION_FORMS[type]?.creditLabel||'Crédits'),h('dd',{dir:'auto'},currentCredit))),
       urls.photos.length > 0 && h('div', { className: 'mx-preview-gallery' }, urls.photos.map((url, index) => h('figure', { key: url }, h('img', { src: url, alt: captions[index] || 'Photo ' + (index + 1) }), captions[index] && h('figcaption', null, captions[index])))),
-      urls.video && h('video', { controls: true, preload: 'metadata', src: urls.video, poster, 'aria-label': title || 'Vidéo à publier' },subtitles&&videoLanguages?.captionsValidated&&h('track',{kind:'subtitles',src:subtitles,srcLang:videoLanguages.captionsLanguage,label:videoLanguages.captionsLanguage==='fr'?'Français':'العربية',default:true})),
+      urls.video && h('video', { controls: true, preload: 'metadata', src: urls.video, poster, 'aria-label': currentTitle || 'Vidéo à publier' },subtitles&&videoLanguages?.captionsValidated&&h('track',{kind:'subtitles',src:subtitles,srcLang:videoLanguages.captionsLanguage,label:videoLanguages.captionsLanguage==='fr'?'Français':'العربية',default:true})),
       mxHttps(videoUrl) && h('a', { className: 'button secondary', href: mxHttps(videoUrl), target: '_blank', rel: 'noreferrer' }, 'Vérifier le lien vidéo', h(Oe, { size: 16 })),
       urls.press && h('a', { className: 'button secondary', href: urls.press, target: '_blank', rel: 'noreferrer' }, 'Ouvrir le PDF sélectionné', h(Oe, { size: 16 })),
       pressText && h('div', { className: 'mx-preview-text', dir: language === 'ar' ? 'rtl' : 'auto' }, pressText),

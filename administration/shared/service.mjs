@@ -69,7 +69,7 @@ async function activation(store,env,request){
 async function catalogue(store,url){
  const output=emptyCatalogue(),rows=await store.db.prepare('SELECT folder,record FROM publications ORDER BY created_at DESC LIMIT 2000').all();
  const convert=value=>typeof value==='string'&&value.startsWith('./medias/')?url.origin+'/api/media/'+value.slice(9):value;
- for(const row of rows.results){const record=publicationToCatalogue(JSON.parse(row.record),row.folder);if(!record.published)continue;output.events.push(record.event);output.items.push(...record.items.map(item=>({...item,thumbnailUrl:convert(item.thumbnailUrl),mediaUrl:convert(item.mediaUrl),fileUrl:convert(item.fileUrl),captionsUrl:convert(item.captionsUrl),photos:item.photos.map(photo=>({...photo,url:convert(photo.url)}))})));}
+ for(const row of rows.results){const record=publicationToCatalogue(JSON.parse(row.record),row.folder);if(!record.published)continue;output.events.push(...record.events);output.items.push(...record.items.map(item=>({...item,thumbnailUrl:convert(item.thumbnailUrl),mediaUrl:convert(item.mediaUrl),fileUrl:convert(item.fileUrl),captionsUrl:convert(item.captionsUrl),photos:item.photos.map(photo=>({...photo,url:convert(photo.url)}))})));}
  return output;
 }
 async function media(store,request,url){

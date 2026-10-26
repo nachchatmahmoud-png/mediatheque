@@ -23,7 +23,7 @@ export async function buildCatalogue(source,output){
    const bytes=await readFile(current);validateAsset(bytes,file);
    const destination=join(output,'medias',entry.name,file);await mkdir(dirname(destination),{recursive:true});await writeFile(destination,bytes);
   }
-  result.events.push(record.event);result.items.push(...record.items);
+  result.events.push(...record.events);result.items.push(...record.items);
  }
  result.events.sort((a,b)=>b.date.localeCompare(a.date));result.items.sort((a,b)=>b.date.localeCompare(a.date));
  await writeFile(join(output,'catalogue.json'),JSON.stringify(result));return result;

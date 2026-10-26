@@ -55,6 +55,30 @@ test('shared publications become public immediately, uploads stay private and vi
  const range=await value.request(new URL(item.mediaUrl).pathname,{headers:{Range:'bytes=4-7'}});assert.equal(range.status,206);assert.equal(range.headers.get('Content-Range'),'bytes 4-7/12');assert.equal(new TextDecoder().decode(range.body),'ftyp');
 });
 
+test('one uploaded Arabic video publishes two distinct language entries sharing the same files',async()=>{
+ const value=setup();await value.register();const token=(await value.login()).body.sessionToken;
+ const stage=async(name,bytes)=>(await value.request('/api/uploads?name='+name,{method:'POST',body:bytes,token})).body.url;
+ const thumbnailUrl=await stage('miniature.png',new Uint8Array(await readFile(new URL('../site/images/logo-ministere.png',import.meta.url))));
+ const mediaUrl=await stage('video.mp4',new Uint8Array([0,0,0,20,102,116,121,112,0,0,0,0]));
+ const translations={fr:{title:'Présentation du programme de logement',description:'',credit:''},ar:{title:'تقديم برنامج السكن',description:'',credit:''}};
+ const input={requestId:crypto.randomUUID(),type:'video',title:translations.fr.title,date:'2026-10-26',topic:'Vie institutionnelle',language:'fr',spokenLanguage:'ar',mediaUrl,thumbnailUrl,translations};
+ const first=await value.request('/api/publications',{method:'POST',token,body:input});assert.equal(first.status,201,JSON.stringify(first.body));
+ assert.equal((await value.request('/api/publications',{method:'POST',token,body:input})).body.id,first.body.id);
+ const catalogue=(await value.request('/api/catalogue',{origin:''})).body;
+ assert.equal(catalogue.items.length,2);assert.equal(catalogue.events.length,2);
+ const fr=catalogue.items.find(item=>item.language==='fr'),ar=catalogue.items.find(item=>item.language==='ar');
+ assert.equal(fr.title,translations.fr.title);assert.equal(ar.title,translations.ar.title);assert.notEqual(fr.id,ar.id);assert.notEqual(fr.eventId,ar.eventId);
+ assert.equal(fr.mediaUrl,ar.mediaUrl);assert.equal(fr.thumbnailUrl,ar.thumbnailUrl);assert.equal(fr.spokenLanguage,'ar');assert.equal(ar.spokenLanguage,'ar');
+ assert.equal(value.files.size,2);assert.equal(value.sqlite.prepare('SELECT COUNT(*) AS count FROM publications').get().count,1);
+ for(const invalid of [{...translations,fr:{title:'عنوان بالعربية'}},{fr:translations.fr,ar:{title:'Titre non traduit'}},{fr:{title:''},ar:translations.ar},{}]){
+  const response=await value.request('/api/publications',{method:'POST',token,body:{...input,requestId:crypto.randomUUID(),translations:invalid}});assert.equal(response.status,400);
+ }
+ assert.equal(value.sqlite.prepare('SELECT COUNT(*) AS count FROM publications').get().count,1);
+ const arabic=await value.request('/api/publications',{method:'POST',token,body:{...input,requestId:crypto.randomUUID(),language:'ar',title:translations.ar.title,translations:{ar:translations.ar}}});assert.equal(arabic.status,201);
+ const after=(await value.request('/api/catalogue',{origin:''})).body;
+ assert.equal(after.items.filter(item=>item.language==='fr').length,1);assert.equal(after.items.filter(item=>item.language==='ar').length,2);assert.equal(value.files.size,2);
+});
+
 test('only the owner can invite the three designated administrators, and activation links are single use',async()=>{
  const value=setup();await value.register();const owner=(await value.login()).body.sessionToken;
  assert.equal((await value.request('/api/accounts/invite',{method:'POST',body:{username:'katiri.abdelah'}})).status,401);
