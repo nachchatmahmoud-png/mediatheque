@@ -1,5 +1,14 @@
 /* Shared visual refinements for the catalogue and the publishing workspace. */
+@font-face {
+  font-family: "Noto Sans Arabic";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("./noto-sans-arabic.woff2") format("woff2");
+}
 :root { --mx-paper: #f5f6f1; --mx-green: #154e41; --mx-line: #dce5dc; }
+html[lang=ar] { --sans: "Noto Sans Arabic", Tahoma, Arial, sans-serif; --serif: var(--sans); }
+[lang=ar]:not(html) { font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif; letter-spacing: normal; }
 html { scroll-behavior: smooth; }
 button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible {
@@ -9,7 +18,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .hero-grid { padding: 28px 0 62px; gap: 48px; }
 .hero-copy h1 { font-size: clamp(42px, 4.15vw, 58px); }
 .hero-copy > p { max-width: 540px; font-size: 15px; line-height: 1.8; }
-.hero-footnote { margin-top: 20px; }
+.hero-footnote { margin-top: 20px; font-size: 14px; line-height: 1.8; font-weight: 500; color: #5d7267; }
+.hero-footnote .little-line { flex-shrink: 0; }
 .mx-hero-search { margin-top: 25px; }
 .mx-hero-search > label { display: block; color: #234c3f; font-weight: 600; font-size: 13px; margin-bottom: 10px; }
 .mx-hero-search-box { display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid #d3dfd2; border-radius: 10px; padding: 6px 6px 6px 15px; box-shadow: 0 5px 24px #143e2b06; }
@@ -17,7 +27,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .mx-hero-search-box input { width: 100%; min-width: 0; border: 0; background: transparent; padding: 10px 0; font: inherit; font-size: 14px; color: #14392e; }
 .mx-hero-search-box input:focus { outline-offset: 0; }
 .mx-hero-search-box .button { min-height: 44px; gap: 10px; padding: 12px 15px; flex-shrink: 0; font-size: 13px; }
-.mx-hero-search .mx-search-hint { font-size: 11px; line-height: 1.6; margin-top: 9px; color: #5d7267; }
+.mx-hero-search .mx-search-hint { font-size: 14px; line-height: 1.8; font-weight: 500; margin-top: 9px; color: #5d7267; }
 .ministry-video-screen { background: #123b32; min-height:0; }
 .ministry-video-cover img { object-fit: cover; }
 .mx-video-language { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:0 0 16px; }
@@ -455,19 +465,19 @@ body { background:#fcfdfb; color:var(--mx-ink); }
 .mx-language-feature h2 { font-family:var(--serif); font-size:36px; line-height:1.2; letter-spacing:-.5px; font-weight:400; max-width:400px; margin:0 0 17px; color:#204e36; }
 .mx-language-feature p { font-size:13px; line-height:1.9; color:#647c59; max-width:370px; }
 .mx-language-feature .button { margin-top:18px; font-size:12px; }
-html[dir=rtl] body { font-family:Tahoma,Arial,sans-serif; }
+html[dir=rtl] body { font-family:var(--sans); line-height:1.85; }
 html[dir=rtl] .brand.institution,html[dir=rtl] .collection-link,html[dir=rtl] .mx-event-spotlight { text-align:right; }
 html[dir=rtl] .brand.institution strong { font-size:14px; line-height:1.9; }
 html[dir=rtl] .main-nav { gap:19px; }
 html[dir=rtl] .main-nav button { font-size:13px; }
 html[dir=rtl] .eyebrow { letter-spacing:0; font-size:12px; }
-html[dir=rtl] h1,html[dir=rtl] h2,html[dir=rtl] h3 { font-family:Tahoma,Arial,sans-serif; letter-spacing:0; }
+html[dir=rtl] h1,html[dir=rtl] h2,html[dir=rtl] h3 { font-family:var(--sans); letter-spacing:0; }
 html[dir=rtl] .hero-copy h1 { font-size:clamp(33px,3.2vw,44px); font-weight:500; line-height:1.65; margin-top:14px; margin-bottom:14px; }
 html[dir=rtl] .hero-copy > p { font-size:15px; line-height:2.15; }
 html[dir=rtl] .hero-copy h1 em { font-style:normal; }
 html[dir=rtl] .mx-hero-search-box { padding:6px 15px 6px 6px; }
 html[dir=rtl] .mx-hero-search > label { font-size:13px; }
-html[dir=rtl] .hero-footnote { font-size:12px; }
+html[dir=rtl] .hero-footnote,html[dir=rtl] .mx-hero-search .mx-search-hint { font-size:15px; line-height:1.9; }
 html[dir=rtl] .ministry-video-meta h2 { font-size:17px; line-height:1.9; }
 html[dir=rtl] .section-heading h2,html[dir=rtl] .mx-section-title h2 { font-size:29px; line-height:1.8; }
 html[dir=rtl] .section-heading p { font-size:13px; line-height:2; }
@@ -476,7 +486,7 @@ html[dir=rtl] .mx-filter-field select { padding:13px 13px 13px 32px; }
 html[dir=rtl] .mx-event-spotlight small { letter-spacing:0; }
 html[dir=rtl] .press-band h2 { font-size:29px; line-height:1.7; }
 html[dir=rtl] .press-band p { line-height:2; }
-html[dir=rtl] .mx-footer-wordmark > strong { font-family:Tahoma,Arial,sans-serif; font-size:28px; line-height:1.9; }
+html[dir=rtl] .mx-footer-wordmark > strong { font-family:var(--sans); font-size:28px; line-height:1.9; }
 html[dir=rtl] .mx-footer-wordmark .eyebrow { font-size:10px; letter-spacing:0; }
 html[dir=rtl] .footer-contact p { line-height:2; }
 html[dir=rtl] .breadcrumb svg,html[dir=rtl] .button > svg:last-child,html[dir=rtl] .collection-link > svg { transform:scaleX(-1); }
