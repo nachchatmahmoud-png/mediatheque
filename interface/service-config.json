@@ -2,6 +2,6 @@
   "provider": "github",
   "repository": "nachchatmahmoud-png/mediatheque",
   "branch": "main",
-  "management": {"mode": "production"},
+  "management": {"mode": "local"},
   "authentication": {"apiBase": ""}
 }

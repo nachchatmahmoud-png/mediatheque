@@ -22,7 +22,10 @@ export async function buildInterface(root, output) {
   bundle = bundle.replace(baseMarker, 'var $s=new URL(".",document.baseURI).pathname.replace(/\\/$/,"");');
   // Bundle the last verified official video so the first render needs no request.
   const latest=JSON.parse(await readFile(join(root,'site/latest-video.json'),'utf8'));
+  const frenchLatest=JSON.parse(await readFile(join(root,'site/latest-video-fr.json'),'utf8'));
+  for(const video of [latest,frenchLatest])if(video.format!=='landscape'||!Number.isInteger(video.width)||!Number.isInteger(video.height)||video.height<=0||video.width<=video.height)throw new Error('La vidéo d’accueil doit être au format horizontal.');
   if(latest.channelId!=='UCIKc_HXIZnAmfO9ulxf80EQ'||latest.channelUrl!=='https://www.youtube.com/@Matnuhpv'||!/^[-\w]{11}$/.test(latest.videoId)||typeof latest.title!=='string'||!latest.title.trim()||Number.isNaN(Date.parse(latest.publishedAt)))throw new Error('La dernière vidéo officielle est non valide.');
+  if(frenchLatest.channelId!==latest.channelId||frenchLatest.channelUrl!==latest.channelUrl||!/^[-\w]{11}$/.test(frenchLatest.videoId)||typeof frenchLatest.title!=='string'||!frenchLatest.title.trim()||/[\u0600-\u06ff]/u.test(frenchLatest.title)||Number.isNaN(Date.parse(frenchLatest.publishedAt)))throw new Error('Le titre français de la vidéo officielle est non valide.');
   bundle=bundle.replace(/var ar=\{[\s\S]*?\};var ge=/,()=> 'var ar='+JSON.stringify(latest)+';var ge=');
   bundle=bundle.replaceAll('e.language.toUpperCase()','(e.language==="ar"?"العربية":"Français")');
   const readerStart=bundle.indexOf('e.type==="video"&&(0,A.jsxs)("div",{className:"video-frame"');
@@ -57,14 +60,14 @@ export async function buildInterface(root, output) {
     if(from<0||until<from)throw new Error('Limite du service introuvable : '+start);
     bundle=bundle.slice(0,from)+replacement+'\n'+bundle.slice(until);
   }
-  const helpers = (await Promise.all(['i18n.js','publication-fields.js','components.js','video-languages.js','admin-service.js','test-administration.js','accounts.js'].map(file=>readFile(join(root,'interface',file),'utf8')))).join('\n');
+  const helpers = (await Promise.all(['i18n.js','publication-fields.js','components.js','video-languages.js','admin-service.js','test-administration.js','local-administration.js','accounts.js'].map(file=>readFile(join(root,'interface',file),'utf8')))).join('\n');
   const config=JSON.parse(await readFile(join(root,'interface/service-config.json'),'utf8'));
   const localizations=JSON.parse(await readFile(join(root,'site/video-localizations.json'),'utf8'));
   if(config.provider!=='github'||config.repository!=='nachchatmahmoud-png/mediatheque'||config.branch!=='main')throw new Error('Vérifiez le dépôt GitHub de publication.');
   if(typeof config.authentication?.apiBase!=='string')throw new Error('Vérifiez la configuration du service administrateur.');
-  if(config.management?.mode&&!['test','production'].includes(config.management.mode))throw new Error('Vérifiez le mode de l’espace de gestion.');
+  if(config.management?.mode&&!['test','local','production'].includes(config.management.mode))throw new Error('Vérifiez le mode de l’espace de gestion.');
   if(config.authentication.apiBase){const api=new URL(config.authentication.apiBase);if(api.protocol!=='https:'||api.username||api.password||api.search||api.hash||/chatgpt/i.test(api.hostname))throw new Error('Adresse du service administrateur non valide.');}
-  const configuration='const MX_SERVICE='+JSON.stringify(config)+'; const MX_VIDEO_LOCALIZATIONS='+JSON.stringify(localizations)+';\n';
+  const configuration='const MX_SERVICE='+JSON.stringify(config)+'; const MX_VIDEO_LOCALIZATIONS='+JSON.stringify(localizations)+'; const MX_FRENCH_VIDEO='+JSON.stringify(frenchLatest)+';\n';
   bundle = bundle.replace('function rf()', configuration+helpers + '\nfunction rf()');
   const messages=JSON.parse(await readFile(join(root,'interface/translations-ar.json'),'utf8'));
   const french=bundle.replace('/*__MX_MESSAGES__*/','const MX_MESSAGES='+JSON.stringify(messages)+';');

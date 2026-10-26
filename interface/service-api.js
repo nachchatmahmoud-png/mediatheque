@@ -5,7 +5,7 @@ async function cL() {
     er=fetch(url,{cache:'no-store',credentials:'omit'}).then(async response=>{
       if(!response.ok)throw new Error('Le catalogue est momentanément indisponible.');
       let catalogue=await response.json();
-      if(MxTestAdministration)catalogue=await MxTestAdministration.catalogue(catalogue);
+      if(mxManagementClient().catalogue)catalogue=await mxManagementClient().catalogue(catalogue);
       return {...mxLocaleCatalogue(catalogue),isAdmin:mxManagementClient().current().authenticated};
     }).catch(error=>{er=undefined;throw error;});
   }
@@ -18,6 +18,7 @@ async function Ho(path,options={}) {
   if(path.startsWith('/api/search?'))return pL(await cL(),new URL(path,'https://local.invalid').searchParams.get('q')||'');
   if(path==='/api/auth/session')return administration.session();
   if(path==='/api/auth/login'&&method==='POST'){const result=await administration.login(JSON.parse(options.body||'{}'));er=undefined;return result;}
+  if(path==='/api/auth/register'&&method==='POST'&&administration.current().localMode)return administration.register(JSON.parse(options.body||'{}'));
   if(path==='/api/auth/change-password'&&method==='POST'&&!MxTestAdministration){const result=await administration.changePassword(JSON.parse(options.body||'{}'));er=undefined;return result;}
   if(path==='/api/auth/logout'&&method==='POST'){er=undefined;return administration.logout();}
   if(path==='/api/test/reset'&&method==='POST'&&MxTestAdministration)return MxTestAdministration.reset();
@@ -25,7 +26,7 @@ async function Ho(path,options={}) {
     if(new URL(path,'https://local.invalid').searchParams.has('manage')){
       administration.requireAccess();const url=new URL('./catalogue.json',document.baseURI);url.searchParams.set('v',String(Date.now()));const response=await fetch(url,{cache:'no-store',credentials:'omit'});
       if(!response.ok)throw new Error('Le catalogue est momentanément indisponible.');
-      let catalogue=await response.json();if(MxTestAdministration)catalogue=await MxTestAdministration.catalogue(catalogue);
+      let catalogue=await response.json();if(administration.catalogue)catalogue=await administration.catalogue(catalogue);
       return {...catalogue,isAdmin:true};
     }
     return cL();

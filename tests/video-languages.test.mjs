@@ -29,11 +29,12 @@ test('video validation rejects unreviewed, missing and incompatible subtitle tra
  const item=validateMedia({...base,spokenLanguage:'ar',captionsLanguage:'fr',captionsSource:'youtube',captionsValidated:true});
  assert.equal(item.spokenLanguage,'ar');assert.equal(item.language,'fr');assert.equal(item.captionsLanguage,'fr');
 });
-test('translated titles and summaries stay tied to their video without a generic title for the next upload',()=>{
+test('translated titles and summaries stay tied to their video and Arabic titles cannot enter the French page',()=>{
  const first=client.mxLatestPresentation({videoId:'abcdefghijk',title:'العنوان الأصلي'});
  assert.equal(first.title,'Titre français validé');assert.equal(first.description,'Présentation française');assert.equal(first.item.spokenLanguage,'ar');
  const next=client.mxLatestPresentation({videoId:'0123456789a',title:'فيديو جديد'});
- assert.equal(next.title,'فيديو جديد');assert.equal(next.description,'');assert.equal(next.item.spokenLanguage,'');
+ assert.equal(next.title,'');assert.equal(next.description,'');assert.equal(next.item.spokenLanguage,'');
+ assert.equal(client.mxLatestPresentation({videoId:'0123456789a',title:'Une nouvelle vidéo en français'}).title,'Une nouvelle vidéo en français');
 });
 test('subtitle import accepts timed WebVTT and refuses renamed or empty text',async()=>{
  await assert.doesNotReject(client.mxReadCaptions(new File(['WEBVTT\n\n00:00.000 --> 00:02.000\nTexte français\n'],'fr.vtt',{type:'text/vtt'})));

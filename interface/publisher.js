@@ -1,15 +1,31 @@
-// Credentials are checked by the administration service, never by public code.
+// The selected client handles either this browser's local access or a service.
 function MxAdminLogin({auth,onAuthenticated}) {
   const h=mxElement;
-  const [username,setUsername]=O.useState(''),[password,setPassword]=O.useState(''),[busy,setBusy]=O.useState(false),[error,setError]=O.useState('');
-  const submit=async event=>{event.preventDefault();if(busy||!auth.configured)return;setBusy(true);setError('');try{await Ho('/api/auth/login',{method:'POST',body:JSON.stringify({username,password})});setPassword('');await onAuthenticated();}catch(exception){setPassword('');setError(exception.message);}finally{setBusy(false);}};
+  const [username,setUsername]=O.useState(''),[password,setPassword]=O.useState(''),[confirmPassword,setConfirmPassword]=O.useState(''),[busy,setBusy]=O.useState(false),[error,setError]=O.useState(''),[mode,setMode]=O.useState(auth.localMode&&auth.canSetup?'create':'login'),[registered,setRegistered]=O.useState(false);
+  const creating=mode==='create',canCreate=auth.localMode&&auth.canSetup&&!registered;
+  const changeMode=value=>{setMode(value);setError('');setPassword('');setConfirmPassword('');};
+  const submit=async event=>{
+    event.preventDefault();if(busy||!auth.configured)return;setError('');
+    if(creating&&password!==confirmPassword){setError('Les deux mots de passe ne correspondent pas.');return;}
+    setBusy(true);
+    try{
+      const result=await Ho(creating?'/api/auth/register':'/api/auth/login',{method:'POST',body:JSON.stringify({username,password,...(creating?{confirmPassword}:{})})});
+      setPassword('');setConfirmPassword('');
+      if(creating){setUsername(result.username);setRegistered(true);setMode('login');}else await onAuthenticated();
+    }catch(exception){setPassword('');setConfirmPassword('');setError(exception.message);}finally{setBusy(false);}
+  };
   return h('div',{className:'mx-admin-login'},
     h('div',{className:'mx-login-intro'},h('span',{className:'mx-login-lock'},h(Wi,{size:30})),h('div',{className:'eyebrow'},'ACCÈS RÉSERVÉ'),h('h2',null,'Espace administrateur'),h('p',null,'Un espace pour préparer vos vidéos, vos albums photo et vos communiqués, puis les publier sur l’accueil.'),h('ul',{className:'mx-login-features'},h('li',null,h(zl,{size:16}),'Un compte personnel pour chaque administrateur'),h('li',null,h(zl,{size:16}),'Des champs adaptés à chaque support'),h('li',null,h(zl,{size:16}),'Un seul bouton pour valider et publier')),h('p',{className:'mx-login-note'},'Médiathèque · Hébergement GitHub')),
-    h('form',{className:'mx-login-panel',onSubmit:submit},h('h3',null,'Connexion administrateur'),h('p',null,'Connectez-vous avec votre identifiant et votre mot de passe personnels.'),
-      !auth.configured&&h('p',{className:'mx-login-activation',role:'status'},'Le service de connexion n’est pas encore configuré. Aucun compte administrateur n’est actuellement activé.'),
-      h('label',{className:'field'},'Identifiant',h('input',{type:'text',name:'username',autoComplete:'username',autoCapitalize:'none',spellCheck:false,required:true,maxLength:60,disabled:busy||!auth.configured,value:username,onChange:event=>setUsername(event.target.value)})),
-      h('label',{className:'field'},'Mot de passe',h('input',{type:'password',name:'password',autoComplete:'current-password',required:true,maxLength:512,disabled:busy||!auth.configured,value:password,onChange:event=>setPassword(event.target.value)})),
-      error&&h('p',{className:'gh-error',role:'alert'},error),h('button',{className:'button primary mx-auth-submit',type:'submit',disabled:busy||!auth.configured},h(Wi,{size:16}),busy?'Connexion en cours…':'Se connecter'),
+    h('form',{className:'mx-login-panel',onSubmit:submit},h('h3',null,creating?'Créer mon accès':'Connexion administrateur'),h('p',null,creating?'Choisissez votre identifiant et votre mot de passe personnels.':'Connectez-vous avec votre identifiant et votre mot de passe personnels.'),
+      auth.localMode&&h('p',{className:'mx-local-scope',role:'note'},'Accès local : votre compte et vos ajouts sont conservés dans ce navigateur uniquement. Ils ne sont pas partagés avec les autres ordinateurs ni les visiteurs du site.'),
+      registered&&h('p',{className:'mx-auth-success',role:'status'},'Votre accès a été créé. Connectez-vous maintenant avec votre identifiant et votre mot de passe.'),
+      !auth.configured&&h('p',{className:'mx-login-activation',role:'status'},auth.error||(auth.localMode?'Ce navigateur ne permet pas la connexion locale. Ouvrez le site avec une version récente de votre navigateur.':'Le service de connexion n’est pas encore configuré. Aucun compte administrateur n’est actuellement activé.')),
+      h('label',{className:'field'},'Identifiant',h('input',{type:'text',name:'username',autoComplete:'username',autoCapitalize:'none',spellCheck:false,required:true,minLength:3,maxLength:60,disabled:busy||!auth.configured,value:username,onChange:event=>setUsername(event.target.value)}),creating&&h('small',null,'3 à 60 caractères : lettres sans accent, chiffres, point ou tiret.')),
+      h('label',{className:'field'},'Mot de passe',h('input',{type:'password',name:'password',autoComplete:creating?'new-password':'current-password',required:true,minLength:creating?15:undefined,maxLength:auth.localMode?128:512,disabled:busy||!auth.configured,value:password,onChange:event=>setPassword(event.target.value)}),creating&&h('small',null,'15 à 128 caractères. Vous pouvez utiliser une phrase de plusieurs mots.')),
+      creating&&h('label',{className:'field'},'Confirmer le mot de passe',h('input',{type:'password',name:'confirmPassword',autoComplete:'new-password',required:true,minLength:15,maxLength:128,disabled:busy||!auth.configured,value:confirmPassword,onChange:event=>setConfirmPassword(event.target.value)})),
+      error&&h('p',{className:'gh-error',role:'alert'},error),h('button',{className:'button primary mx-auth-submit',type:'submit',disabled:busy||!auth.configured},h(Wi,{size:16}),busy?(creating?'Création en cours…':'Connexion en cours…'):(creating?'Créer mon accès':'Se connecter')),
+      (creating||canCreate)&&h('button',{className:'button secondary mx-auth-switch',type:'button',disabled:busy,onClick:()=>changeMode(creating?'login':'create')},creating?'J’ai déjà un accès — Se connecter':'Première visite ? Créer mon accès'),
+      auth.localMode&&h('small',null,'Conservez votre mot de passe. La suppression des données du navigateur efface cet accès et les contenus locaux.'),
       h('small',null,'Accès réservé aux administrateurs habilités de la médiathèque.')));
 }
 
@@ -23,9 +39,10 @@ function nf({auth,isAdmin,loading,error,onBack,onLogout,onRefresh,onToast,onPubl
     h('button',{className:'button secondary',onClick:onBack},h(Xi,{size:17}),'Retour à la médiathèque'),
     h(MxManagementHero,{auth,items,onLogout,busy,onToast}),
     auth.testMode&&h(MxTestNotice,{onReset:resetTests,busy}),
+    auth.localMode&&auth.authenticated&&h('aside',{className:'mx-local-management-note',role:'note'},h('strong',null,'Gestion locale'),h('p',null,'Vos ajouts apparaissent dans l’accueil de ce navigateur après validation. Ils ne sont pas publiés pour les autres visiteurs.')),
     resetError&&h('p',{className:'gh-error',role:'alert'},resetError),
     loading?h('p',{role:'status'},'Chargement de l’espace de gestion…'):error?h('div',{className:'gh-error',role:'alert'},error,h('button',{className:'button secondary',onClick:onRefresh},'Réessayer')):!auth.authenticated||!isAdmin?h(MxAdminLogin,{auth,onAuthenticated:onRefresh}):auth.requiresPasswordChange?h(MxPasswordChange,{onAuthenticated:onRefresh}):h(O.Fragment,null,
-      h('nav',{className:'mx-workspace-nav','aria-label':'Administration'},h('span',{className:'active'},h(Ta,{size:17}),'Publications'),!auth.testMode&&h('a',{href:'https://github.com/'+MX_SERVICE.repository+'/actions',target:'_blank',rel:'noreferrer'},'Suivi de la mise en ligne',h(Oe,{size:14})),auth.canManageAccess&&h('a',{href:'https://github.com/'+MX_SERVICE.repository+'/settings/access',target:'_blank',rel:'noreferrer'},'Gérer les accès',h(Oe,{size:14}))),
+      h('nav',{className:'mx-workspace-nav','aria-label':'Administration'},h('span',{className:'active'},h(Ta,{size:17}),'Publications'),!auth.testMode&&!auth.localMode&&h('a',{href:'https://github.com/'+MX_SERVICE.repository+'/actions',target:'_blank',rel:'noreferrer'},'Suivi de la mise en ligne',h(Oe,{size:14})),auth.canManageAccess&&h('a',{href:'https://github.com/'+MX_SERVICE.repository+'/settings/access',target:'_blank',rel:'noreferrer'},'Gérer les accès',h(Oe,{size:14}))),
       h('h2',{className:'mx-content-choice-title'},'Quel contenu souhaitez-vous ajouter ?'),
       h('div',{className:'transfer-shortcuts gh-type-choices',role:'group','aria-label':'Type de contenu à ajouter'},...yL.map(({type,Icon})=>h('button',{key:type,type:'button',disabled:busy,className:'transfer-shortcut gh-type-card '+type+(activeType===type?' selected':''),'aria-label':MX_PUBLICATION_FORMS[type].label,'aria-pressed':activeType===type,'aria-controls':'mx-editor-'+type,onClick:()=>setActiveType(type)},h('span',{className:'transfer-shortcut-icon'},h(Icon,{size:26})),h('span',{className:'mx-content-choice-copy'},h('strong',null,MX_PUBLICATION_FORMS[type].label),h('small',null,MX_PUBLICATION_FORMS[type].hint)),activeType===type&&h(zl,{size:20})))),
       ...['video','photo','press'].map(type=>h('div',{key:type,id:'mx-editor-'+type,className:'mx-content-editor',hidden:activeType!==type},h(MxPublicationEditor,{type,auth,busy,setBusy,onToast,onPublished}))),
@@ -128,7 +145,7 @@ function MxPublicationEditor({type,auth,busy,setBusy,onToast,onPublished}) {
       const payload=mxPublicationPayload({requestId:requestId.current,type,title,date,topic,language:finalLanguage,description,credit,location,thumbnailUrl,mediaUrl:videoMode==='link'?videoUrl.trim():paths[0],fileUrl:paths[0]||'',captionsUrl,spokenLanguage,captionsLanguage,captionsSource,captionsValidated,photos:paths.map((url,index)=>({url,caption:captions[index]||''})),content:pressSelection.content});
       const result=await Ho('/api/publications',{method:'POST',headers:{'Content-Type':'application/json'},onProgress:setProgress,body:JSON.stringify(payload)});
       if(!result.published)throw new Error('La publication n’a pas été confirmée.');
-      setProgress('Publication effectuée.');onToast(result.testMode?'Le contenu de test est visible dans l’accueil de ce navigateur.':'La publication est en ligne et visible dans l’accueil.');
+      setProgress('Publication effectuée.');onToast(result.localOnly?'Le contenu est visible dans l’accueil de ce navigateur.':result.testMode?'Le contenu de test est visible dans l’accueil de ce navigateur.':'La publication est en ligne et visible dans l’accueil.');
       await onPublished(result.id,finalLanguage);
     }catch(exception){setFormError(exception.message);}finally{setBusy(false);setProgress('');}
   };

@@ -1,12 +1,12 @@
 // Source de l’interface publique ; assemblée par scripts/build-interface.mjs.
 function af() {
-  let [e, a] = (0, No.useState)(ar),
+  let [e, a] = (0, No.useState)(MX_LOCALE==='fr'?MX_FRENCH_VIDEO:ar),
     [t, l] = (0, No.useState)(!1),
     [imageFailed, setImageFailed] = (0, No.useState)(false);
   ((0, No.useEffect)(() => {
     let i = new AbortController(),
       u = () =>
-        fetch(je("/latest-video.json"), {
+        fetch(je(MX_LOCALE==='fr'?'/latest-video-fr.json':'/latest-video.json'), {
           cache: "no-cache",
           signal: i.signal,
         })
@@ -15,7 +15,7 @@ function af() {
             return r.json();
           })
           .then((r) => {
-            xL(r) && a(r);
+            xL(r) && r.format==='landscape' && Number.isInteger(r.width) && Number.isInteger(r.height) && r.width>r.height && r.height>0 && (MX_LOCALE!=='fr'||mxFrenchVideoTitle(r)) && a(r);
           })
           .catch(() => {});
     u();
@@ -54,6 +54,7 @@ function af() {
       }),
       (0, ge.jsx)("div", {
         className: "ministry-video-screen",
+        style: {aspectRatio:e.width+'/'+e.height},
         children: t
           ? (0, ge.jsx)("iframe", {
                 src:
@@ -72,11 +73,11 @@ function af() {
               children: [
                 (0, ge.jsx)("img", {
                   src:
-                    imageFailed ? je(MX_LOCALE==='ar'?'/images/cover-ar.svg':'/images/cover.svg') : localThumbnail || "https://i.ytimg.com/vi/" + e.videoId + "/hqdefault.jpg",
+                    imageFailed ? je(MX_LOCALE==='ar'?'/images/cover-ar.svg':'/images/cover.svg') : localThumbnail || "https://i.ytimg.com/vi/" + e.videoId + "/maxresdefault.jpg",
                   onError: () => setImageFailed(true),
                   alt: "",
-                  width: 480,
-                  height: 360,
+                  width: e.width,
+                  height: e.height,
                   decoding: "async",
                 }),
                 (0, ge.jsx)("span", {

@@ -8,28 +8,26 @@ Le site public et son espace de gestion sont hébergés dans ce dépôt et publi
 
 Les pages française et arabe disposent de leurs propres textes, résultats et événements. L’interface arabe se lit de droite à gauche. L’espace de gestion commun est en français et reste sur la même adresse GitHub Pages.
 
-## État de l’espace de gestion
+## Accès local à l’espace de gestion
 
-**Mode test désactivé.** La gestion demande désormais une connexion. Les formulaires de publication et les contenus locaux d’essai ne sont plus accessibles sans authentification. La consultation du site reste publique. Les données d’essai déjà enregistrées dans un navigateur ne sont pas supprimées par ce changement.
+Le mode test sans connexion est désactivé. **Créer mon accès** permet de choisir un identifiant et un mot de passe, puis **Se connecter** ouvre les formulaires de gestion. Lorsqu’un accès existe dans ce navigateur, seule la connexion est proposée. Aucun mot de passe prédéfini n’est fourni ou placé dans le dépôt.
 
-**Activation des comptes bloquée : aucun service de connexion n’est configuré.** Le formulaire le signale explicitement et ne collecte aucun mot de passe. Le profil propriétaire prévu est `nachchat.mahmoud` ; cet identifiant n’est pas encore un compte actif et aucun mot de passe utilisable n’a été créé.
+Le compte et les contenus ajoutés sont **limités à ce navigateur**. Ils ne sont pas synchronisés entre les ordinateurs et les ajouts ne sont pas publiés pour les autres visiteurs. Cette limite est indiquée dans le formulaire et dans la gestion. Les données d’anciens essais restent séparées et ne sont pas reprises dans ce nouveau compte.
 
-Le choix est explicite dans `interface/service-config.json` : `management.mode` vaut `production`. L’adresse `authentication.apiBase` reste vide jusqu’au déploiement et à la vérification d’un service sécurisé. Firebase a été proposé comme alternative à Supabase ; cette intégration n’est pas encore installée ou connectée. Ne pas annoncer d’identifiants actifs sans création effective des comptes et vérification de leur connexion.
+Le choix est explicite dans `interface/service-config.json` : `management.mode` vaut `local`. Les identifiants sont vérifiés localement avec une empreinte PBKDF2 SHA-256, un sel aléatoire et 600 000 itérations. Le mot de passe n’est pas conservé en clair et n’est envoyé à aucun service. Une session dure au maximum huit heures, expire après trente minutes d’inactivité et peut être fermée avec **Se déconnecter**. Effacer les données du navigateur supprime le compte et ses contenus locaux. Cet accès n’accorde aucun droit sur GitHub et ne constitue pas une autorisation de publication sur le site public.
 
-## Accès des administrateurs en production
+## Publication partagée ultérieure
 
-Le formulaire demande un **identifiant** et un **mot de passe** personnels. Les pages restent sur GitHub Pages. Les mots de passe et les droits de publication doivent être vérifiés par un service sécurisé ; aucune clé GitHub n’est demandée aux administrateurs ou embarquée dans le site.
+GitHub Pages héberge les fichiers statiques du site. Une connexion utilisable par les quatre administrateurs depuis plusieurs ordinateurs et une publication visible par tous nécessitent un service partagé associé au dépôt. Aucun service de ce type n’est actuellement connecté. Firebase et Supabase ne sont pas retenus, conformément au choix du propriétaire.
 
-**Service de production non connecté, comptes non activés.** Les quatre personnes prévues sont Katiri Abdelah, Rbina Abdelah, Nachchat Mahmoud et Ilham Boudil. Aucun mot de passe de ces personnes n’a été créé ou publié dans le dépôt.
-
-L’adresse HTTPS du service se renseigne dans `interface/service-config.json`, champ `authentication.apiBase`, après son déploiement. Le code du serveur, les profils demandés, les scripts de préparation et les conditions d’activation sont disponibles dans `administration/`. Les mots de passe initiaux ne sont créés que lors de la configuration privée du service et doivent être remplacés à la première connexion. Le jeton de session reste uniquement en mémoire et expire après 30 minutes d’inactivité, au plus tard à l’expiration imposée par le serveur.
+Le client de service et les conditions d’activation restent disponibles dans `administration/`. Le passage à ce fonctionnement exige de déployer et vérifier le service, puis de renseigner `authentication.apiBase` et de sélectionner `management.mode: production`. Les personnes initialement prévues sont Katiri Abdelah, Rbina Abdelah, Nachchat Mahmoud et Ilham Boudil ; aucun compte partagé n’a été créé pour elles.
 
 ## Publier un contenu
 
-1. Ouvrir **Espace de gestion** et se connecter avec un compte habilité, après activation du service.
+1. Ouvrir **Espace de gestion** et créer son accès local lors de la première visite, puis se connecter.
 2. Choisir **Vidéo**, **Photos** ou **Communiqué de presse**. Chaque support possède son formulaire et sa saisie indépendante pendant le passage entre les trois choix.
 3. Renseigner les champs propres au support, la page de publication et la rubrique, puis sélectionner les fichiers.
-4. Vérifier l’aperçu, puis cliquer sur **Valider et publier**.
+4. Vérifier l’aperçu, puis cliquer sur **Valider et publier** pour retrouver le contenu dans l’accueil de ce navigateur.
 
 Les mots-clés nécessaires à l’indexation sont renseignés à partir de la rubrique. Les informations facultatives sont regroupées. Pour les vidéos, la langue parlée est distincte de la langue de la fiche. Un bref résumé français est demandé pour présenter une vidéo en arabe sur la page française.
 
@@ -43,7 +41,7 @@ Une miniature est extraite automatiquement de la vidéo importée et s’affiche
 
 Pour une vidéo importée, les sous-titres WebVTT peuvent être joints et vérifiés dans l’aperçu. Pour YouTube, ils doivent être publiés sur la vidéo dans YouTube Studio. La mention de sous-titres français ou arabes apparaît seulement lorsque l’administrateur a déclaré leur disponibilité et confirmé leur validation.
 
-La dernière vidéo de la chaîne officielle `@Matnuhpv` est actualisée par GitHub Actions aux minutes 13 et 43 de chaque heure. La page française reprend la traduction du titre YouTube ; la page arabe conserve son titre d’origine. Les titres traduits et résumés français validés sont associés à l’identifiant exact de la vidéo dans `site/video-localizations.json`. Sans traduction renseignée pour une nouvelle vidéo, son titre d’origine est affiché. Aucun titre générique ne le remplace. L’audio d’origine est conservé ; le site ne traduit pas automatiquement les propos.
+La dernière vidéo classique horizontale de la chaîne officielle `@Matnuhpv` est actualisée par GitHub Actions aux minutes 13 et 43 de chaque heure. La sélection utilise l’onglet Vidéos, exclut les Shorts et les directs, puis contrôle les dimensions du fichier. Le lecteur respecte les proportions de la vidéo, sans l’étirer ni lui imposer des bandes latérales. Si la vérification échoue, la dernière vidéo horizontale vérifiée est conservée. La page française reprend la traduction du titre YouTube ; la page arabe conserve son titre d’origine. Les titres traduits et résumés français validés sont associés à l’identifiant exact de la vidéo dans `site/video-localizations.json`. La page française utilise `site/latest-video-fr.json`. Si une nouvelle vidéo arabe n’a pas encore de titre français validé, cette page conserve la dernière vidéo traduite ; elle ne réaffiche jamais le titre arabe. La page arabe suit le dernier titre d’origine. L’audio d’origine est conservé ; le site ne traduit pas automatiquement les propos.
 
 ## Formats et limites
 
@@ -53,11 +51,11 @@ La dernière vidéo de la chaîne officielle `@Matnuhpv` est actualisée par Git
 - Sous-titres : WebVTT jusqu’à 1 Mio.
 - Publication complète : 100 Mio de fichiers maximum.
 
-Les fichiers sont validés avant l’enregistrement. Les essais restent dans le navigateur ; les publications de production seront également contrôlées par le générateur du catalogue avant leur diffusion publique.
+Les fichiers sont validés avant l’enregistrement. Les contenus ajoutés actuellement restent dans le navigateur ; des publications de production devront également être contrôlées par le générateur du catalogue avant leur diffusion publique.
 
 ## Source et vérifications
 
-Les composants éditables se trouvent dans `interface/`. `scripts/build-interface.mjs` les assemble avec le runtime React conservé dans `site/assets/app.js`. `scripts/build-github-pages.mjs` génère `_site/` et valide les dossiers de `publications/`. Le mode test fonctionne entièrement dans le navigateur.
+Les composants éditables se trouvent dans `interface/`. `scripts/build-interface.mjs` les assemble avec le runtime React conservé dans `site/assets/app.js`. `scripts/build-github-pages.mjs` génère `_site/` et valide les dossiers de `publications/`. L’accès local et ses contenus fonctionnent entièrement dans le navigateur, sans Firebase ni Supabase.
 
 Avec Node.js 22.13 ou ultérieur et Python 3 :
 

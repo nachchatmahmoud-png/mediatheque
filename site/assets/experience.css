@@ -18,7 +18,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .mx-hero-search-box input:focus { outline-offset: 0; }
 .mx-hero-search-box .button { min-height: 44px; gap: 10px; padding: 12px 15px; flex-shrink: 0; font-size: 13px; }
 .mx-hero-search .mx-search-hint { font-size: 11px; line-height: 1.6; margin-top: 9px; color: #5d7267; }
-.ministry-video-screen { background: #123b32; }
+.ministry-video-screen { background: #123b32; min-height:0; }
 .ministry-video-cover img { object-fit: cover; }
 .mx-video-language { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:0 0 16px; }
 .mx-video-language>span { display:inline-flex; align-items:center; gap:6px; color:#476746; background:#edf3e8; border:1px solid #dce7d5; border-radius:5px; font-size:11px; padding:6px 9px; line-height:1.5; }
@@ -334,6 +334,11 @@ body { background:#fcfdfb; color:var(--mx-ink); }
 .mx-login-panel input:focus { background:#fff; }
 .mx-login-panel .mx-login-activation { background:#f7f3e7; border:1px solid #e6dcc3; border-radius:8px; padding:12px 14px; color:#725d34; font-size:12px; }
 .mx-login-panel input:disabled { background:#f3f5f0; color:#73806e; cursor:not-allowed; }
+.mx-login-panel .mx-local-scope,.mx-local-management-note { border:1px solid #d7e2d6; border-radius:8px; padding:13px 15px; background:#f2f6ef; color:#3e5d45; font-size:12px; line-height:1.8; }
+.mx-login-panel .mx-auth-success { padding:12px 15px; border-left:3px solid #3f8156; background:#eff8ee; color:#255137; font-size:13px; }
+.mx-auth-switch { white-space:normal; text-align:center; }
+.mx-local-management-note { margin-bottom:24px; }
+.mx-local-management-note p { margin-top:4px; }
 .mx-workspace-nav { display:flex; gap:25px; border-bottom:1px solid #d5dfd2; margin-bottom:25px; overflow-x:auto; }
 .mx-workspace-nav > button { display:flex; align-items:center; flex-shrink:0; gap:9px; padding:7px 1px 18px; color:#69806d; border-bottom:3px solid transparent; font-size:13px; font-weight:500; }
 .mx-workspace-nav > button.active { color:#174e3b; border-color:#b29b5e; }

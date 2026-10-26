@@ -57,9 +57,14 @@ function MxVideoLanguageFields({spokenLanguage,onSpokenLanguage,captionsLanguage
         h('label',{className:'mx-caption-review'},h('input',{type:'checkbox',checked:validated,onChange:event=>onValidated(event.target.checked)}),h('span',null,isYoutube?'J’ai vérifié les sous-titres et leur publication sur cette vidéo YouTube.':'J’ai vérifié le texte, la traduction et la synchronisation des sous-titres.')))));
 }
 
+function mxFrenchVideoTitle(video) {
+  const title=MX_VIDEO_LOCALIZATIONS[video.videoId]?.fr?.title||video.title||'';
+  return typeof title==='string'&&title.trim()&&!/[\u0600-\u06ff]/u.test(title)?title.trim():'';
+}
+
 function mxLatestPresentation(video) {
   const record=MX_VIDEO_LOCALIZATIONS[video.videoId]||{};
   const translation=record[MX_LOCALE]||{};
-  return {title:translation.title||video.title,description:translation.description||'',
+  return {title:MX_LOCALE==='fr'?mxFrenchVideoTitle(video):translation.title||video.title,description:translation.description||'',
     item:{type:'video',mediaUrl:'https://www.youtube.com/watch?v='+video.videoId,spokenLanguage:record.spokenLanguage||'',captionsLanguage:record.captionsLanguage||'',captionsSource:'youtube',captionsValidated:record.captionsValidated===true}};
 }
