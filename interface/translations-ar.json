@@ -206,5 +206,6 @@
   "Espace de gestion ouvert sans connexion": "فضاء الإدارة متاح للتجربة دون تسجيل الدخول",
   "Ajoutez vos supports, vérifiez l’aperçu et cliquez sur « Valider et publier ». Vos essais apparaîtront dans l’accueil de ce navigateur uniquement.": "أضيفوا المحتوى، ثم تحققوا من المعاينة واضغطوا على « تأكيد ونشر ». ستظهر المواد التجريبية في الصفحة الرئيسية لهذا المتصفح فقط.",
   "Effacer les contenus de test": "مسح المحتويات التجريبية",
-  "Contenu de test": "محتوى تجريبي"
+  "Contenu de test": "محتوى تجريبي",
+  "Le service de connexion n’est pas encore configuré. Aucun compte administrateur n’est actuellement activé.": "لم تتم بعد تهيئة خدمة تسجيل الدخول. ولا يوجد حالياً أي حساب إداري مفعّل."
 }
