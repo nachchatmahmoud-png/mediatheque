@@ -10,12 +10,12 @@ const sessionToken='LOCAL_TEST_SESSION_TOKEN_NEVER_VALID_123456789';
 const credentials={username:'  Admin.Test  ',password:'Mot de passe de test non utilisable'};
 const publication={requestId:'12345678-1234-1234-1234-123456789abc',type:'video',title:'Publication de test',language:'fr'};
 
-function client({base=apiBase,denyLogin=false,denyWrite=false,badSession=false,logoutFailure=false,initialPassword=false}={}){
-  const calls=[],events=[],timers=[];let live=false,checks=0;
+function client({base=apiBase,denyLogin=false,denyWrite=false,badSession=false,logoutFailure=false,initialPassword=false,shared=false,activation='c'.repeat(64)}={}){
+  const calls=[],events=[],timers=[];let live=false,checks=0,registered=false;const history=[];
   const response=(status,value)=>({ok:status>=200&&status<300,status,json:async()=>value});
-  const context=vm.createContext({URL,Event,File,Date,er:undefined,MX_SERVICE:{authentication:{apiBase:base}},
+  const context=vm.createContext({URL,URLSearchParams,Event,File,Date,er:undefined,MX_SERVICE:{authentication:{apiBase:base,shared}},
     mxLocaleCatalogue:value=>({...value,items:value.items.filter(item=>item.language==='fr')}),document:{baseURI:'https://nachchatmahmoud-png.github.io/mediatheque/'},
-    window:{dispatchEvent:event=>events.push(event.type)},localStorage:{getItem(){throw new Error('No session storage');},setItem(){throw new Error('No session storage');}},
+    history:{replaceState:(_state,_title,url)=>history.push(url)},window:{location:{hash:activation?'#activation='+activation:'',pathname:'/mediatheque/fr/',search:'?view=manage'},dispatchEvent:event=>events.push(event.type)},localStorage:{getItem(){throw new Error('No session storage');},setItem(){throw new Error('No session storage');}},
     setTimeout:(callback,delay)=>{if(delay<10000)queueMicrotask(callback);else timers.push(callback);return 1;},clearTimeout(){},
     fetch:async(url,options={})=>{
       url=String(url);calls.push({url,options});
@@ -26,6 +26,9 @@ function client({base=apiBase,denyLogin=false,denyWrite=false,badSession=false,l
         return response(200,{items:live?[{id:'publication-test-video-1',language:'fr',title:publication.title},{id:'publication-ar',language:'ar'}]:[],events:[],settings:{}});
       }
       const path=url.slice(apiBase.length);
+      if(path==='/api/auth/options')return response(200,{configured:true,shared:true,canSetup:!registered&&!!options.headers.Authorization});
+      if(path==='/api/auth/register'){assert.equal(options.headers.Authorization,'Activation '+activation);registered=true;return response(201,{created:true,username:'admin.test',shared:true});}
+      if(path==='/api/catalogue'){assert.equal(options.headers.Authorization,undefined);return response(200,{items:[{id:'shared-fr',language:'fr'},{id:'shared-ar',language:'ar'}],events:[]});}
       if(path==='/api/auth/login')return response(denyLogin?401:200,{authenticated:true,sessionToken,expiresAt:new Date(Date.now()+3600000).toISOString(),role:badSession?'reader':'admin',displayName:'Administrateur de test',requiresPasswordChange:initialPassword});
       assert.equal(options.headers.Authorization,'Bearer '+sessionToken);
       if(path==='/api/auth/session')return response(200,{authenticated:true,requiresPasswordChange:initialPassword});
@@ -38,7 +41,7 @@ function client({base=apiBase,denyLogin=false,denyWrite=false,badSession=false,l
     },
   });
   vm.runInContext(source,context);
-  return {context,calls,events,timers};
+  return {context,calls,events,timers,history};
 }
 const login=value=>value.context.Ho('/api/auth/login',{method:'POST',body:JSON.stringify(credentials)});
 
@@ -127,3 +130,15 @@ test('the first-login password requirement is preserved until the server confirm
   assert.equal((await value.context.Ho('/api/auth/session')).requiresPasswordChange,false);
   assert.equal('sessionToken' in result,false);
 });
+
+ test('shared registration consumes a private activation token and public catalogues never receive the session',async()=>{
+  const value=client({shared:true});
+  assert.deepEqual(value.history,['/mediatheque/fr/?view=manage']);
+  const options=await value.context.Ho('/api/auth/session');assert.equal(options.canSetup,true);assert.equal(options.sharedMode,true);
+  const result=await value.context.Ho('/api/auth/register',{method:'POST',body:JSON.stringify({...credentials,confirmPassword:credentials.password})});assert.equal(result.created,true);
+  assert.equal((await value.context.Ho('/api/auth/session')).canSetup,false);
+  const identity=await login(value);assert.equal(identity.sharedMode,true);
+  const catalogue=await value.context.Ho('/api/library');assert.ok(catalogue.items.some(item=>item.id==='shared-fr'));assert.ok(catalogue.items.every(item=>item.language==='fr'));
+  const publicRead=value.calls.find(call=>call.url.endsWith('/api/catalogue'));assert.equal(publicRead.options.headers.Authorization,undefined);
+  assert.ok(value.calls.every(call=>!call.url.includes('c'.repeat(64))));
+ });

@@ -1,0 +1,78 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {DatabaseSync} from 'node:sqlite';
+import {pbkdf2Sync} from 'node:crypto';
+import {readFile} from 'node:fs/promises';
+import {createSharedHandler,portalOrigin} from '../administration/shared/service.mjs';
+const schema=await readFile(new URL('../administration/shared/schema.sql',import.meta.url),'utf8');
+const secret='a'.repeat(64),password='Phrase privée de contrôle 2026';
+function setup(){
+ const sqlite=new DatabaseSync(':memory:');sqlite.exec(schema);const files=new Map();
+ const statement=(sql,values=[])=>({bind:(...next)=>statement(sql,next),first:async()=>sqlite.prepare(sql).get(...values)||null,all:async()=>({results:sqlite.prepare(sql).all(...values)}),run:async()=>{const result=sqlite.prepare(sql).run(...values);return {meta:{changes:Number(result.changes)}};}});
+ const DB={prepare:statement,batch:async statements=>{sqlite.exec('BEGIN');try{const results=[];for(const item of statements)results.push(await item.run());sqlite.exec('COMMIT');return results;}catch(error){sqlite.exec('ROLLBACK');throw error;}}};
+ const BUCKET={put:async(key,value)=>{files.set(key,new Uint8Array(value));},delete:async key=>files.delete(key),head:async key=>files.has(key)?{size:files.get(key).length,httpEtag:'"fixture"'}:null,get:async(key,options)=>{if(!files.has(key))return null;const full=files.get(key),bytes=options?.range?full.slice(options.range.offset,options.range.offset+options.range.length):full;return {arrayBuffer:async()=>bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),body:bytes};}};
+ const handler=createSharedHandler({DB,BUCKET,OWNER_SETUP_SECRET:secret});
+ async function request(path,{method='GET',body,token,activation,origin=portalOrigin,headers={}}={}){
+  const response=await handler(new Request('https://service.example'+path,{method,headers:{Origin:origin,...(token?{Authorization:'Bearer '+token}:{}),...(activation?{Authorization:'Activation '+activation}:{}),...(body!==undefined?{'Content-Type':body instanceof Uint8Array?'application/octet-stream':'application/json'}:{}),...headers},...(body===undefined?{}:{body:body instanceof Uint8Array?body:JSON.stringify(body)})}));
+  return {status:response.status,headers:response.headers,body:response.headers.get('Content-Type')?.includes('application/json')?await response.json():new Uint8Array(await response.arrayBuffer())};
+ }
+ const register=()=>request('/api/auth/register',{method:'POST',activation:secret,body:{username:'mahmoud',password,confirmPassword:password}});
+ const login=()=>request('/api/auth/login',{method:'POST',body:{username:'MAHMOUD',password}});
+ return {request,register,login,sqlite,files,DB};
+}
+
+test('the first shared account requires its private activation link and works from independent clients',async()=>{
+ const value=setup();
+ assert.equal((await value.request('/api/auth/options')).body.canSetup,false);
+ assert.equal((await value.request('/api/auth/options',{activation:secret})).body.canSetup,true);
+ assert.equal((await value.request('/api/auth/register',{method:'POST',body:{username:'mahmoud',password,confirmPassword:password}})).status,403);
+ assert.equal((await value.register()).status,201);
+ assert.equal((await value.request('/api/auth/options',{activation:secret})).body.canSetup,false);
+ const first=await value.login(),second=await value.login();
+ assert.equal(first.status,200);assert.equal(second.status,200);assert.notEqual(first.body.sessionToken,second.body.sessionToken);
+ for(const auth of [first,second])assert.equal((await value.request('/api/auth/session',{token:auth.body.sessionToken})).body.username,'mahmoud');
+ const account=value.sqlite.prepare('SELECT * FROM administrators').get();assert.equal(JSON.stringify(account).includes(password),false);assert.equal(account.role,'owner');
+ await value.request('/api/auth/logout',{method:'POST',token:first.body.sessionToken,body:{}});
+ assert.equal((await value.request('/api/auth/session',{token:first.body.sessionToken})).status,401);
+ assert.equal((await value.request('/api/auth/session',{token:second.body.sessionToken})).status,200);
+});
+
+test('shared publications become public immediately, uploads stay private and video range reads work',async()=>{
+ const value=setup();await value.register();const {sessionToken}= (await value.login()).body;
+ const png=new Uint8Array(await readFile(new URL('../site/images/logo-ministere.png',import.meta.url)));
+ const video=new Uint8Array([0,0,0,20,102,116,121,112,0,0,0,0]);
+ const stage=async(name,bytes)=>(await value.request('/api/uploads?name='+name,{method:'POST',body:bytes,token:sessionToken})).body.url;
+ assert.equal((await value.request('/api/publications',{method:'POST',body:{}})).status,401);
+ const cover=await stage('image.png',png),media=await stage('film.mp4',video);
+ assert.equal((await value.request('/api/media/private/staged.mp4')).status,404);
+ for(const extra of [{type:'press',content:'Communiqué partagé'},{type:'photo',photos:[{url:cover,caption:'Rabat'}],thumbnailUrl:cover},{type:'video',mediaUrl:media,thumbnailUrl:cover,spokenLanguage:'fr'}]){
+  const input={requestId:crypto.randomUUID(),title:'Publication '+extra.type,date:'2026-10-26',topic:'Vie institutionnelle',language:'fr',...extra};
+  const first=await value.request('/api/publications',{method:'POST',token:sessionToken,body:input});assert.equal(first.status,201,JSON.stringify(first.body));
+  const retry=await value.request('/api/publications',{method:'POST',token:sessionToken,body:input});assert.equal(retry.body.id,first.body.id);
+ }
+ const catalogue=await value.request('/api/catalogue',{origin:''});assert.equal(catalogue.status,200);assert.equal(catalogue.body.items.length,3);
+ const item=catalogue.body.items.find(item=>item.type==='video');assert.match(item.mediaUrl,/^https:\/\/service.example\/api\/media\//);
+ const range=await value.request(new URL(item.mediaUrl).pathname,{headers:{Range:'bytes=4-7'}});assert.equal(range.status,206);assert.equal(range.headers.get('Content-Range'),'bytes 4-7/12');assert.equal(new TextDecoder().decode(range.body),'ftyp');
+});
+
+test('only the owner can invite the three designated administrators, and activation links are single use',async()=>{
+ const value=setup();await value.register();const owner=(await value.login()).body.sessionToken;
+ assert.equal((await value.request('/api/accounts/invite',{method:'POST',body:{username:'katiri.abdelah'}})).status,401);
+ const invite=await value.request('/api/accounts/invite',{method:'POST',token:owner,body:{username:'katiri.abdelah'}});assert.equal(invite.status,201);
+ assert.equal((await value.request('/api/auth/options',{activation:invite.body.activationToken})).body.registrationUsername,'katiri.abdelah');
+ const created=await value.request('/api/auth/register',{method:'POST',activation:invite.body.activationToken,body:{username:'katiri.abdelah',password,confirmPassword:password}});assert.equal(created.status,201);
+ assert.equal((await value.request('/api/auth/options',{activation:invite.body.activationToken})).body.canSetup,false);
+ const admin=(await value.request('/api/auth/login',{method:'POST',body:{username:'katiri.abdelah',password}})).body.sessionToken;
+ assert.equal((await value.request('/api/accounts',{token:admin})).status,403);
+ const accounts=(await value.request('/api/accounts',{token:owner})).body.accounts;assert.equal(accounts.length,4);assert.equal(accounts.find(item=>item.username==='katiri.abdelah').active,true);
+ assert.equal((await value.request('/api/auth/login',{method:'POST',origin:'https://untrusted.example',body:{username:'mahmoud',password}})).status,403);
+});
+
+ test('the existing browser account can be transferred without changing its password and is upgraded at login',async()=>{
+ const value=setup(),salt='b'.repeat(32),passwordHash=pbkdf2Sync(password,Buffer.from(salt,'hex'),600000,32,'sha256').toString('hex');
+ const result=await value.request('/api/auth/register',{method:'POST',activation:secret,body:{username:'mahmoud',legacyVerifier:{salt,passwordHash,iterations:600000}}});
+ assert.equal(result.status,201);assert.equal(value.sqlite.prepare('SELECT password_hash FROM administrators').get().password_hash,'pbkdf2:'+passwordHash);
+ assert.equal((await value.login()).status,200);
+ assert.equal(value.sqlite.prepare('SELECT password_hash FROM administrators').get().password_hash.startsWith('pbkdf2:'),false);
+ assert.equal((await value.login()).status,200);
+ });

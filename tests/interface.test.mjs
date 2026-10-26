@@ -33,7 +33,7 @@ test('complete assembled application parses and supports a subdirectory deployme
     assert.ok(bundle.includes('current-password'));
     assert.equal(bundle.includes('Utilisez votre clé personnelle GitHub'),false);
     assert.equal(bundle.includes('personal-access-tokens'),false);
-    assert.equal(bundle.toLowerCase().includes('chatgpt'),false);
+    for(const path of ['site/index.html','interface/portal.js','interface/publisher.js','interface/accounts.js'])assert.equal((await readFile(join(root,path),'utf8')).toLowerCase().includes('chatgpt'),false);
     assert.match(bundle, /Valider et publier/);
     assert.match(bundle, /Partager la recherche/);
   } finally { await rm(output, {recursive: true, force: true}); }

@@ -18,7 +18,7 @@ async function Ho(path,options={}) {
   if(path.startsWith('/api/search?'))return pL(await cL(),new URL(path,'https://local.invalid').searchParams.get('q')||'');
   if(path==='/api/auth/session')return administration.session();
   if(path==='/api/auth/login'&&method==='POST'){const result=await administration.login(JSON.parse(options.body||'{}'));er=undefined;return result;}
-  if(path==='/api/auth/register'&&method==='POST'&&administration.current().localMode)return administration.register(JSON.parse(options.body||'{}'));
+  if(path==='/api/auth/register'&&method==='POST'&&administration.register)return administration.register(JSON.parse(options.body||'{}'));
   if(path==='/api/auth/change-password'&&method==='POST'&&!MxTestAdministration){const result=await administration.changePassword(JSON.parse(options.body||'{}'));er=undefined;return result;}
   if(path==='/api/auth/logout'&&method==='POST'){er=undefined;return administration.logout();}
   if(path==='/api/test/reset'&&method==='POST'&&MxTestAdministration)return MxTestAdministration.reset();
@@ -32,6 +32,8 @@ async function Ho(path,options={}) {
     return cL();
   }
   administration.requireAccess();
+  if(path==='/api/accounts'&&method==='GET')return administration.accounts();
+  if(path==='/api/accounts/invite'&&method==='POST')return administration.invite(JSON.parse(options.body||'{}').username);
   if(path.startsWith('/api/uploads?')&&method==='POST')return administration.stage(options.body);
   if(path==='/api/publications'&&method==='POST')return administration.publish(JSON.parse(options.body||'{}'),options.onProgress);
   throw new Error('Cette opération n’est pas disponible.');

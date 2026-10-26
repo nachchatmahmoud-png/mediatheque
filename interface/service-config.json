@@ -2,6 +2,11 @@
   "provider": "github",
   "repository": "nachchatmahmoud-png/mediatheque",
   "branch": "main",
-  "management": {"mode": "local"},
-  "authentication": {"apiBase": ""}
+  "management": {
+    "mode": "production"
+  },
+  "authentication": {
+    "apiBase": "https://mediatheque-comptes-partages.nachchatmahmoud.chatgpt.site",
+    "shared": true
+  }
 }

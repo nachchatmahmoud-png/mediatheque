@@ -35,3 +35,39 @@ function MxManagementHero({auth,items,onLogout,busy,onToast}){
  if(auth.testMode)return h('div',{className:'mx-management-hero'},h('div',{className:'mx-management-hero-copy'},h('div',{className:'eyebrow'},h('span',null),'ESPACE DE GESTION'),h('h1',null,'Gestion des contenus'),h('p',null,'Préparez une vidéo, un album photo ou un communiqué et découvrez son affichage dans l’accueil.')),h('div',{className:'mx-session-card'},h('span',{className:'mx-session-label'},h('span',null),'MODE TEST'),h('strong',null,'Accès sans connexion'),h('small',null,'Vos essais sont conservés dans ce navigateur.')));
  return h('div',{className:'mx-management-hero'},h('div',{className:'mx-management-hero-copy'},h('div',{className:'eyebrow'},h('span',null),'ESPACE ADMINISTRATEUR'),h('h1',null,'Gestion des contenus'),h('p',null,auth.authenticated?'Préparez vos supports, vérifiez leur présentation et publiez en toute simplicité.':'Un accès personnel pour enrichir et administrer la médiathèque.')),auth.authenticated&&h('div',{className:'mx-session-card'},h('span',{className:'mx-session-label'},h('span',null),'SESSION OUVERTE'),h('strong',null,auth.displayName||auth.username),h('small',null,auth.role==='owner'?'Propriétaire · Administration des comptes':'Administrateur · Publication des contenus'),h('button',{className:'button secondary',disabled:busy,onClick:()=>onLogout().catch(exception=>onToast(exception.message))},h(Wi,{size:15}),'Se déconnecter')));
 }
+
+function MxSharedAccounts(){
+ const h=mxElement;
+ const [accounts,setAccounts]=O.useState([]),[busy,setBusy]=O.useState(''),[error,setError]=O.useState(''),[invitation,setInvitation]=O.useState(null);
+ O.useEffect(()=>{Ho('/api/accounts').then(result=>setAccounts(result.accounts)).catch(exception=>setError(exception.message));},[]);
+ const invite=async account=>{setBusy(account.username);setError('');setInvitation(null);try{const result=await Ho('/api/accounts/invite',{method:'POST',body:JSON.stringify({username:account.username})});const url=new URL(mxManagementUrl());url.hash='activation='+result.activationToken;setInvitation({name:account.displayName,url:url.href});}catch(exception){setError(exception.message);}finally{setBusy('');}};
+ return h('details',{className:'mx-shared-accounts',id:'mx-shared-accounts'},h('summary',null,'Gérer les accès des administrateurs'),
+  h('p',null,'Chaque administrateur choisit son mot de passe à partir de son lien personnel. Son compte fonctionne ensuite depuis ses différents navigateurs et ordinateurs.'),
+  error&&h('p',{className:'gh-error',role:'alert'},error),
+  h('div',{className:'mx-shared-account-list'},...accounts.map(account=>h('article',{key:account.username},h('div',null,h('strong',null,account.displayName),h('small',null,account.username)),h('span',null,account.active?'Compte actif':'À activer'),!account.active&&h('button',{className:'button secondary',type:'button',disabled:!!busy,onClick:()=>invite(account)},busy===account.username?'Préparation…':'Créer un lien d’activation')))),
+  invitation&&h('div',{className:'mx-invitation-result',role:'status'},h('strong',null,'Lien personnel pour '+invitation.name),h('p',null,'Transmettez ce lien uniquement à cette personne. Il est valable 7 jours et ne peut être utilisé qu’une seule fois.'),h('label',{className:'field'},'Lien d’activation',h('input',{type:'text',readOnly:true,value:invitation.url,onFocus:event=>event.target.select()}))));
+}
+
+function MxLocalImport({auth,onRefresh}){
+ const h=mxElement;
+ const [items,setItems]=O.useState([]),[busy,setBusy]=O.useState(false),[error,setError]=O.useState(''),[progress,setProgress]=O.useState('');
+ const storage=O.useRef(null);
+ O.useEffect(()=>{storage.current=mxBrowserTestStorage('mediatheque-contenus-locaux-v1');storage.current.read().then(data=>setItems(data.items.filter(item=>!item.sharedPublication))).catch(()=>{});},[]);
+ const transfer=async()=>{
+  if(busy)return;setBusy(true);setError('');
+  try{
+   const data=await storage.current.read(),assets=new Map(data.assets.map(asset=>[asset.id,asset]));
+   for(let index=0;index<items.length;index++){
+    const item=items[index],paths=new Map();setProgress('Publication '+(index+1)+' / '+items.length+' : '+item.title);
+    const file=async ref=>{if(!ref?.startsWith('local-content:'))return ref||'';if(paths.has(ref))return paths.get(ref);const asset=assets.get(ref);if(!asset)throw new Error('Une pièce jointe est absente : '+item.title);const result=await mxManagementClient().stage(new File([asset.blob],asset.name,{type:asset.blob.type}));paths.set(ref,result.url);return result.url;};
+    const payload={...item,requestId:item.id.replace(/^local-/,''),thumbnailUrl:await file(item.thumbnailUrl),mediaUrl:await file(item.mediaUrl),fileUrl:await file(item.fileUrl),captionsUrl:await file(item.captionsUrl),photos:[]};
+    for(const photo of item.photos)payload.photos.push({...photo,url:await file(photo.url)});
+    const published=await mxManagementClient().publish(payload);await storage.current.save({...item,sharedPublication:published.id},[]);
+    setItems(previous=>previous.filter(value=>value.id!==item.id));
+   }
+   await onRefresh();
+  }catch(exception){setError(exception.message);}finally{setBusy(false);setProgress('');}
+ };
+ if(!items.length)return null;
+ return h('details',{className:'mx-local-import'},h('summary',null,items.length+' contenu(s) enregistré(s) sur cet appareil'),h('p',null,'Ces contenus sont encore conservés dans ce navigateur. Vous pouvez les publier dans la médiathèque commune pour les rendre visibles depuis les autres navigateurs.'),h('ul',null,...items.map(item=>h('li',{key:item.id},item.title))),error&&h('p',{className:'gh-error',role:'alert'},error),progress&&h('p',{role:'status'},progress),h('button',{className:'button primary',type:'button',disabled:busy,onClick:transfer},busy?'Publication en cours…':'Publier ces contenus pour tous les visiteurs'));
+}

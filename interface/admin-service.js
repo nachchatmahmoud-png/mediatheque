@@ -5,9 +5,15 @@ const MxAdministration=(()=>{
   const apiBase=(()=>{
     try{const url=new URL(MX_SERVICE.authentication?.apiBase||'');return url.protocol==='https:'&&!url.username&&!url.password&&!url.search&&!url.hash?url.href.replace(/\/$/,''):'';}catch{return '';}
   })();
-  let token='',identity=null,idleTimer=null,expiresAt=0;
+  let token='',identity=null,idleTimer=null,expiresAt=0,setupInfo={};
+  const sharedMode=MX_SERVICE.authentication?.shared===true;
+  let activationToken='';
+  if(sharedMode&&typeof window!=='undefined'){
+    const fragment=new URLSearchParams(window.location.hash.slice(1)),candidate=fragment.get('activation')||'';
+    if(/^[a-f0-9]{64}$/.test(candidate)){activationToken=candidate;history.replaceState(null,'',window.location.pathname+window.location.search);}
+  }
   const pending=new Map();
-  const anonymous=()=>({authenticated:false,configured:!!apiBase,canSetup:false,canRecover:false,username:''});
+  const anonymous=()=>({authenticated:false,configured:!!apiBase,canSetup:setupInfo.canSetup===true,canRecover:false,username:'',sharedMode,registrationUsername:setupInfo.registrationUsername||''});
   const clear=()=>{token='';identity=null;expiresAt=0;pending.clear();clearTimeout(idleTimer);};
   const expire=()=>{clear();window.dispatchEvent(new Event('management-session-expired'));};
   const touch=()=>{clearTimeout(idleTimer);idleTimer=setTimeout(expire,Math.max(0,Math.min(30*60*1000,expiresAt-Date.now())));};
@@ -17,7 +23,7 @@ const MxAdministration=(()=>{
     const expiry=Date.parse(result.expiresAt);
     if(result.authenticated!==true||!['owner','admin'].includes(result.role)||typeof result.sessionToken!=='string'||! /^[A-Za-z0-9._~-]{32,4096}$/.test(result.sessionToken)||!Number.isFinite(expiry)||expiry<=Date.now()||expiry>Date.now()+8*60*60*1000)throw new Error('La connexion n’a pas été confirmée. Réessayez.');
     clear();token=result.sessionToken;expiresAt=expiry;
-    identity={authenticated:true,configured:true,username,displayName:typeof result.displayName==='string'?result.displayName:username,role:result.role,requiresPasswordChange:result.requiresPasswordChange===true};
+    identity={authenticated:true,configured:true,username,displayName:typeof result.displayName==='string'?result.displayName:username,role:result.role,sharedMode,canManageAccess:sharedMode&&result.role==='owner',requiresPasswordChange:result.requiresPasswordChange===true};
     touch();return current();
   }
   async function request(path,{method='GET',body,headers={},authenticated=true}={}){
@@ -44,13 +50,22 @@ const MxAdministration=(()=>{
     const result=await request('/api/auth/login',{method:'POST',authenticated:false,headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
     return installSession(result,username);
   }
+  async function register(credentials){
+    if(!sharedMode||!activationToken)throw new Error('Utilisez votre lien personnel d’activation pour créer votre accès.');
+    const result=await request('/api/auth/register',{method:'POST',authenticated:false,headers:{'Content-Type':'application/json',Authorization:'Activation '+activationToken},body:JSON.stringify(credentials)});
+    if(result.created!==true)throw new Error('La création de votre accès n’a pas été confirmée.');
+    activationToken='';setupInfo={};return result;
+  }
   async function changePassword(credentials){
     requireAccess();const username=identity.username;
     const result=await request('/api/auth/change-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(credentials)});
     return installSession(result,username);
   }
   async function session(){
-    if(!current().authenticated)return current();
+    if(!current().authenticated){
+      if(sharedMode&&apiBase){try{setupInfo=await request('/api/auth/options',{authenticated:false,headers:activationToken?{Authorization:'Activation '+activationToken}:{}});}catch(error){return {...anonymous(),configured:false,error:error.message};}}
+      return current();
+    }
     const result=await request('/api/auth/session');
     if(result.authenticated!==true){clear();return current();}
     identity.requiresPasswordChange=result.requiresPasswordChange===true;
@@ -60,6 +75,15 @@ const MxAdministration=(()=>{
     try{if(current().authenticated)await request('/api/auth/logout',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});}finally{clear();}
     return {ok:true};
   }
+  async function catalogue(base){
+    if(!sharedMode)return base;
+    const result=await request('/api/catalogue',{authenticated:false});
+    if(!Array.isArray(result.items)||!Array.isArray(result.events))throw new Error('Les publications sont momentanément indisponibles.');
+    const merge=(first,second)=>[...new Map([...second,...first].map(item=>[item.id,item])).values()];
+    return {...base,items:merge(result.items,base.items||[]),events:merge(result.events,base.events||[])};
+  }
+  const accounts=()=>request('/api/accounts');
+  const invite=username=>request('/api/accounts/invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username})});
   async function stage(file){
     requireAccess();
     if(!file||typeof file.arrayBuffer!=='function'||!file.size||file.size>50*1048576)throw new Error('Sélectionnez un fichier valide de 50 Mio maximum.');
@@ -83,11 +107,11 @@ const MxAdministration=(()=>{
       try{
         const url=new URL('./catalogue.json',document.baseURI);url.searchParams.set('v',String(Date.now()));
         const response=await fetch(url,{cache:'no-store',credentials:'omit'});
-        if(response.ok){const catalogue=await response.json();if(catalogue.items?.some(item=>item.id===publication.id)){er=Promise.resolve({...mxLocaleCatalogue(catalogue),isAdmin:current().authenticated});return {id:publication.id,published:true};}}
+        if(response.ok){const published=await catalogue(await response.json());if(published.items?.some(item=>item.id===publication.id)){er=Promise.resolve({...mxLocaleCatalogue(published),isAdmin:current().authenticated});return {id:publication.id,published:true};}}
       }catch{}
       await new Promise(resolve=>setTimeout(resolve,5000));
     }while(Date.now()<deadline);
     throw new Error('Le contenu est enregistré. La mise en ligne se poursuit. Cliquez à nouveau sur « Valider et publier » pour vérifier son affichage, sans créer de doublon.');
   }
-  return {current,session,login,logout,changePassword,requireAccess,stage,publish};
+  return {current,session,register,login,logout,changePassword,requireAccess,stage,publish,catalogue,accounts,invite};
 })();

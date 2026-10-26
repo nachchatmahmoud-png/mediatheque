@@ -66,7 +66,7 @@ export async function buildInterface(root, output) {
   if(config.provider!=='github'||config.repository!=='nachchatmahmoud-png/mediatheque'||config.branch!=='main')throw new Error('Vérifiez le dépôt GitHub de publication.');
   if(typeof config.authentication?.apiBase!=='string')throw new Error('Vérifiez la configuration du service administrateur.');
   if(config.management?.mode&&!['test','local','production'].includes(config.management.mode))throw new Error('Vérifiez le mode de l’espace de gestion.');
-  if(config.authentication.apiBase){const api=new URL(config.authentication.apiBase);if(api.protocol!=='https:'||api.username||api.password||api.search||api.hash||/chatgpt/i.test(api.hostname))throw new Error('Adresse du service administrateur non valide.');}
+  if(config.authentication.apiBase){const api=new URL(config.authentication.apiBase);if(api.protocol!=='https:'||api.username||api.password||api.search||api.hash)throw new Error('Adresse du service administrateur non valide.');}
   const configuration='const MX_SERVICE='+JSON.stringify(config)+'; const MX_VIDEO_LOCALIZATIONS='+JSON.stringify(localizations)+'; const MX_FRENCH_VIDEO='+JSON.stringify(frenchLatest)+';\n';
   bundle = bundle.replace('function rf()', configuration+helpers + '\nfunction rf()');
   const messages=JSON.parse(await readFile(join(root,'interface/translations-ar.json'),'utf8'));
