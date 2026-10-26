@@ -5,7 +5,10 @@ async function cL() {
     er=fetch(url,{cache:'no-store',credentials:'omit'}).then(async response=>{
       if(!response.ok)throw new Error('Le catalogue est momentanément indisponible.');
       let catalogue=await response.json();
-      if(mxManagementClient().catalogue)catalogue=await mxManagementClient().catalogue(catalogue);
+      if(mxManagementClient().catalogue){
+        try{catalogue=await mxManagementClient().catalogue(catalogue);}
+        catch(error){if(MX_SERVICE.authentication?.shared!==true)throw error;}
+      }
       return {...mxLocaleCatalogue(catalogue),isAdmin:mxManagementClient().current().authenticated};
     }).catch(error=>{er=undefined;throw error;});
   }

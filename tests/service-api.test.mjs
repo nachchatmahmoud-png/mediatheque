@@ -10,7 +10,7 @@ const sessionToken='LOCAL_TEST_SESSION_TOKEN_NEVER_VALID_123456789';
 const credentials={username:'  Admin.Test  ',password:'Mot de passe de test non utilisable'};
 const publication={requestId:'12345678-1234-1234-1234-123456789abc',type:'video',title:'Publication de test',language:'fr'};
 
-function client({base=apiBase,denyLogin=false,denyWrite=false,badSession=false,logoutFailure=false,initialPassword=false,shared=false,activation='c'.repeat(64)}={}){
+function client({base=apiBase,denyLogin=false,denyWrite=false,badSession=false,logoutFailure=false,initialPassword=false,shared=false,serviceFailure=false,staticItems=[],activation='c'.repeat(64)}={}){
   const calls=[],events=[],timers=[];let live=false,checks=0,registered=false;const history=[];
   const response=(status,value)=>({ok:status>=200&&status<300,status,json:async()=>value});
   const context=vm.createContext({URL,URLSearchParams,Event,File,Date,er:undefined,MX_SERVICE:{authentication:{apiBase:base,shared}},
@@ -23,9 +23,10 @@ function client({base=apiBase,denyLogin=false,denyWrite=false,badSession=false,l
         assert.equal(new URL(url).origin,'https://nachchatmahmoud-png.github.io');
         assert.equal(options.headers?.Authorization,undefined);
         checks++;if(checks>1)live=true;
-        return response(200,{items:live?[{id:'publication-test-video-1',language:'fr',title:publication.title},{id:'publication-ar',language:'ar'}]:[],events:[],settings:{}});
+        return response(200,{items:[...staticItems,...(live?[{id:'publication-test-video-1',language:'fr',title:publication.title},{id:'publication-ar',language:'ar'}]:[])],events:[],settings:{}});
       }
       const path=url.slice(apiBase.length);
+      if(serviceFailure)throw new Error('offline');
       if(path==='/api/auth/options')return response(200,{configured:true,shared:true,canSetup:!registered&&!!options.headers.Authorization});
       if(path==='/api/auth/register'){assert.equal(options.headers.Authorization,'Activation '+activation);registered=true;return response(201,{created:true,username:'admin.test',shared:true});}
       if(path==='/api/catalogue'){assert.equal(options.headers.Authorization,undefined);return response(200,{items:[{id:'shared-fr',language:'fr'},{id:'shared-ar',language:'ar'}],events:[]});}
@@ -61,6 +62,18 @@ test('public consultation remains on GitHub Pages without an authentication requ
   assert.equal(new URL(value.calls[0].url).pathname,'/mediatheque/catalogue.json');
   assert.equal(value.calls[0].options.credentials,'omit');
   await assert.rejects(value.context.Ho('/api/uploads?name=x.png',{method:'POST',body:new File(['test'],'x.png')}),/Connectez-vous/);
+});
+
+test('an unavailable shared service preserves the GitHub catalogue while management remains closed',async()=>{
+  const value=client({shared:true,serviceFailure:true,staticItems:[{id:'github-fr',language:'fr',title:'Publication existante'},{id:'github-ar',language:'ar',title:'عنوان'}]});
+  const catalogue=await value.context.Ho('/api/library');
+  assert.deepEqual(Array.from(catalogue.items,item=>item.id),['github-fr']);
+  const session=await value.context.Ho('/api/auth/session');
+  assert.equal(session.configured,false);assert.equal(session.authenticated,false);
+  await assert.rejects(login(value),/indisponible/);
+  await assert.rejects(value.context.Ho('/api/uploads?name=test.png',{method:'POST',body:new File(['test'],'test.png')}),/Connectez-vous/);
+  assert.equal(value.calls.some(call=>call.url.includes('/api/uploads')),false);
+  assert.ok(value.calls.filter(call=>call.url.endsWith('/api/catalogue')).every(call=>call.options.headers.Authorization===undefined));
 });
 
 test('identifier and password go only to the configured HTTPS service and the session stays private',async()=>{

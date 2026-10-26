@@ -8,11 +8,9 @@ Le site public et son espace de gestion sont hébergés dans ce dépôt et publi
 
 Les pages française et arabe disposent de leurs propres textes, résultats et événements. L’interface arabe se lit de droite à gauche. L’espace de gestion commun est en français et reste sur la même adresse GitHub Pages.
 
-## Accès partagé à l’espace de gestion — préparation
+## Accès partagé à l’espace de gestion
 
-**Mise en service en attente :** le service est déployé en accès privé. L’activation depuis le portail GitHub attend la validation du destinataire des données et l’ouverture des points d’entrée nécessaires. La version publique actuellement en service conserve encore son fonctionnement local.
-
-Après activation, la gestion utilisera des comptes conservés côté serveur. Le même identifiant et le même mot de passe fonctionnent depuis plusieurs navigateurs et ordinateurs. Le portail public reste hébergé sur GitHub Pages. Les publications et leurs fichiers sont conservés dans une base commune et deviennent visibles sur l’accueil après validation, sans installation à effectuer sur chaque ordinateur.
+La gestion utilise des comptes conservés côté serveur. Après l’activation initiale du compte, le même identifiant et le même mot de passe fonctionnent depuis plusieurs navigateurs et ordinateurs. Le portail public reste hébergé sur GitHub Pages. Les publications et leurs fichiers sont conservés dans une base commune et deviennent visibles sur l’accueil après validation, sans installation à effectuer sur chaque ordinateur.
 
 Le propriétaire active son accès avec un lien personnel à usage unique. Depuis le navigateur où l’ancien compte local a été créé, **Conserver mon accès existant** transfère son identifiant et son vérificateur de mot de passe au service protégé, sans modifier son mot de passe. Le vérificateur est ensuite mis à niveau au premier accès. Depuis un autre navigateur, le formulaire permet de créer l’accès partagé en choisissant son identifiant et son mot de passe. Une fois le compte activé, la connexion utilise l’adresse de gestion habituelle, sans lien d’activation.
 
