@@ -123,7 +123,7 @@ for(const type of ['photo','press'])test('the '+type+' editor uploads once and p
   assert.equal(payload.photos.length,1);assert.equal(payload.thumbnailUrl,payload.photos[0].url);assert.deepEqual(payload.translations.fr.captions,['Salé']);assert.deepEqual(payload.translations.ar.captions,['سلا']);assert.equal(payload.content,'');
  }else{
   assert.equal(payload.translations.fr.content,'Texte français du communiqué.');assert.equal(payload.translations.ar.content,'النص العربي للبلاغ.');assert.ok(payload.fileUrl);assert.equal(payload.translations.fr.fileUrl,payload.translations.ar.fileUrl);
-  view.field('Transférer le PDF en français').props.onChange({target:{files:[{name:'communique-fr.pdf',size:15,lastModified:2,type:'application/pdf'}],value:''}});
+  view.field('Transférer le PDF en français').props.onChange({target:{files:[{name:'communique.pdf',size:12,lastModified:1,type:'application/pdf'}],value:''}});
   await view.submit();const distinct=JSON.parse(view.calls.at(-1).body);assert.notEqual(distinct.translations.fr.fileUrl,distinct.translations.ar.fileUrl);assert.equal(view.calls.filter(call=>call.path.startsWith('/api/uploads')).length,2);
   view.nodes(view.render()).find(node=>node.tag==='button'&&node.children.includes('PDF uniquement')).props.onClick();
   await view.submit();const pdf=JSON.parse(view.calls.at(-1).body);assert.equal(pdf.content,'');assert.equal(pdf.translations.fr.content,'');assert.equal(pdf.translations.ar.content,'');

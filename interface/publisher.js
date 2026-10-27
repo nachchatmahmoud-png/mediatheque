@@ -122,7 +122,7 @@ function MxPublicationEditor({type,auth,busy,setBusy,onToast,onPublished}) {
     }catch(exception){setFormError(exception.message);}
   };
   const upload=async file=>{
-    const key=[file.name,file.size,file.lastModified].join(':');
+    const key=file;
     if(uploaded.current.has(key))return uploaded.current.get(key);
     const mime=/\.vtt$/i.test(file.name)?'text/vtt':file.type||({jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',mp4:'video/mp4',webm:'video/webm',pdf:'application/pdf'}[file.name.split('.').at(-1).toLowerCase()]);
     const result=await Ho('/api/uploads?name='+encodeURIComponent(file.name),{method:'POST',headers:{'Content-Type':mime},body:file});
