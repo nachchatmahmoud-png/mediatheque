@@ -110,7 +110,7 @@ export function createAdminHandler({store,passwords,publisher,publicationAccess}
       if(path==='/api/publications'&&request.method==='POST'){
         const {account}=await authenticate(request);
         if(!await store.allow(await hashToken('publications:'+account.id),30))throw new ServiceError('Trop de publications. Patientez avant de réessayer.',429);
-        const prepared=await preparePublication(await bodyJSON(request,120000),account.id,id=>store.upload(id));
+        const prepared=await preparePublication(await bodyJSON(request,512000),account.id,id=>store.upload(id));
         return answer(await publisher.publish(prepared,path=>store.download(path)),201);
       }
       throw new ServiceError('Opération non disponible.',404);

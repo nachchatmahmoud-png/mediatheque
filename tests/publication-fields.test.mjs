@@ -75,3 +75,58 @@ test('the editor publishes one video once with both titles and retains unchecked
   await nodes(tree).find(node=>node.tag==='form').props.onSubmit({preventDefault(){}});
   assert.equal(calls.length,1);assert.ok(nodes(render()).some(node=>node.props.role==='alert'&&node.children.some(value=>typeof value==='string'&&value.includes('au moins une page'))));
 });
+
+function editorHarness(type){
+ const hooks=[],calls=[],published=[];let cursor=0;
+ const O={Fragment:'fragment',useState(initial){const index=cursor++;if(!(index in hooks))hooks[index]=typeof initial==='function'?initial():initial;return [hooks[index],value=>{hooks[index]=typeof value==='function'?value(hooks[index]):value;}];},useRef(initial){const index=cursor++;if(!(index in hooks))hooks[index]={current:initial};return hooks[index];},useEffect(){}};
+ const context=vm.createContext({O,URL,MX_DOC_RUNTIME:documentary,MxDocumentaryFields:'MxDocumentaryFields',SL:'2026-10-27',el:['Habitat et logement'],mxElement:(tag,props,...children)=>({tag,props:props||{},children:children.flat(Infinity).filter(Boolean)}),mxUseObjectUrl:()=>'',mxYoutubeThumbnail:()=>'',mxValidateFile:()=>{},mxSize:value=>value+' octets',mxPlural:(value,noun)=>value+' '+noun,mxHttps:()=>'',mxUuid:()=>filled.requestId,Ya:value=>value,Ho:async(path,options)=>{calls.push({path,...options});return path.startsWith('/api/uploads')?{url:'admin-upload:'+calls.length}:{id:'contenu-partage',published:true};},...Object.fromEntries(['Ta','pa','ma','Oo','zl','MxPreviewIcon','MxThumbnailField','MxVideoLanguageFields','MxThumbnailImage','MxPublicationPreview','MxPhotoPreview'].map(name=>[name,name]))});
+ const props={type,auth:{sharedMode:true},busy:false,setBusy(){},onToast(){},onPublished:async(...values)=>published.push(values)};
+ const render=()=>{cursor=0;return context.MxPublicationEditor(props);};
+ const nodes=tree=>[tree,...tree.children.flatMap(child=>child&&typeof child==='object'?nodes(child):[])];
+ const field=(label)=>nodes(render()).find(node=>node.props['aria-label']===label);
+ const checkbox=locale=>nodes(render()).find(node=>node.tag==='input'&&node.props.type==='checkbox'&&node.props.value===locale);
+ const fill=(label,value)=>field(label).props.onChange({target:{value}});
+ const submit=async()=>nodes(render()).find(node=>node.tag==='form').props.onSubmit({preventDefault(){}});
+ return {context,render,nodes,field,checkbox,fill,submit,calls,published};
+}
+
+const editorSource=await readFile(new URL('../interface/publisher.js',import.meta.url),'utf8');
+for(const type of ['photo','press'])test('the '+type+' editor uploads once and publishes the checked language editions',async()=>{
+ const view=editorHarness(type);vm.runInContext(source+'\n'+editorSource,view.context);
+ view.fill('Domaine principal *','Habitat et logement');
+ view.nodes(view.render()).find(node=>node.tag==='MxDocumentaryFields').props.onChange(['Aide directe au logement']);
+ assert.equal(view.checkbox('fr').props.checked,true);assert.equal(view.checkbox('ar').props.checked,true);
+ view.fill('Titre en français *',type==='photo'?'Album du programme de logement':'Communiqué sur le logement');
+ view.fill('Titre en arabe *',type==='photo'?'ألبوم برنامج السكن':'بلاغ حول السكن');
+ if(type==='photo'){
+  const files=[{name:'rabat.png',size:12,lastModified:1,type:'image/png'},{name:'sale.png',size:12,lastModified:2,type:'image/png'}];
+  view.field('Importer les photographies *').props.onChange({target:{files,value:''}});
+  const photo=index=>view.nodes(view.render()).filter(node=>node.tag==='MxPhotoPreview')[index];
+  photo(0).props.onCaption('fr','Rabat');photo(0).props.onCaption('ar','الرباط');photo(1).props.onCaption('fr','Salé');photo(1).props.onCaption('ar','سلا');
+  photo(1).props.onCover();photo(1).props.onMove(0);
+  assert.deepEqual(Array.from(photo(0).props.editions.fr.captions),['Salé','Rabat']);
+  assert.deepEqual(Array.from(photo(0).props.editions.ar.captions),['سلا','الرباط']);
+  photo(1).props.onRemove();assert.equal(photo(0).props.file.name,'sale.png');
+ }else{
+  view.nodes(view.render()).find(node=>node.tag==='button'&&node.children.includes('Texte et PDF')).props.onClick();
+  view.fill('Texte intégral du communiqué en français *','Texte français du communiqué.');view.fill('Texte intégral du communiqué en arabe *','النص العربي للبلاغ.');
+  view.field('Transférer le PDF en arabe').props.onChange({target:{files:[{name:'communique.pdf',size:12,lastModified:1,type:'application/pdf'}],value:''}});
+ }
+ view.checkbox('fr').props.onChange({target:{checked:false}});assert.equal(view.field('Titre en français *'),undefined);
+ view.checkbox('fr').props.onChange({target:{checked:true}});assert.ok(view.field('Titre en français *').props.value);
+ if(type==='press')assert.equal(view.field('Texte intégral du communiqué en français *').props.value,'Texte français du communiqué.');
+ await view.submit();
+ assert.equal(view.calls.filter(call=>call.path.startsWith('/api/uploads')).length,1);assert.equal(view.calls.filter(call=>call.path==='/api/publications').length,1);assert.equal(view.published.length,1);
+ const payload=JSON.parse(view.calls.find(call=>call.path==='/api/publications').body);
+ assert.deepEqual(Object.keys(payload.translations),['fr','ar']);assert.equal(payload.language,'fr');
+ if(type==='photo'){
+  assert.equal(payload.photos.length,1);assert.equal(payload.thumbnailUrl,payload.photos[0].url);assert.deepEqual(payload.translations.fr.captions,['Salé']);assert.deepEqual(payload.translations.ar.captions,['سلا']);assert.equal(payload.content,'');
+ }else{
+  assert.equal(payload.translations.fr.content,'Texte français du communiqué.');assert.equal(payload.translations.ar.content,'النص العربي للبلاغ.');assert.ok(payload.fileUrl);assert.equal(payload.translations.fr.fileUrl,payload.translations.ar.fileUrl);
+  view.field('Transférer le PDF en français').props.onChange({target:{files:[{name:'communique-fr.pdf',size:15,lastModified:2,type:'application/pdf'}],value:''}});
+  await view.submit();const distinct=JSON.parse(view.calls.at(-1).body);assert.notEqual(distinct.translations.fr.fileUrl,distinct.translations.ar.fileUrl);assert.equal(view.calls.filter(call=>call.path.startsWith('/api/uploads')).length,2);
+  view.nodes(view.render()).find(node=>node.tag==='button'&&node.children.includes('PDF uniquement')).props.onClick();
+  await view.submit();const pdf=JSON.parse(view.calls.at(-1).body);assert.equal(pdf.content,'');assert.equal(pdf.translations.fr.content,'');assert.equal(pdf.translations.ar.content,'');
+ }
+ view.checkbox('fr').props.onChange({target:{checked:false}});await view.submit();const arabic=JSON.parse(view.calls.at(-1).body);assert.deepEqual(Object.keys(arabic.translations),['ar']);
+});

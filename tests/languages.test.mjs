@@ -49,6 +49,12 @@ test('French and Arabic pages use separate bundles with valid syntax and matchin
    const bundle=await readFile(join(output,'assets/app-'+language+'.js'),'utf8');
    assert.doesNotThrow(()=>new vm.Script(bundle));
    assert.ok(bundle.includes(language==='ar'?'مكتبة الفيديو':'Vidéothèque'));
+   const runtimeStart=bundle.indexOf('var MX_DOC_RUNTIME='),runtimeEnd=bundle.indexOf('var iu=',runtimeStart);
+   const searchSource=bundle.slice(runtimeStart,runtimeEnd)+'var uu=MX_DOC_RUNTIME.keywordSearchText;'+bundle.match(/var Ea=[^;]+;/u)[0]+bundle.slice(bundle.indexOf('function Eo('),bundle.indexOf('function xg('))+bundle.slice(bundle.indexOf('function pL('),bundle.indexOf('async function Ho('));
+   const search=vm.runInNewContext(searchSource+';pL');
+   const term=language==='ar'?'الدعم المباشر للسكن':'Aide directe au logement';
+   const item={id:'album-'+language,type:'photo',language,title:language==='ar'?'ألبوم السكن':'Album de logement',photos:[],keywords:[term]};
+   for(const query of ['دعم السكن','الدعم المباشر للسكن','Daam Sakane'])assert.deepEqual(Array.from(search({items:[item],events:[]},query).ids),[item.id]);
   }
   assert.match(await readFile(join(output,'index.html'),'utf8'),/location\.replace/);
  }finally{await rm(output,{recursive:true,force:true});}

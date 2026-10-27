@@ -177,3 +177,55 @@ test('removing all accounts retains already published documents and their files'
  const catalogue=await (await openHandler(new Request('https://service.example/api/catalogue'))).json();assert.equal(catalogue.items[0].id,saved.body.id);
  const file=await openHandler(new Request(catalogue.items[0].thumbnailUrl));assert.equal(file.status,200);assert.deepEqual(new Uint8Array(await file.arrayBuffer()),png);
 });
+
+test('one photo album or communiqué creates both language pages without copying its attachments',async()=>{
+ const value=setup({openPublishing:true});
+ const png=new Uint8Array(await readFile(new URL('../site/images/logo-ministere.png',import.meta.url)));
+ const pdf=new TextEncoder().encode('%PDF-1.4\nFixture locale');
+ const stage=async(name,body)=>(await value.request('/api/uploads?name='+name,{method:'POST',body})).body.url;
+ const photo=await stage('album.png',png),document=await stage('communique.pdf',pdf);
+ const cases=[
+  {type:'photo',photos:[{url:photo}],thumbnailUrl:photo,translations:{fr:{title:'Programme de logement en images',location:'Rabat',captions:['Présentation du programme']},ar:{title:'برنامج السكن بالصور',location:'الرباط',captions:['تقديم البرنامج']}}},
+  {type:'press',translations:{fr:{title:'Communiqué sur le logement',content:'Présentation du programme de logement.'},ar:{title:'بلاغ حول السكن',content:'تقديم برنامج السكن.',fileUrl:document}}},
+ ];
+ for(const extra of cases){
+  const input={requestId:crypto.randomUUID(),date:'2026-10-27',topic:'Habitat et logement',keywords:['Aide directe au logement'],language:'fr',title:extra.translations.fr.title,...extra};
+  const first=await value.request('/api/publications',{method:'POST',body:input});assert.equal(first.status,201,JSON.stringify(first.body));
+  const retry=await value.request('/api/publications',{method:'POST',body:input});assert.equal(retry.body.id,first.body.id);
+  const catalogue=(await value.request('/api/catalogue',{origin:''})).body;
+  const items=catalogue.items.filter(item=>item.type===extra.type),fr=items.find(item=>item.language==='fr'),ar=items.find(item=>item.language==='ar');
+  assert.equal(items.length,2);assert.equal(fr.id,first.body.id);assert.notEqual(fr.id,ar.id);assert.notEqual(fr.eventId,ar.eventId);
+  assert.equal(fr.title,extra.translations.fr.title);assert.equal(ar.title,extra.translations.ar.title);
+  assert.deepEqual(fr.keywords,['Aide directe au logement']);assert.deepEqual(ar.keywords,fr.keywords);
+  if(extra.type==='photo'){
+   assert.equal(fr.photos[0].url,ar.photos[0].url);assert.equal(fr.thumbnailUrl,ar.thumbnailUrl);
+   assert.equal(fr.photos[0].caption,'Présentation du programme');assert.equal(ar.photos[0].caption,'تقديم البرنامج');assert.equal(fr.location,'Rabat');assert.equal(ar.location,'الرباط');
+  }else{
+   assert.equal(fr.fileUrl,ar.fileUrl);assert.equal(fr.content,extra.translations.fr.content);assert.equal(ar.content,extra.translations.ar.content);
+   assert.deepEqual((await value.request(new URL(fr.fileUrl).pathname)).body,pdf);
+  }
+  const invalid={...input,requestId:crypto.randomUUID(),translations:{...extra.translations,fr:{...extra.translations.fr,...(extra.type==='photo'?{captions:['نص عربي']}:{content:'نص عربي'})}}};
+  assert.equal((await value.request('/api/publications',{method:'POST',body:invalid})).status,400);
+ }
+ assert.equal(value.files.size,2);assert.equal(value.sqlite.prepare('SELECT COUNT(*) AS count FROM publications').get().count,2);
+ const onlyArabic=await value.request('/api/publications',{method:'POST',body:{...cases[0],requestId:crypto.randomUUID(),title:cases[0].translations.ar.title,language:'ar',date:'2026-10-27',topic:'Habitat et logement',keywords:['Aide directe au logement'],translations:{ar:cases[0].translations.ar}}});
+ assert.equal(onlyArabic.status,201);assert.equal(value.files.size,2);
+ const large={fr:{title:'Communiqué intégral',content:'Le programme de logement. '.repeat(1500)},ar:{title:'البلاغ الكامل',content:'برنامج السكن. '.repeat(2800)}};
+ const full=await value.request('/api/publications',{method:'POST',body:{requestId:crypto.randomUUID(),type:'press',title:large.fr.title,language:'fr',date:'2026-10-27',topic:'Habitat et logement',keywords:['Aide directe au logement'],content:large.fr.content,translations:large}});
+ assert.equal(full.status,201,JSON.stringify(full.body));
+ const onePdf={requestId:crypto.randomUUID(),type:'press',title:'Un PDF et deux titres',language:'fr',date:'2026-10-27',topic:'Habitat et logement',keywords:['Aide directe au logement'],translations:{fr:{title:'Un PDF et deux titres'},ar:{title:'ملف واحد وعنوانان',fileUrl:document}}};
+ const single=await value.request('/api/publications',{method:'POST',body:onePdf});assert.equal(single.status,201,JSON.stringify(single.body));
+ const singleItems=(await value.request('/api/catalogue',{origin:''})).body.items,primary=singleItems.find(item=>item.id===single.body.id),secondary=singleItems.find(item=>item.eventId===primary.eventId.replace(/-fr$/,'-ar'));
+ assert.equal(primary.fileUrl,secondary.fileUrl);assert.equal(primary.content,'');assert.equal(secondary.title,'ملف واحد وعنوانان');assert.equal(value.files.size,2);
+ const noTitle=await value.request('/api/publications',{method:'POST',body:{...onePdf,requestId:crypto.randomUUID(),translations:{...onePdf.translations,fr:{title:''}}}});assert.equal(noTitle.status,400);
+ const frenchPdf=new TextEncoder().encode('%PDF-1.4\nVersion francaise'),frenchRef=await stage('communique-fr.pdf',frenchPdf);
+ const twoPdfs=await value.request('/api/publications',{method:'POST',body:{requestId:crypto.randomUUID(),type:'press',title:'Deux PDF du communiqué',language:'fr',date:'2026-10-27',topic:'Habitat et logement',keywords:['Aide directe au logement'],translations:{fr:{title:'Deux PDF du communiqué',fileUrl:frenchRef},ar:{title:'نسختان من البلاغ',fileUrl:document}}}});
+ assert.equal(twoPdfs.status,201,JSON.stringify(twoPdfs.body));
+ const records=(await value.request('/api/catalogue',{origin:''})).body.items;
+ const frPdf=records.find(item=>item.id===twoPdfs.body.id),arPdf=records.find(item=>item.eventId===frPdf.eventId.replace(/-fr$/,'-ar'));
+ assert.notEqual(frPdf.fileUrl,arPdf.fileUrl);assert.deepEqual((await value.request(new URL(frPdf.fileUrl).pathname)).body,frenchPdf);assert.deepEqual((await value.request(new URL(arPdf.fileUrl).pathname)).body,pdf);
+ assert.equal(value.files.size,3);
+
+ const missing=await value.request('/api/publications',{method:'POST',body:{requestId:crypto.randomUUID(),type:'press',title:large.fr.title,language:'fr',date:'2026-10-27',topic:'Habitat et logement',keywords:['Aide directe au logement'],translations:{fr:large.fr,ar:{title:'بلاغ غير مكتمل'}}}});
+ assert.equal(missing.status,400);
+});

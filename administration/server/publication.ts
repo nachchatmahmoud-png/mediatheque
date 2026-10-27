@@ -1,5 +1,5 @@
 import {publicationToCatalogue,validateAsset,MIB} from '../../github-pages/catalogue.ts';
-import {topics,youtubeEmbed,validateVideoTranslations} from '../../app/lib/model.ts';
+import {topics,youtubeEmbed,validatePublicationTranslations} from '../../app/lib/model.ts';
 import {validateDocumentaryKeywords} from '../../app/lib/keyword-catalog.ts';
 
 export class ServiceError extends Error {
@@ -43,16 +43,16 @@ export async function preparePublication(input:unknown,accountId:string,findUplo
   try{keywords=validateDocumentaryKeywords(v.topic,v.keywords);}catch(error){throw new ServiceError(error instanceof Error?error.message:'Vérifiez les mots-clés documentaires.');}
   const record:Record<string,any>={version:1,status:'published',title:text(v.title,180,true),date,topic:v.topic,language:v.language,description:text(v.description,1200),credit:text(v.credit,200),keywords};
   if(v.translations!==undefined){
-    if(v.type!=='video')throw new ServiceError('Les versions linguistiques concernent les vidéos.');
-    try{record.translations=validateVideoTranslations(v.translations);}catch(error){throw new ServiceError(error instanceof Error?error.message:'Vérifiez les traductions de la vidéo.');}
+    try{record.translations=validatePublicationTranslations(v.translations,v.type);}catch(error){throw new ServiceError(error instanceof Error?error.message:'Vérifiez les textes des pages sélectionnées.');}
     const primary=record.translations[v.language];if(!primary)throw new ServiceError('La page principale doit être sélectionnée.');
     Object.assign(record,primary);
   }
   if(v.type==='photo'){
-    record.location=text(v.location,150);
+    record.location=record.translations?record.location:text(v.location,150);
     if(!Array.isArray(v.photos)||!v.photos.length||v.photos.length>30||v.photos.some((p:any)=>!p||typeof p!=='object'))throw new ServiceError('Sélectionnez entre 1 et 30 photographies.');
+    if(record.translations&&Object.values(record.translations).some((fields:any)=>fields.captions.length&&fields.captions.length!==v.photos.length))throw new ServiceError('Vérifiez les légendes de chaque photographie.');
     record.photos=[];
-    for(let i=0;i<v.photos.length;i++)record.photos.push({file:await asset(v.photos[i].url,'photo','photos/photo-'+String(i+1).padStart(2,'0')),caption:text(v.photos[i].caption,300)});
+    for(let i=0;i<v.photos.length;i++)record.photos.push({file:await asset(v.photos[i].url,'photo','photos/photo-'+String(i+1).padStart(2,'0')),caption:record.translations?record.captions[i]||'':text(v.photos[i].caption,300)});
     record.cover=paths.get(v.thumbnailUrl)||record.photos[0].file;
   }
   if(v.type==='video'){
@@ -71,8 +71,21 @@ export async function preparePublication(input:unknown,accountId:string,findUplo
     record.videos=[video];
   }
   if(v.type==='press'){
-    const press:Record<string,string>={text:text(v.content,40000)};
-    if(v.fileUrl)press.file=await asset(v.fileUrl,'press','communiques/communique');
+    let press:Record<string,string>;
+    if(record.translations){
+      const fallback=Object.keys(record.translations).map(locale=>v.translations[locale].fileUrl).find(Boolean);
+      for(const [locale,fields] of Object.entries(record.translations) as [string,Record<string,any>][]){
+        delete fields.file;
+        const ref=v.translations[locale].fileUrl||fallback;
+        if(ref)fields.file=await asset(ref,'press','communiques/communique-'+locale);
+        if(!fields.content&&!fields.file)throw new ServiceError(locale==='fr'?'Joignez le PDF en français ou saisissez le texte en français.':'Joignez le PDF en arabe ou saisissez le texte en arabe.');
+      }
+      const primary=record.translations[v.language];
+      press={text:primary.content,...(primary.file?{file:primary.file}:{})};
+    }else{
+      press={text:text(v.content,40000)};
+      if(v.fileUrl)press.file=await asset(v.fileUrl,'press','communiques/communique');
+    }
     if(!press.text&&!press.file)throw new ServiceError('Joignez un PDF ou saisissez le texte du communiqué.');
     record.press=[press];
   }

@@ -183,16 +183,16 @@ function MxCatalogueFilters({ query, onQuery, topic, onTopic, year, onYear, lang
       select('Année', year, onYear, [['', 'Toutes les années'], ...years.map(value => [value, value])])));
 }
 
-function MxPhotoPreview({ file, caption, index, total, cover, onCover, onCaption, onRemove, onMove }) {
+function MxPhotoPreview({ file, editions, index, total, cover, onCover, onCaption, onRemove, onMove }) {
   const h = mxElement;
+  const caption=Object.values(editions||{})[0]?.captions?.[index]||'';
   const [url, setUrl] = O.useState('');
   O.useEffect(() => { const next = URL.createObjectURL(file); setUrl(next); return () => URL.revokeObjectURL(next); }, [file]);
   return h('article', { className: 'mx-photo-preview'+(cover?' mx-photo-cover':'') },
     h('div', { className: 'mx-photo-thumb' }, url && h('img', { src: url, alt: caption || file.name }),
       cover && h('span', null, h(zl,{size:12}), 'Miniature de l’album')),
     h('div', { className: 'mx-photo-info' }, h('strong', { title: file.name }, file.name), h('small', null, mxSize(file.size)),
-      h('label', { htmlFor: 'mx-caption-' + index }, 'Légende de la photo ' + (index + 1)),
-      h('input', { id: 'mx-caption-' + index, value: caption, onChange: event => onCaption(event.target.value), maxLength: 300, placeholder: 'Décrire brièvement la photographie…' }),
+      ...Object.entries(editions||{}).map(([locale,fields])=>h('label',{key:locale,htmlFor:'mx-caption-'+index+'-'+locale},locale==='fr'?'Légende en français (facultatif)':'Légende en arabe (facultatif)',h('input',{id:'mx-caption-'+index+'-'+locale,value:fields.captions[index]||'',onChange:event=>onCaption(locale,event.target.value),maxLength:300,lang:locale,dir:locale==='ar'?'rtl':'ltr'}))),
       h('button', {type:'button',className:'mx-cover-choice','aria-pressed':cover,onClick:onCover},h(cover?zl:pa,{size:15}),cover?'Miniature sélectionnée':'Choisir comme miniature'),
       h('div', { className: 'mx-photo-actions' },
         h('button', { type: 'button', disabled: index === 0, onClick: () => onMove(index - 1), 'aria-label': 'Déplacer la photo ' + (index + 1) + ' vers le début' }, '← Monter'),
@@ -200,19 +200,22 @@ function MxPhotoPreview({ file, caption, index, total, cover, onCover, onCaption
         h('button', { type: 'button', className: 'mx-remove', onClick: onRemove, 'aria-label': 'Retirer ' + file.name }, 'Retirer'))));
 }
 
-function MxPublicationPreview({ type, title, date, topic, keywords=[], description, credit, location, language, editions, photos, captions, video, videoUrl, thumbnail, videoLanguages, captionsFile, press, pressText, onClose }) {
+function MxPublicationPreview({ type, title, date, topic, keywords=[], description, credit, location, language, editions, photos, captions, video, videoUrl, thumbnail, videoLanguages, captionsFile, press, pressFiles, pressText, onClose }) {
   const h = mxElement;
   const [urls, setUrls] = O.useState({ photos: [], video: '', press: '' });
   const [previewLanguage,setPreviewLanguage]=O.useState(language==='ar'?'ar':'fr');
   const currentLanguage=editions?(editions[previewLanguage]?previewLanguage:Object.keys(editions)[0]||language):language;
   const currentEdition=editions?.[currentLanguage],currentTitle=currentEdition?.title??title,currentDescription=currentEdition?.description??description,currentCredit=currentEdition?.credit??credit;
+  const currentLocation=currentEdition?.location??location,currentCaptions=currentEdition?.captions??captions,currentPressText=currentEdition?.content??pressText;
+  const currentPress=pressFiles?(pressFiles[currentLanguage]||Object.keys(editions||{}).map(locale=>pressFiles[locale]).find(Boolean)):press;
+  const pressUrl=mxUseObjectUrl(currentPress);
   const poster = mxUseObjectUrl(thumbnail);
   const subtitles = mxUseObjectUrl(captionsFile);
   O.useEffect(() => {
-    const next = { photos: photos.map(file => URL.createObjectURL(file)), video: video ? URL.createObjectURL(video) : '', press: press ? URL.createObjectURL(press) : '' };
+    const next = { photos: photos.map(file => URL.createObjectURL(file)), video: video ? URL.createObjectURL(video) : '', press: '' };
     setUrls(next);
     return () => [...next.photos, next.video, next.press].filter(Boolean).forEach(url => URL.revokeObjectURL(url));
-  }, [photos, video, press]);
+  }, [photos, video]);
   return h(Ul, { label: 'Aperçu de la publication', onClose, wide: true },
     h('div', { className: 'mx-publication-preview' },
       h('div', { className: 'eyebrow' }, 'APERÇU AVANT PUBLICATION'),
@@ -223,12 +226,12 @@ function MxPublicationPreview({ type, title, date, topic, keywords=[], descripti
       videoLanguages&&h(MxVideoLanguage,{item:videoLanguages}),
       thumbnail && h('div',{className:'mx-preview-cover'},h('span',{className:'eyebrow'},'MINIATURE DANS L’ACCUEIL'),h(MxThumbnailImage,{source:thumbnail,title:currentTitle})),
       currentDescription && h('p', { dir: currentLanguage === 'ar' ? 'rtl' : 'auto',lang:currentLanguage }, currentDescription),
-      (currentCredit||location)&&h('dl',{className:'mx-preview-details'},location&&h('div',null,h('dt',null,'Lieu des prises de vue'),h('dd',{dir:'auto'},location)),currentCredit&&h('div',null,h('dt',null,MX_PUBLICATION_FORMS[type]?.creditLabel||'Crédits'),h('dd',{dir:'auto'},currentCredit))),
-      urls.photos.length > 0 && h('div', { className: 'mx-preview-gallery' }, urls.photos.map((url, index) => h('figure', { key: url }, h('img', { src: url, alt: captions[index] || 'Photo ' + (index + 1) }), captions[index] && h('figcaption', null, captions[index])))),
+      (currentCredit||currentLocation)&&h('dl',{className:'mx-preview-details'},currentLocation&&h('div',null,h('dt',null,'Lieu des prises de vue'),h('dd',{dir:currentLanguage==='ar'?'rtl':'ltr',lang:currentLanguage},currentLocation)),currentCredit&&h('div',null,h('dt',null,MX_PUBLICATION_FORMS[type]?.creditLabel||'Crédits'),h('dd',{dir:currentLanguage==='ar'?'rtl':'ltr',lang:currentLanguage},currentCredit))),
+      urls.photos.length > 0 && h('div', { className: 'mx-preview-gallery',dir:currentLanguage==='ar'?'rtl':'ltr',lang:currentLanguage }, urls.photos.map((url, index) => h('figure', { key: url }, h('img', { src: url, alt: currentCaptions[index] || 'Photo ' + (index + 1) }), currentCaptions[index] && h('figcaption', null, currentCaptions[index])))),
       urls.video && h('video', { controls: true, preload: 'metadata', src: urls.video, poster, 'aria-label': currentTitle || 'Vidéo à publier' },subtitles&&videoLanguages?.captionsValidated&&h('track',{kind:'subtitles',src:subtitles,srcLang:videoLanguages.captionsLanguage,label:videoLanguages.captionsLanguage==='fr'?'Français':'العربية',default:true})),
       mxHttps(videoUrl) && h('a', { className: 'button secondary', href: mxHttps(videoUrl), target: '_blank', rel: 'noreferrer' }, 'Vérifier le lien vidéo', h(Oe, { size: 16 })),
-      urls.press && h('a', { className: 'button secondary', href: urls.press, target: '_blank', rel: 'noreferrer' }, 'Ouvrir le PDF sélectionné', h(Oe, { size: 16 })),
-      pressText && h('div', { className: 'mx-preview-text', dir: language === 'ar' ? 'rtl' : 'auto' }, pressText),
+      pressUrl && h('a', { className: 'button secondary', href: pressUrl, target: '_blank', rel: 'noreferrer' }, 'Ouvrir le PDF sélectionné', h(Oe, { size: 16 })),
+      currentPressText && h('div', { className: 'mx-preview-text', dir: currentLanguage === 'ar' ? 'rtl' : 'ltr',lang:currentLanguage }, currentPressText),
       h('p', { className: 'mx-preview-note' }, mxManagementClient().current().localMode?'Le contenu sera visible dans l’accueil de ce navigateur après votre clic sur « Valider et publier ».':MxTestAdministration?'Cet essai sera visible dans l’accueil de ce navigateur après votre clic sur « Valider et publier ».':'Le contenu sera mis en ligne après votre clic sur « Valider et publier ».'),
       h('button', { className: 'button primary', onClick: onClose }, 'Revenir au formulaire')));
 }

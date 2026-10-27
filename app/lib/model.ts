@@ -50,22 +50,35 @@ export function validateVideoLanguages(v:Record<string,unknown>){
  }
  return {spokenLanguage:v.type==='video'?spokenLanguage:'',captionsLanguage,captionsSource,captionsValidated};
 }
-export type VideoTranslation={title:string;description:string;credit:string};
-export function validateVideoTranslations(value:unknown):Partial<Record<'fr'|'ar',VideoTranslation>>|undefined{
+export type PublicationTranslation={title:string;description:string;credit:string;location?:string;captions?:string[];content?:string;file?:string};
+export type VideoTranslation=PublicationTranslation;
+export function validatePublicationTranslations(value:unknown,type:MediaType):Partial<Record<'fr'|'ar',PublicationTranslation>>|undefined{
  if(value===undefined)return undefined;
  if(!value||typeof value!=='object'||Array.isArray(value)||!Object.keys(value).length||Object.keys(value).some(key=>!['fr','ar'].includes(key)))throw new Error('Choisissez au moins une page de publication : français ou arabe.');
- const source=value as Record<string,unknown>,result:Partial<Record<'fr'|'ar',VideoTranslation>>={};
+ const source=value as Record<string,unknown>,result:Partial<Record<'fr'|'ar',PublicationTranslation>>={};
  for(const language of ['fr','ar'] as const){
   if(!Object.hasOwn(source,language))continue;
   const entry=source[language];if(!entry||typeof entry!=='object'||Array.isArray(entry))throw new Error('Renseignez les textes de chaque page sélectionnée.');
   const fields=entry as Record<string,unknown>,title=bounded(fields.title,language==='fr'?'Titre en français':'Titre en arabe',180,true);
   const description=bounded(fields.description,'Résumé',1200),credit=bounded(fields.credit,'Crédits',200);
-  if(language==='fr'&&(!/\p{Script=Latin}/u.test(title)||/\p{Script=Arabic}/u.test([title,description,credit].join(' '))))throw new Error('Renseignez le titre et les textes de la version française en français.');
+  const extra:Pick<PublicationTranslation,'location'|'captions'|'content'|'file'>={};
+  if(type==='photo'){
+   extra.location=bounded(fields.location,'Lieu',150);
+   const captions=fields.captions===undefined?[]:fields.captions;
+   if(!Array.isArray(captions)||captions.length>30)throw new Error('Vérifiez les légendes de l’album.');
+   extra.captions=captions.map(caption=>bounded(caption,'Légende',300));
+  }
+  if(type==='press'){
+   extra.content=bounded(fields.content,'Texte du communiqué',40000);
+   if(fields.file!==undefined){extra.file=bounded(fields.file,'PDF du communiqué',200);if(!/^communiques\/[a-z0-9][a-z0-9_-]*\.pdf$/i.test(extra.file))throw new Error('Chemin du PDF non valide.');}
+  }
+  if(language==='fr'&&(!/\p{Script=Latin}/u.test(title)||/\p{Script=Arabic}/u.test([title,description,credit,extra.location,extra.content,...(extra.captions||[])].join(' '))))throw new Error('Renseignez le titre et les textes de la version française en français.');
   if(language==='ar'&&!/\p{Script=Arabic}/u.test(title))throw new Error('Renseignez le titre de la version arabe en arabe.');
-  result[language]={title,description,credit};
+  result[language]={title,description,credit,...extra};
  }
  return result;
 }
+export function validateVideoTranslations(value:unknown){return validatePublicationTranslations(value,'video');}
 export function validateMedia(input:unknown,{requireDescription=true}:{requireDescription?:boolean}={}):MediaItem{
  if(!input||typeof input!=='object')throw new Error('Publication non valide.');const v=input as Record<string,unknown>;
  if(!['video','photo','press'].includes(String(v.type)))throw new Error('Type de publication non valide.');

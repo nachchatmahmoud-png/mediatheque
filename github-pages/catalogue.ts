@@ -1,4 +1,4 @@
-import {validateEvent,validateVideoLanguages,validateVideoTranslations,youtubeEmbed,type MediaItem,type MediaEvent,defaultSettings} from '../app/lib/model.ts';
+import {validateEvent,validateVideoLanguages,validatePublicationTranslations,youtubeEmbed,type MediaItem,type MediaEvent,defaultSettings} from '../app/lib/model.ts';
 
 export const MIB=1024*1024;
 const text=(v:unknown,max:number,label:string)=>{if(v===undefined)return '';if(typeof v!=='string'||v.length>max)throw new Error(label+' non valide.');return v.trim();};
@@ -21,13 +21,16 @@ export function publicationToCatalogue(raw:unknown,id:string):{event:MediaEvent;
  if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('Fiche de publication non valide.');
  const v=raw as Record<string,unknown>;
  if(v.version!==1||!['draft','published'].includes(String(v.status)))throw new Error('Version ou état de la publication non valide.');
- const translations=validateVideoTranslations(v.translations);
- if(translations){
-  const videos=records(v.videos,'Vidéos',10);
-  if(videos.length!==1||records(v.photos,'Photographies',30).length||records(v.press,'Communiqués',10).length)throw new Error('Les versions linguistiques doivent concerner une seule vidéo.');
-  if(id.length>77||!Object.hasOwn(translations,String(v.language)))throw new Error('Vérifiez la langue principale et le nom du dossier de la vidéo.');
+ if(v.translations!==undefined){
+  const videos=records(v.videos,'Vidéos',10),photos=records(v.photos,'Photographies',30),press=records(v.press,'Communiqués',10);
+  if(Number(!!videos.length)+Number(!!photos.length)+Number(!!press.length)!==1||videos.length>1||press.length>1)throw new Error('Les versions linguistiques doivent concerner une vidéo, un album ou un communiqué.');
+  const type=videos.length?'video':photos.length?'photo':'press';
+  const translations=validatePublicationTranslations(v.translations,type)!;
+  if(id.length>77||!Object.hasOwn(translations,String(v.language)))throw new Error('Vérifiez la langue principale et le nom du dossier de la publication.');
   const editions=Object.entries(translations).map(([language,fields])=>{
-   const edition=publicationToCatalogue({...v,translations:undefined,language,...fields,videos:[{...videos[0],title:fields.title,transcript:''}]},id);
+   if(type==='photo'&&fields.captions?.length&&fields.captions.length!==photos.length)throw new Error('Vérifiez les légendes de chaque photographie.');
+   const localized=type==='video'?{videos:[{...videos[0],title:fields.title,transcript:''}]}:type==='photo'?{photos:photos.map((photo,index)=>({...photo,caption:fields.captions?.[index]||''}))}:{press:[{title:fields.title,text:fields.content||'',file:fields.file}]};
+   const edition=publicationToCatalogue({...v,translations:undefined,language,...fields,...localized},id);
    const event={...edition.event,id:id+'-'+language};
    return {...edition,event,items:edition.items.map(item=>({...item,id:item.id+'-'+language,eventId:event.id,eventTitle:fields.title}))};
   });

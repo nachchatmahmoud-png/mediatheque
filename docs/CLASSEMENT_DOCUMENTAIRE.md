@@ -24,7 +24,7 @@ Le référentiel comporte 65 descripteurs français, avec un libellé arabe et d
 - Exclure les étiquettes sans objet précis, comme Vie institutionnelle, Gouvernance ou Réunion de coordination.
 - Conserver les noms de lieux dans les métadonnées géographiques lorsqu’elles sont disponibles, sans les confondre avec un sujet.
 - Faire sélectionner les descripteurs par la personne qui décrit le contenu. Les suggestions ne sont jamais publiées automatiquement.
-- Enregistrer les descripteurs choisis sans les remplacer par la rubrique. Employer le même identifiant de sujet pour les deux versions d’une vidéo ; afficher le libellé correspondant à la langue de consultation.
+- Enregistrer les descripteurs choisis sans les remplacer par la rubrique. Employer le même identifiant de sujet pour les deux versions d’une vidéo, d’un album photo ou d’un communiqué ; afficher le libellé correspondant à la langue de consultation.
 
 ## Sources publiques consultées
 
