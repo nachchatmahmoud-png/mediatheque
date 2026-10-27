@@ -98,6 +98,7 @@ function af() {
         className: "ministry-video-meta",
         children: [
           (0, ge.jsx)("h2", { dir: "auto", children: displayTitle }),
+          MX_LOCALE==='fr'&&e.titleTranslation==='automatic'&&(0,ge.jsx)('small',{className:'mx-latest-translation',children:'Titre traduit automatiquement'}),
           mxElement(MxVideoLanguage,{item:presentation.item,compact:true}),
           presentation.description&&(0,ge.jsx)('p',{className:'mx-latest-summary',children:presentation.description}),
           (0, ge.jsxs)("div", {

@@ -1,5 +1,6 @@
 """Refresh the latest regular landscape upload from the official ministry channel."""
 import argparse
+import html
 import json
 import os
 import re
@@ -42,6 +43,8 @@ def record(value):
         result.update(width=width, height=height, format='landscape')
     if value.get('thumbnailUrl') == '/images/youtube-' + value['videoId'] + '.jpg':
         result['thumbnailUrl'] = value['thumbnailUrl']
+    if value.get('titleTranslation') == 'automatic' and isinstance(value.get('sourceTitle'), str) and len(value['sourceTitle']) <= 500:
+        result.update(titleTranslation='automatic', sourceTitle=value['sourceTitle'])
     return result
 
 
@@ -190,6 +193,23 @@ def refresh(output, current_url=None, fetch=download):
     return video, video != previous
 
 
+def translate_french(title, fetch=download):
+    # Only public YouTube titles are sent, through the documented anonymous GET API.
+    if len(title.encode('utf-8')) > 500:
+        raise ValueError('Titre trop long pour la traduction automatique')
+    url = 'https://api.mymemory.translated.net/get?' + urllib.parse.urlencode({'q': title, 'langpair': 'ar|fr', 'mt': '1'})
+    response = json.loads(fetch(url))
+    if response.get('responseStatus') != 200 or response.get('quotaFinished') is True:
+        raise ValueError('Traduction momentanément indisponible')
+    translated = response.get('responseData', {}).get('translatedText')
+    if not isinstance(translated, str):
+        raise ValueError('Traduction non valide')
+    translated = html.unescape(translated).strip()
+    if not translated or len(translated) > 500 or re.search(r'[\u0600-\u06ff]', translated) or not re.search(r'[a-zA-ZÀ-ÿ]', translated) or 'MYMEMORY WARNING' in translated.upper():
+        raise ValueError('Titre français non confirmé')
+    return translated
+
+
 def refresh_french(video, output, translations, current_url=None, fetch=download):
     previous = previous_record(output, current_url, fetch, french=True)
     translation = translations.get(video['videoId'], {}).get('fr', {}).get('title')
@@ -197,8 +217,19 @@ def refresh_french(video, output, translations, current_url=None, fetch=download
         translation = next((entry.get('fr', {}).get('title') for entry in translations.values() if entry.get('originalTitle') == video['title']), None)
     if not translation and not re.search(r'[\u0600-\u06ff]', video['title']):
         translation = video['title']
+    automatic = False
+    if not translation and previous and previous['videoId'] == video['videoId'] and (previous.get('titleTranslation') != 'automatic' or previous.get('sourceTitle') == video['title']):
+        translation = previous['title']
+        automatic = previous.get('titleTranslation') == 'automatic'
+    if not translation:
+        try:
+            translation = translate_french(video['title'], fetch)
+            automatic = True
+            print('Français : titre de la dernière vidéo traduit automatiquement')
+        except (ValueError, KeyError, TypeError, OSError):
+            print('Français : service de traduction momentanément indisponible')
     if isinstance(translation, str) and translation.strip() and not re.search(r'[\u0600-\u06ff]', translation):
-        french = record({**video, 'title': translation})
+        french = record({**video, 'title': translation, **({'titleTranslation': 'automatic', 'sourceTitle': video['title']} if automatic else {})})
         if previous and timestamp(previous['publishedAt']) > timestamp(french['publishedAt']):
             french = previous
     elif previous:

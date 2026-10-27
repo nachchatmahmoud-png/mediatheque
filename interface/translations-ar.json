@@ -269,5 +269,7 @@
   "Retirer le PDF en français": "إزالة ملف PDF بالفرنسية",
   "Retirer le PDF en arabe": "إزالة ملف PDF بالعربية",
   "Un seul PDF suffit : il sera accessible dans les deux pages. Avec deux PDF, chaque page affichera le document de sa langue.": "يكفي ملف PDF واحد وسيكون متاحاً في الصفحتين. عند إضافة ملفين، تعرض كل صفحة الوثيقة بلغتها.",
-  "Joignez au moins un PDF du communiqué. Le second est facultatif.": "أرفقوا ملف PDF واحداً على الأقل للبلاغ. الملف الثاني اختياري."
+  "Joignez au moins un PDF du communiqué. Le second est facultatif.": "أرفقوا ملف PDF واحداً على الأقل للبلاغ. الملف الثاني اختياري.",
+  "Bref résumé du communiqué en français (facultatif)": "ملخص موجز للبلاغ بالفرنسية (اختياري)",
+  "Bref résumé du communiqué en arabe (facultatif)": "ملخص موجز للبلاغ بالعربية (اختياري)"
 }

@@ -62,8 +62,26 @@ with tempfile.TemporaryDirectory() as folder:
  translated,changed=m.refresh_french(video,french,{'0123456789a':{'fr':{'title':'Titre traduit de la vidéo'}}})
  assert changed and translated['title']=='Titre traduit de la vidéo'
  unknown={**video,'videoId':'newarabic12','publishedAt':'2024-01-01T00:00:00Z','title':'عنوان جديد'}
- retained,changed=m.refresh_french(unknown,french,{})
+ retained,changed=m.refresh_french(unknown,french,{},fetch=unavailable)
  assert not changed and retained==translated
+ automatic_calls=[]
+ def translate(url):
+  from urllib.parse import urlparse,parse_qs
+  query=parse_qs(urlparse(url).query)
+  assert url.startswith('https://api.mymemory.translated.net/get?')
+  assert query['q']==[unknown['title']] and query['langpair']==['ar|fr']
+  automatic_calls.append(url)
+  return json.dumps({'responseStatus':200,'responseData':{'translatedText':'Nouveau titre &amp; programme de logement'}}).encode()
+ automatic,changed=m.refresh_french(unknown,french,{},fetch=translate)
+ assert changed and automatic['videoId']==unknown['videoId'] and automatic['title']=='Nouveau titre & programme de logement'
+ assert automatic['titleTranslation']=='automatic' and automatic['sourceTitle']==unknown['title']
+ cached,changed=m.refresh_french(unknown,french,{},fetch=translate)
+ assert not changed and cached==automatic and len(automatic_calls)==1
+ validated,changed=m.refresh_french(unknown,french,{unknown['videoId']:{'fr':{'title':'Titre validé par la rédaction'}}},fetch=translate)
+ assert changed and validated['title']=='Titre validé par la rédaction' and 'titleTranslation' not in validated
+ for response in [{'responseStatus':429,'responseData':{'translatedText':'QUOTA EXCEEDED'}},{'responseStatus':200,'responseData':{'translatedText':'عنوان عربي'}},{'responseStatus':200,'quotaFinished':True,'responseData':{'translatedText':'Titre français'}}]:
+  try:m.translate_french(unknown['title'],fetch=lambda url:json.dumps(response).encode());assert False
+  except ValueError:pass
 with tempfile.TemporaryDirectory() as folder:
  output=Path(folder)/'latest-video.json'
  def missing_image(url):return b'<html>unavailable</html>' if 'ytimg' in url else fetch(url)
