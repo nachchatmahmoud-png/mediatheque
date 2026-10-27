@@ -2,7 +2,7 @@
 
 Ce plan constitue un choix éditorial pour la médiathèque. Il ne se présente pas comme un thésaurus officiel ni comme la reproduction de l’organigramme du ministère.
 
-## Domaines principaux
+## Domaines et rubrique parlementaire
 
 1. Habitat et logement.
 2. Politique de la ville et renouvellement urbain.
@@ -10,15 +10,17 @@ Ce plan constitue un choix éditorial pour la médiathèque. Il ne se présente 
 4. Aménagement et développement du territoire.
 5. Architecture et patrimoine bâti.
 6. Formation et recherche dans les métiers du territoire.
+7. Interventions et questions parlementaires.
 
-Le référentiel comporte 57 descripteurs français, avec un libellé arabe et des synonymes ou sigles de recherche. Sa source unique est `app/lib/keyword-catalog.ts`, réutilisée par le navigateur et le service de publication.
+Le référentiel comporte 65 descripteurs français, avec un libellé arabe et des synonymes ou sigles de recherche. Sa source unique est `app/lib/keyword-catalog.ts`, réutilisée par le navigateur et le service de publication.
 
 ## Règles d’indexation
 
 - Choisir le domaine d’après le sujet réellement traité, sans préselection automatique.
 - Retenir de 1 à 8 descripteurs précis, dont au moins un du domaine principal. Les sujets secondaires d’autres domaines restent accessibles par la recherche dans le référentiel.
 - Ne pas répéter le nom du domaine comme unique mot-clé.
-- Ne pas transformer le contexte de diffusion (Parlement, rencontre, convention, visite) en domaine documentaire. Une réponse parlementaire sur l’aide au logement se classe sous Habitat et logement, avec le descripteur Aide directe au logement.
+- La rubrique Interventions et questions parlementaires rassemble les interventions, réponses aux questions orales et écrites, travaux en commission, présentations budgétaires et examens des projets de loi. Compléter les descripteurs parlementaires par les sujets traités : par exemple Réponses aux questions orales et Aide directe au logement. Un contenu peut aussi être classé dans son domaine sectoriel et recevoir un descripteur parlementaire complémentaire.
+- Les mentions génériques de rencontre, convention ou visite ne constituent pas, à elles seules, un sujet documentaire.
 - Exclure les étiquettes sans objet précis, comme Vie institutionnelle, Gouvernance ou Réunion de coordination.
 - Conserver les noms de lieux dans les métadonnées géographiques lorsqu’elles sont disponibles, sans les confondre avec un sujet.
 - Faire sélectionner les descripteurs par la personne qui décrit le contenu. Les suggestions ne sont jamais publiées automatiquement.
@@ -32,4 +34,4 @@ Le référentiel comporte 57 descripteurs français, avec un libellé arabe et d
 - [INAU, statut, tutelle, formation et recherche](https://inau.ac.ma/presentation-de-linau/).
 - [INAU, offre de formations](https://inau.ac.ma/loffre-de-formations/).
 
-Les sources permettent de situer les champs et les exemples d’action publique. Le regroupement en six domaines et le choix des libellés relèvent du travail éditorial de classement. Aucune référence juridique non vérifiée n’est utilisée pour leur donner une portée réglementaire.
+Les sources permettent de situer les champs et les exemples d’action publique. Le regroupement en six domaines et une rubrique parlementaire et le choix des libellés relèvent du travail éditorial de classement. Aucune référence juridique non vérifiée n’est utilisée pour leur donner une portée réglementaire.

@@ -44,3 +44,15 @@ test('one bilingual video keeps its subject descriptors in both language records
  for(const item of catalogue.items){assert.equal(item.topic,housing);assert.deepEqual(item.keywords,['Aide directe au logement','Logement social']);}
  assert.deepEqual(catalogue.items[1].keywords.map(term=>documentaryTranslations[term]),['الدعم المباشر للسكن','السكن الاجتماعي']);
 });
+
+test('parliamentary replies retain their parliamentary form and the ministerial subject addressed',async()=>{
+ const topic='Interventions et questions parlementaires';
+ const keywords=['Réponse à une question orale','Aide directe au logement'];
+ assert.ok(documentaryTopics.includes(topic));
+ assert.deepEqual(validateDocumentaryKeywords(topic,keywords),['Réponses aux questions orales','Aide directe au logement']);
+ assert.deepEqual(validateDocumentaryKeywords(housing,keywords),['Réponses aux questions orales','Aide directe au logement']);
+ const prepared=await preparePublication({...base,topic,keywords},account,async()=>null);
+ const catalogue=publicationToCatalogue(prepared.record,prepared.folder);
+ for(const query of ['questions orales','aide au logement','الأسئلة الشفهية'])assert.equal(filterMedia(catalogue.items,{type:'all',query,year:'',topic:'',sort:'newest'}).length,1);
+ assert.equal(documentaryTranslations['Réponses aux questions écrites'],'الأجوبة عن الأسئلة الكتابية');
+});

@@ -1,7 +1,7 @@
 // Editorial classification by subject. Provenance and indexing rules: docs/CLASSEMENT_DOCUMENTAIRE.md.
 export type Term={label:string;arabic:string;topic:string;aliases:string[]};
-export const documentaryTopics:string[]=["Habitat et logement", "Politique de la ville et renouvellement urbain", "Urbanisme et planification urbaine", "Aménagement et développement du territoire", "Architecture et patrimoine bâti", "Formation et recherche dans les métiers du territoire"];
-export const documentaryTopicTranslations:Record<string,string>={"Habitat et logement": "السكن والإسكان", "Politique de la ville et renouvellement urbain": "سياسة المدينة والتجديد الحضري", "Urbanisme et planification urbaine": "التعمير والتخطيط الحضري", "Aménagement et développement du territoire": "إعداد التراب والتنمية الترابية", "Architecture et patrimoine bâti": "الهندسة المعمارية والتراث المبني", "Formation et recherche dans les métiers du territoire": "التكوين والبحث في مهن إعداد التراب والتعمير"};
+export const documentaryTopics:string[]=["Habitat et logement", "Politique de la ville et renouvellement urbain", "Urbanisme et planification urbaine", "Aménagement et développement du territoire", "Architecture et patrimoine bâti", "Formation et recherche dans les métiers du territoire", "Interventions et questions parlementaires"];
+export const documentaryTopicTranslations:Record<string,string>={"Habitat et logement": "السكن والإسكان", "Politique de la ville et renouvellement urbain": "سياسة المدينة والتجديد الحضري", "Urbanisme et planification urbaine": "التعمير والتخطيط الحضري", "Aménagement et développement du territoire": "إعداد التراب والتنمية الترابية", "Architecture et patrimoine bâti": "الهندسة المعمارية والتراث المبني", "Formation et recherche dans les métiers du territoire": "التكوين والبحث في مهن إعداد التراب والتعمير", "Interventions et questions parlementaires": "المداخلات والأسئلة البرلمانية"};
 export const keywordCatalog:Term[]=[
  {
   "label": "Aide directe au logement",
@@ -484,6 +484,79 @@ export const keywordCatalog:Term[]=[
   "topic": "Formation et recherche dans les métiers du territoire",
   "aliases": [
    "البحث في الهندسة المعمارية والبناء"
+  ]
+ },
+ {
+  "label": "Interventions parlementaires",
+  "arabic": "المداخلات البرلمانية",
+  "topic": "Interventions et questions parlementaires",
+  "aliases": [
+   "المداخلات البرلمانية",
+   "Intervention parlementaire",
+   "Intervention au Parlement"
+  ]
+ },
+ {
+  "label": "Réponses aux questions parlementaires",
+  "arabic": "الأجوبة عن الأسئلة البرلمانية",
+  "topic": "Interventions et questions parlementaires",
+  "aliases": [
+   "الأجوبة عن الأسئلة البرلمانية",
+   "Réponse à une question parlementaire"
+  ]
+ },
+ {
+  "label": "Réponses aux questions orales",
+  "arabic": "الأجوبة عن الأسئلة الشفهية",
+  "topic": "Interventions et questions parlementaires",
+  "aliases": [
+   "الأجوبة عن الأسئلة الشفهية",
+   "Réponse aux questions orales",
+   "Réponse à une question orale"
+  ]
+ },
+ {
+  "label": "Réponses aux questions écrites",
+  "arabic": "الأجوبة عن الأسئلة الكتابية",
+  "topic": "Interventions et questions parlementaires",
+  "aliases": [
+   "الأجوبة عن الأسئلة الكتابية",
+   "Réponse aux questions écrites",
+   "Réponse à une question écrite"
+  ]
+ },
+ {
+  "label": "Travaux des commissions parlementaires",
+  "arabic": "أشغال اللجان البرلمانية",
+  "topic": "Interventions et questions parlementaires",
+  "aliases": [
+   "أشغال اللجان البرلمانية",
+   "Travaux en commission parlementaire"
+  ]
+ },
+ {
+  "label": "Présentation du budget sectoriel",
+  "arabic": "تقديم الميزانية القطاعية",
+  "topic": "Interventions et questions parlementaires",
+  "aliases": [
+   "تقديم الميزانية القطاعية",
+   "Présentation du budget du ministère"
+  ]
+ },
+ {
+  "label": "Examen des projets de loi",
+  "arabic": "دراسة مشاريع القوانين",
+  "topic": "Interventions et questions parlementaires",
+  "aliases": [
+   "دراسة مشاريع القوانين"
+  ]
+ },
+ {
+  "label": "Débats parlementaires",
+  "arabic": "المناقشات البرلمانية",
+  "topic": "Interventions et questions parlementaires",
+  "aliases": [
+   "المناقشات البرلمانية"
   ]
  }
 ];
