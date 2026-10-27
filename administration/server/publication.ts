@@ -1,5 +1,6 @@
 import {publicationToCatalogue,validateAsset,MIB} from '../../github-pages/catalogue.ts';
 import {topics,youtubeEmbed,validateVideoTranslations} from '../../app/lib/model.ts';
+import {validateDocumentaryKeywords} from '../../app/lib/keyword-catalog.ts';
 
 export class ServiceError extends Error {
   status:number;
@@ -38,7 +39,9 @@ export async function preparePublication(input:unknown,accountId:string,findUplo
     if(!extensions[kind].includes(ext))throw new ServiceError('Le format du fichier ne correspond pas au support demandé.');
     const path=name+'.'+ext;paths.set(ref,path);assets.push({path,upload});return path;
   };
-  const record:Record<string,any>={version:1,status:'published',title:text(v.title,180,true),date,topic:v.topic,language:v.language,description:text(v.description,1200),credit:text(v.credit,200),keywords:[v.topic]};
+  let keywords:string[];
+  try{keywords=validateDocumentaryKeywords(v.topic,v.keywords);}catch(error){throw new ServiceError(error instanceof Error?error.message:'Vérifiez les mots-clés documentaires.');}
+  const record:Record<string,any>={version:1,status:'published',title:text(v.title,180,true),date,topic:v.topic,language:v.language,description:text(v.description,1200),credit:text(v.credit,200),keywords};
   if(v.translations!==undefined){
     if(v.type!=='video')throw new ServiceError('Les versions linguistiques concernent les vidéos.');
     try{record.translations=validateVideoTranslations(v.translations);}catch(error){throw new ServiceError(error instanceof Error?error.message:'Vérifiez les traductions de la vidéo.');}

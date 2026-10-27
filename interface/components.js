@@ -200,7 +200,7 @@ function MxPhotoPreview({ file, caption, index, total, cover, onCover, onCaption
         h('button', { type: 'button', className: 'mx-remove', onClick: onRemove, 'aria-label': 'Retirer ' + file.name }, 'Retirer'))));
 }
 
-function MxPublicationPreview({ type, title, date, topic, description, credit, location, language, editions, photos, captions, video, videoUrl, thumbnail, videoLanguages, captionsFile, press, pressText, onClose }) {
+function MxPublicationPreview({ type, title, date, topic, keywords=[], description, credit, location, language, editions, photos, captions, video, videoUrl, thumbnail, videoLanguages, captionsFile, press, pressText, onClose }) {
   const h = mxElement;
   const [urls, setUrls] = O.useState({ photos: [], video: '', press: '' });
   const [previewLanguage,setPreviewLanguage]=O.useState(language==='ar'?'ar':'fr');
@@ -218,7 +218,8 @@ function MxPublicationPreview({ type, title, date, topic, description, credit, l
       h('div', { className: 'eyebrow' }, 'APERÇU AVANT PUBLICATION'),
       editions&&Object.keys(editions).length>1&&h('div',{className:'mx-preview-language-choices',role:'group','aria-label':'Langue de l’aperçu'},...Object.keys(editions).map(locale=>h('button',{key:locale,type:'button','aria-pressed':locale===currentLanguage,onClick:()=>setPreviewLanguage(locale),lang:locale},locale==='fr'?'Français':'العربية'))),
       h('h2', { dir: currentLanguage==='ar'?'rtl':'auto',lang:currentLanguage }, currentTitle || 'Titre à renseigner'),
-      h('p', { className: 'mx-preview-meta' }, date && Ya(date), ' · ', topic),
+      h('p', { className: 'mx-preview-meta' }, date && Ya(date), ' · ', currentLanguage==='ar'?(MX_DOC_RUNTIME.documentaryTranslations[topic]||topic):topic),
+      keywords.length>0&&h('ul',{className:'mx-documentary-preview',dir:currentLanguage==='ar'?'rtl':'ltr','aria-label':currentLanguage==='ar'?'الكلمات المفتاحية':'Mots-clés'},...keywords.map(label=>h('li',{key:label},currentLanguage==='ar'?(MX_DOC_RUNTIME.documentaryTranslations[label]||label):label))),
       videoLanguages&&h(MxVideoLanguage,{item:videoLanguages}),
       thumbnail && h('div',{className:'mx-preview-cover'},h('span',{className:'eyebrow'},'MINIATURE DANS L’ACCUEIL'),h(MxThumbnailImage,{source:thumbnail,title:currentTitle})),
       currentDescription && h('p', { dir: currentLanguage === 'ar' ? 'rtl' : 'auto',lang:currentLanguage }, currentDescription),

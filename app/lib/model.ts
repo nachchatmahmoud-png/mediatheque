@@ -1,4 +1,4 @@
-import {canonicalKeyword,keywordSearchText} from './keyword-catalog.ts';
+import {canonicalKeyword,keywordSearchText,documentaryTopics} from './keyword-catalog.ts';
 export type MediaType = 'video' | 'photo' | 'press';
 export type MediaItem = {
  id:string;type:MediaType;title:string;description:string;date:string;topic:string;language:string;status:'draft'|'published';
@@ -9,7 +9,7 @@ export type MediaItem = {
 export type MediaEvent={id:string;title:string;description:string;date:string;topic:string;location:string;keywords:string[]};
 export type PortalSettings={ministryName:string;subtitle:string;showDemo:boolean;contactEmail:string};
 export const defaultSettings:PortalSettings={ministryName:"Ministère de l’Aménagement du Territoire National, de l’Urbanisme, de l’Habitat et de la Politique de la Ville",subtitle:'Portail institutionnel',showDemo:false,contactEmail:''};
-export const topics=['Habitat et politique de la ville','Urbanisme et aménagement du territoire','Parlement','Architecture et patrimoine architectural','Coopération et partenariats','Formation et qualification des compétences','Vie institutionnelle'];
+export const topics=documentaryTopics;
 export const labels:Record<MediaType,string>={video:'Vidéothèque',photo:'Photothèque',press:'Espace médias'};
 export const typeLabels:Record<MediaType,string>={video:'Vidéo',photo:'Album photo',press:'Communiqué de presse'};
 export const blankMedia=():MediaItem=>({id:'',type:'video',title:'',description:'',date:new Date().toISOString().slice(0,10),topic:topics[0],language:'fr',status:'draft',content:'',location:'',credit:'',duration:'',thumbnailUrl:'',mediaUrl:'',fileUrl:'',captionsUrl:'',photos:[],keywords:[],transcript:'',eventId:null});

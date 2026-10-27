@@ -1,3 +1,4 @@
+import {documentaryTranslations} from '../app/lib/keyword-catalog.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -8,19 +9,20 @@ import {buildInterface,localizeJavaScriptStrings} from '../scripts/build-interfa
 import {buildLanguagePages} from '../scripts/build-language-pages.mjs';
 
 const root=new URL('../',import.meta.url).pathname;
-const messages=JSON.parse(await readFile(new URL('../interface/translations-ar.json',import.meta.url),'utf8'));
+const baseMessages=JSON.parse(await readFile(new URL('../interface/translations-ar.json',import.meta.url),'utf8'));
+const messages={...baseMessages,...documentaryTranslations};
 const source=(await readFile(new URL('../interface/i18n.js',import.meta.url),'utf8')).replace('/*__MX_MESSAGES__*/','const MX_MESSAGES='+JSON.stringify(messages)+';');
 function languageClient(language){
  return vm.runInNewContext(source+';({mxLocaleCatalogue,mxPageUrl,mxDetectedLanguage})',{URL,document:{documentElement:{lang:language},baseURI:'https://example.test/mediatheque/'},MX_SERVICE:{origin:'https://admin.example.test'}});
 }
 test('each page includes only its language and the corresponding events',()=>{
- const catalogue={settings:{ministryName:'Ministère'},events:[{id:'ef',topic:'Vie institutionnelle',keywords:[]},{id:'ea',topic:'Vie institutionnelle',keywords:[]},{id:'orphan',keywords:[]}],items:[{id:'fr',language:'fr',eventId:'ef',title:'Titre français',topic:'Vie institutionnelle',keywords:['Vie institutionnelle']},{id:'ar',language:'ar',eventId:'ea',title:'عنوان عربي',topic:'Vie institutionnelle',keywords:['Vie institutionnelle']},{id:'unknown',language:'en',eventId:'orphan'}]};
+ const catalogue={settings:{ministryName:'Ministère'},events:[{id:'ef',topic:'Habitat et logement',keywords:[]},{id:'ea',topic:'Habitat et logement',keywords:[]},{id:'orphan',keywords:[]}],items:[{id:'fr',language:'fr',eventId:'ef',title:'Titre français',topic:'Habitat et logement',keywords:['Habitat et logement']},{id:'ar',language:'ar',eventId:'ea',title:'عنوان عربي',topic:'Habitat et logement',keywords:['Habitat et logement']},{id:'unknown',language:'en',eventId:'orphan'}]};
  for(const language of ['fr','ar']){
   const result=languageClient(language).mxLocaleCatalogue(catalogue);
   assert.deepEqual(Array.from(result.items,item=>item.id),[language]);
   assert.deepEqual(Array.from(result.events,event=>event.id),[language==='ar'?'ea':'ef']);
   assert.equal(result.items[0].title,language==='ar'?'عنوان عربي':'Titre français');
-  assert.equal(result.items[0].topic,language==='ar'?'الحياة المؤسساتية':'Vie institutionnelle');
+  assert.equal(result.items[0].topic,language==='ar'?'السكن والإسكان':'Habitat et logement');
  }
  assert.equal(languageClient('fr').mxDetectedLanguage('بلاغ الوزارة'),'ar');
  assert.equal(languageClient('fr').mxDetectedLanguage('Actualité du Ministère'),'fr');

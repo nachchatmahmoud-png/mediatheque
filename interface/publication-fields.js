@@ -12,7 +12,7 @@ function mxPressSelection(mode,files,text){
 
 function mxPublicationPayload(input){
   if(!MX_PUBLICATION_FORMS[input.type])throw new Error('Choisissez un type de contenu.');
-  const item={requestId:input.requestId,type:input.type,title:input.title.trim(),date:input.date,topic:input.topic,language:input.language,description:input.description||'',credit:input.credit||'',status:'published',keywords:[input.topic],location:'',duration:'',thumbnailUrl:'',mediaUrl:'',fileUrl:'',captionsUrl:'',spokenLanguage:'',captionsLanguage:'',captionsSource:'',captionsValidated:false,photos:[],content:'',transcript:''};
+  const item={requestId:input.requestId,type:input.type,title:input.title.trim(),date:input.date,topic:input.topic,language:input.language,description:input.description||'',credit:input.credit||'',status:'published',keywords:MX_DOC_RUNTIME.validateDocumentaryKeywords(input.topic,input.keywords),location:'',duration:'',thumbnailUrl:'',mediaUrl:'',fileUrl:'',captionsUrl:'',spokenLanguage:'',captionsLanguage:'',captionsSource:'',captionsValidated:false,photos:[],content:'',transcript:''};
   if(item.type==='video')Object.assign(item,{thumbnailUrl:input.thumbnailUrl||'',mediaUrl:input.mediaUrl||'',spokenLanguage:input.spokenLanguage||'',captionsLanguage:input.captionsLanguage||'',captionsSource:input.captionsSource||'',captionsValidated:!!input.captionsSource&&input.captionsValidated===true,captionsUrl:input.captionsUrl||''});
   if(item.type==='video'&&input.languages!==undefined)Object.assign(item,mxVideoEditions(input.languages,input.translations));
   if(item.type==='photo')Object.assign(item,{photos:input.photos||[],thumbnailUrl:input.thumbnailUrl||'',location:input.location||''});

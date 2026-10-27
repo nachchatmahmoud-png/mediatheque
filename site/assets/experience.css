@@ -537,3 +537,25 @@ html[dir=rtl] .mx-language-feature p {  line-height:2; }
 .mx-preview-language-choices button { border:1px solid var(--mx-line); border-radius:8px; padding:10px 18px; background:#fff; color:var(--mx-green); cursor:pointer; font:inherit; }
 .mx-preview-language-choices button[aria-pressed=true] { background:var(--mx-green); color:#fff; border-color:var(--mx-green); }
 @media(max-width:600px) { .mx-video-pages,.mx-video-edition { padding:16px; } .mx-video-page-choice { min-width:0; flex:1; } }
+
+/* Domain and subject descriptors share one scale in both languages. */
+.mx-documentary-guidance { font-size:13px; line-height:1.8; color:#607064; margin:18px 0; }
+.mx-documentary { margin:24px 0; padding:23px; background:#f5f8f2; border:1px solid #d8e3d1; border-radius:10px; }
+.mx-documentary-heading { display:flex; align-items:center; justify-content:space-between; gap:15px; }
+.mx-documentary-heading h3 { font-size:16px; margin:0; color:#244e35; }
+.mx-documentary-heading>span { font-size:12px; color:#58714c; }
+.mx-documentary>p,.mx-documentary>small { font-size:13px; line-height:1.8; color:#60745a; }
+.mx-documentary-search { display:block; font-size:13px; font-weight:500; margin:18px 0 13px; color:#35543d; }
+.gh-form .mx-documentary-search input { display:block; width:100%; margin-top:7px; font-size:14px; }
+.mx-documentary-options,.mx-documentary-selected { display:flex; flex-wrap:wrap; gap:9px; margin:14px 0; }
+.mx-documentary-options>button,.mx-documentary-selected>button { display:flex; align-items:center; gap:9px; font:inherit; font-size:13px; text-align:start; border:1px solid #cedcc6; background:#fff; border-radius:7px; padding:10px 12px; color:#355a40; line-height:1.6; }
+.mx-documentary-options>button { flex-direction:column; align-items:flex-start; gap:3px; }
+.mx-documentary-options>button small { font-size:11px; color:#71816a; }
+.mx-documentary-options>button:hover { background:#e9f1e3; border-color:#78986c; }
+.mx-documentary-options>button:disabled { opacity:.5; }
+.mx-documentary-selected>button { background:#245b40; color:#fff; border-color:#245b40; }
+.mx-documentary-selected>button>span { font-size:19px; line-height:1; }
+.mx-documentary-more { color:#386440; font-size:13px; text-decoration:underline; text-underline-offset:3px; margin:2px 0 17px; display:block; }
+.mx-documentary-preview { display:flex; flex-wrap:wrap; gap:8px; list-style:none; padding:0; margin:15px 0 22px; }
+.mx-documentary-preview li { padding:7px 11px; border-radius:6px; background:#edf3e7; color:#35583c; font-size:13px; }
+@media(max-width:680px){.mx-documentary{padding:18px 15px;}.mx-documentary-options>button,.mx-documentary-selected>button{font-size:13px;}}

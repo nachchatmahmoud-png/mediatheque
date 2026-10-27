@@ -9,7 +9,7 @@ const source=await readFile(new URL('../interface/video-languages.js',import.met
 const client=vm.runInNewContext(helpers+'\n'+source+';({mxVideoLanguageDetails,mxVideoEmbedUrl,mxLatestPresentation,mxReadCaptions})',{
  URL,MX_LOCALE:'fr',MX_VIDEO_LOCALIZATIONS:{abcdefghijk:{spokenLanguage:'ar',fr:{title:'Titre français validé',description:'Présentation française'}}},mxDetectedLanguage:()=>'ar',mxT:value=>value,
 });
-const base={...blankMedia(),title:'Test',date:'2026-10-21',topic:'Vie institutionnelle',description:'Résumé français',keywords:['Test'],mediaUrl:'https://www.youtube.com/watch?v=abcdefghijk',status:'published'};
+const base={...blankMedia(),title:'Test',date:'2026-10-21',topic:'Habitat et logement',description:'Résumé français',keywords:['Test'],mediaUrl:'https://www.youtube.com/watch?v=abcdefghijk',status:'published'};
 test('audio language stays distinct from page language and unverified captions are never advertised',()=>{
  const video={...base,language:'fr',spokenLanguage:'ar',captionsSource:'youtube',captionsLanguage:'fr'};
  assert.equal(client.mxVideoLanguageDetails(video).original,'Vidéo en arabe');

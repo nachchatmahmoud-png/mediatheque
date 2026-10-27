@@ -6,7 +6,7 @@ import {digest,preparePublication} from '../server/publication.ts';
 const accountId='11111111-1111-4111-8111-111111111111',uploadId='22222222-2222-4222-8222-222222222222';
 const bytes=new Uint8Array(await readFile(new URL('../../site/images/logo-ministere.png',import.meta.url)));
 const upload={id:uploadId,accountId,path:accountId+'/'+uploadId+'/asset.png',name:'cover.png',size:bytes.length,digest:await digest(bytes),createdAt:new Date().toISOString()};
-const prepared=await preparePublication({requestId:'33333333-3333-4333-8333-333333333333',type:'photo',title:'Album de test',date:'2026-10-22',topic:'Vie institutionnelle',language:'fr',photos:[{url:'admin-upload:'+uploadId}]},accountId,async()=>upload);
+const prepared=await preparePublication({requestId:'33333333-3333-4333-8333-333333333333',type:'photo',title:'Album de test',date:'2026-10-22',topic:'Habitat et logement',keywords:['Aide directe au logement'],language:'fr',photos:[{url:'admin-upload:'+uploadId}]},accountId,async()=>upload);
 function repository({conflict=false}={}){
  const calls=[],trees=[],commits=[];let head='a'.repeat(40),written=null,patches=0;
  const fetcher=async(url,options)=>{

@@ -80,7 +80,7 @@ test('shared publications become public immediately, uploads stay private and vi
  const cover=await stage('image.png',png),media=await stage('film.mp4',video);
  assert.equal((await value.request('/api/media/private/staged.mp4')).status,404);
  for(const extra of [{type:'press',content:'Communiqué partagé'},{type:'photo',photos:[{url:cover,caption:'Rabat'}],thumbnailUrl:cover},{type:'video',mediaUrl:media,thumbnailUrl:cover,spokenLanguage:'fr'}]){
-  const input={requestId:crypto.randomUUID(),title:'Publication '+extra.type,date:'2026-10-26',topic:'Vie institutionnelle',language:'fr',...extra};
+  const input={requestId:crypto.randomUUID(),title:'Publication '+extra.type,date:'2026-10-26',topic:'Habitat et logement',keywords:['Aide directe au logement'],language:'fr',...extra};
   const first=await value.request('/api/publications',{method:'POST',token:sessionToken,body:input});assert.equal(first.status,201,JSON.stringify(first.body));
   const retry=await value.request('/api/publications',{method:'POST',token:sessionToken,body:input});assert.equal(retry.body.id,first.body.id);
  }
@@ -95,7 +95,7 @@ test('one uploaded Arabic video publishes two distinct language entries sharing 
  const thumbnailUrl=await stage('miniature.png',new Uint8Array(await readFile(new URL('../site/images/logo-ministere.png',import.meta.url))));
  const mediaUrl=await stage('video.mp4',new Uint8Array([0,0,0,20,102,116,121,112,0,0,0,0]));
  const translations={fr:{title:'Présentation du programme de logement',description:'',credit:''},ar:{title:'تقديم برنامج السكن',description:'',credit:''}};
- const input={requestId:crypto.randomUUID(),type:'video',title:translations.fr.title,date:'2026-10-26',topic:'Vie institutionnelle',language:'fr',spokenLanguage:'ar',mediaUrl,thumbnailUrl,translations};
+ const input={requestId:crypto.randomUUID(),type:'video',title:translations.fr.title,date:'2026-10-26',topic:'Habitat et logement',keywords:['Aide directe au logement'],language:'fr',spokenLanguage:'ar',mediaUrl,thumbnailUrl,translations};
  const first=await value.request('/api/publications',{method:'POST',token,body:input});assert.equal(first.status,201,JSON.stringify(first.body));
  assert.equal((await value.request('/api/publications',{method:'POST',token,body:input})).body.id,first.body.id);
  const catalogue=(await value.request('/api/catalogue',{origin:''})).body;
@@ -148,7 +148,7 @@ test('open management removes accounts and publishes shared content without a lo
  const png=new Uint8Array(await readFile(new URL('../site/images/logo-ministere.png',import.meta.url)));
  const upload=await value.request('/api/uploads?name=couverture.png',{method:'POST',body:png});
  assert.equal(upload.status,201,JSON.stringify(upload.body));
- const input={requestId:crypto.randomUUID(),type:'photo',title:'Album publié sans connexion',date:'2026-10-26',topic:'Vie institutionnelle',language:'fr',thumbnailUrl:upload.body.url,photos:[{url:upload.body.url,caption:'Rabat'}]};
+ const input={requestId:crypto.randomUUID(),type:'photo',title:'Album publié sans connexion',date:'2026-10-26',topic:'Habitat et logement',keywords:['Aide directe au logement'],language:'fr',thumbnailUrl:upload.body.url,photos:[{url:upload.body.url,caption:'Rabat'}]};
  const published=await value.request('/api/publications',{method:'POST',body:input});
  assert.equal(published.status,201,JSON.stringify(published.body));
  const anotherBrowser=await value.request('/api/catalogue',{origin:''});
@@ -167,7 +167,7 @@ test('removing all accounts retains already published documents and their files'
  const value=setup();await value.register();const token=(await value.login()).body.sessionToken;
  const png=new Uint8Array(await readFile(new URL('../site/images/logo-ministere.png',import.meta.url)));
  const upload=await value.request('/api/uploads?name=photo.png',{method:'POST',body:png,token});
- const input={requestId:crypto.randomUUID(),type:'photo',title:'Publication existante',date:'2026-10-26',topic:'Vie institutionnelle',language:'fr',thumbnailUrl:upload.body.url,photos:[{url:upload.body.url,caption:''}]};
+ const input={requestId:crypto.randomUUID(),type:'photo',title:'Publication existante',date:'2026-10-26',topic:'Habitat et logement',keywords:['Aide directe au logement'],language:'fr',thumbnailUrl:upload.body.url,photos:[{url:upload.body.url,caption:''}]};
  const saved=await value.request('/api/publications',{method:'POST',body:input,token});assert.equal(saved.status,201);
  const openHandler=createSharedHandler({DB:value.DB,BUCKET:value.BUCKET,REQUIRE_AUTHENTICATION:'false'});
  const response=await openHandler(new Request('https://service.example/api/auth/options',{headers:{Origin:portalOrigin}}));assert.equal(response.status,200);

@@ -6,7 +6,7 @@ import {webcrypto} from 'node:crypto';
 import {File} from 'node:buffer';
 
 const [components,localSource,api,i18n]=await Promise.all(['components.js','test-administration.js','service-api.js','i18n.js'].map(name=>readFile(new URL('../interface/'+name,import.meta.url),'utf8')));
-const topic='Habitat et politique de la ville';
+const topic='Habitat et logement';
 const base={items:[{id:'official-fr',language:'fr'},{id:'official-ar',language:'ar'}],events:[],settings:{ministryName:'Médiathèque'}};
 function memoryStorage(){
   let data={items:[],assets:[]};

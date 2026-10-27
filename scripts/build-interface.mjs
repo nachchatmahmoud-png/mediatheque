@@ -1,5 +1,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import {stripTypeScriptTypes} from 'node:module';
+import {documentaryTopics,documentaryTranslations} from '../app/lib/keyword-catalog.ts';
 
 // Translate known UI string literals, including escaped Unicode in the retained
 // runtime. Values, identifiers, URLs and user content keep their original form.
@@ -20,6 +22,14 @@ export async function buildInterface(root, output) {
   const baseMarker = 'var $s="/mediatheque".replace(/\\/$/,"");';
   if (!bundle.includes(baseMarker)) throw new Error('Base du portail introuvable.');
   bundle = bundle.replace(baseMarker, 'var $s=new URL(".",document.baseURI).pathname.replace(/\\/$/,"");');
+  // One source supplies the browser, search aliases and server-side indexing.
+  const vocabulary=stripTypeScriptTypes(await readFile(join(root,'app/lib/keyword-catalog.ts'),'utf8')).replace(/^export /gm,'');
+  const documentaryRuntime='var MX_DOC_RUNTIME=(()=>{'+vocabulary+';return {keywordCatalog,documentaryTopics,documentaryTranslations,normalizeKeyword,canonicalKeyword,keywordSearchText,parseKeywordText,rankKeywordTopics,preferredKeywordTopic,suggestKeywords,validateDocumentaryKeywords};})();var iu=MX_DOC_RUNTIME.canonicalKeyword,uu=MX_DOC_RUNTIME.keywordSearchText,Ro=MX_DOC_RUNTIME.parseKeywordText,Js=MX_DOC_RUNTIME.rankKeywordTopics,pg=MX_DOC_RUNTIME.preferredKeywordTopic,mg=MX_DOC_RUNTIME.suggestKeywords;';
+  const vocabularyStart=bundle.indexOf('var js='),vocabularyEnd=bundle.indexOf('var Ws=',vocabularyStart);
+  if(vocabularyStart<0||vocabularyEnd<vocabularyStart)throw new Error('Limite du référentiel documentaire introuvable.');
+  bundle=bundle.slice(0,vocabularyStart)+'/*__MX_DOCUMENTARY_RUNTIME__*/'+bundle.slice(vocabularyEnd);
+  if(!/el=\[[^\]]+\],nu=/.test(bundle))throw new Error('Liste des domaines introuvable.');
+  bundle=bundle.replace(/el=\[[^\]]+\],nu=/,()=> 'el='+JSON.stringify(documentaryTopics)+',nu=');
   // Bundle the last verified official video so the first render needs no request.
   const latest=JSON.parse(await readFile(join(root,'site/latest-video.json'),'utf8'));
   const frenchLatest=JSON.parse(await readFile(join(root,'site/latest-video-fr.json'),'utf8'));
@@ -60,7 +70,7 @@ export async function buildInterface(root, output) {
     if(from<0||until<from)throw new Error('Limite du service introuvable : '+start);
     bundle=bundle.slice(0,from)+replacement+'\n'+bundle.slice(until);
   }
-  const helpers = (await Promise.all(['i18n.js','publication-fields.js','components.js','video-languages.js','admin-service.js','test-administration.js','local-administration.js','accounts.js'].map(file=>readFile(join(root,'interface',file),'utf8')))).join('\n');
+  const helpers = (await Promise.all(['i18n.js','documentary.js','publication-fields.js','components.js','video-languages.js','admin-service.js','test-administration.js','local-administration.js','accounts.js'].map(file=>readFile(join(root,'interface',file),'utf8')))).join('\n');
   const config=JSON.parse(await readFile(join(root,'interface/service-config.json'),'utf8'));
   const localizations=JSON.parse(await readFile(join(root,'site/video-localizations.json'),'utf8'));
   if(config.provider!=='github'||config.repository!=='nachchatmahmoud-png/mediatheque'||config.branch!=='main')throw new Error('Vérifiez le dépôt GitHub de publication.');
@@ -69,11 +79,12 @@ export async function buildInterface(root, output) {
   if(config.authentication.apiBase){const api=new URL(config.authentication.apiBase);if(api.protocol!=='https:'||api.username||api.password||api.search||api.hash)throw new Error('Adresse du service administrateur non valide.');}
   const configuration='const MX_SERVICE='+JSON.stringify(config)+'; const MX_VIDEO_LOCALIZATIONS='+JSON.stringify(localizations)+'; const MX_FRENCH_VIDEO='+JSON.stringify(frenchLatest)+';\n';
   bundle = bundle.replace('function rf()', configuration+helpers + '\nfunction rf()');
-  const messages=JSON.parse(await readFile(join(root,'interface/translations-ar.json'),'utf8'));
-  const french=bundle.replace('/*__MX_MESSAGES__*/','const MX_MESSAGES='+JSON.stringify(messages)+';');
+  const messages={...JSON.parse(await readFile(join(root,'interface/translations-ar.json'),'utf8')),...documentaryTranslations};
+  const french=bundle.replace('/*__MX_MESSAGES__*/','const MX_MESSAGES='+JSON.stringify(messages)+';').replace('/*__MX_DOCUMENTARY_RUNTIME__*/',()=>documentaryRuntime);
   let arabic=localizeJavaScriptStrings(bundle,messages);
   arabic=arabic.replaceAll('"/images/cover.svg"','"/images/cover-ar.svg"');
   arabic=arabic.replace('/*__MX_MESSAGES__*/','const MX_MESSAGES='+JSON.stringify(messages)+';');
+  arabic=arabic.replace('/*__MX_DOCUMENTARY_RUNTIME__*/',()=>documentaryRuntime);
   await writeFile(join(output,'assets/app.js'),french);
   await writeFile(join(output,'assets/app-fr.js'),french);
   await writeFile(join(output,'assets/app-ar.js'),arabic);

@@ -5,7 +5,7 @@ const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const output=join(root,'supabase/functions/mediatheque/generated');
 await rm(output,{recursive:true,force:true});await mkdir(output,{recursive:true});
 for(const name of ['service.ts','publication.ts','github.ts','supabase.ts']){
-  const source=(await readFile(join(root,'administration/server',name),'utf8')).replaceAll('../../github-pages/catalogue.ts','./catalogue.ts').replaceAll('../../app/lib/model.ts','./model.ts');
+  const source=(await readFile(join(root,'administration/server',name),'utf8')).replaceAll('../../github-pages/catalogue.ts','./catalogue.ts').replaceAll('../../app/lib/model.ts','./model.ts').replaceAll('../../app/lib/keyword-catalog.ts','./keyword-catalog.ts');
   await writeFile(join(output,name),source);
 }
 await writeFile(join(output,'catalogue.ts'),(await readFile(join(root,'github-pages/catalogue.ts'),'utf8')).replace('../app/lib/model.ts','./model.ts'));

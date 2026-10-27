@@ -87,7 +87,7 @@ test('uploads validate actual bytes, stay private and cannot be reused by anothe
  const staged=await value.request('/api/uploads?name=photo.png',{method:'POST',body:png,token});assert.equal(staged.status,201);
  const stored=value.uploads.get(staged.body.url.slice(13));assert.ok(stored.path.startsWith(accountId+'/'));
  stored.accountId=otherId;
- const result=await value.request('/api/publications',{method:'POST',token,body:{requestId:crypto.randomUUID(),type:'photo',title:'Album',date:'2026-10-22',topic:'Vie institutionnelle',language:'fr',photos:[{url:staged.body.url}]}});
+ const result=await value.request('/api/publications',{method:'POST',token,body:{requestId:crypto.randomUUID(),type:'photo',title:'Album',date:'2026-10-22',topic:'Habitat et logement',keywords:['Aide directe au logement'],language:'fr',photos:[{url:staged.body.url}]}});
  assert.equal(result.status,400);assert.equal(value.calls.some(call=>call.action==='publish'),false);
 });
 
@@ -97,7 +97,7 @@ test('photo, YouTube, imported video with captions and communiqué use the catal
  const photo=await stage('cover.png',png),pdf=await stage('communique.pdf',new TextEncoder().encode('%PDF-1.4\nTEST'));
  const media=await stage('video.mp4',new Uint8Array([0,0,0,20,102,116,121,112,0,0,0,0]));
  const captions=await stage('fr.vtt',new TextEncoder().encode('WEBVTT\n\n00:00.000 --> 00:02.000\nTexte de test.\n'));
- const base={title:'Publication de test',date:'2026-10-22',topic:'Vie institutionnelle',language:'fr',description:'Résumé français'};
+ const base={title:'Publication de test',date:'2026-10-22',topic:'Habitat et logement',keywords:['Aide directe au logement'],language:'fr',description:'Résumé français'};
  for(const support of [
   {type:'photo',photos:[{url:photo,caption:'Couverture'}],thumbnailUrl:photo,location:'Rabat',credit:'Photographe de test'},
   {type:'video',mediaUrl:'https://www.youtube.com/watch?v=abcdefghijk',spokenLanguage:'ar'},

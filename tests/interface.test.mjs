@@ -72,7 +72,7 @@ test('browser ZIP writer produces a readable dossier accepted by the public cata
     const {Cg: zip} = vm.runInNewContext(zipSource + ';({Cg})', {TextEncoder, Uint8Array, Uint32Array, DataView});
     const folder = 'test-local-publication';
     const photo = new Uint8Array(await readFile(join(root, 'site/images/logo-ministere.png')));
-    const record = {version: 1, status: 'published', title: 'TEST LOCAL', date: '2026-10-01', topic: 'Habitat et politique de la ville', keywords: ['Habitat'], language: 'fr',
+    const record = {version: 1, status: 'published', title: 'TEST LOCAL', date: '2026-10-01', topic: 'Habitat et logement', keywords: ['Habitat'], language: 'fr',
       photos: [{file: 'photos/01-test.png', caption: 'Légende de test'}], videos: [{url: 'https://example.org/test.mp4'}], press: [{text: 'TEST LOCAL'}]};
     const archivePath = join(temporary, 'publication.zip');
     await writeFile(archivePath, zip([
@@ -97,7 +97,7 @@ test('the GitHub catalogue builds two language pages from one video dossier and 
   const id='video-bilingue',folder=join(temporary,'source',id),video=new Uint8Array([0,0,0,20,102,116,121,112,0,0,0,0]);
   const cover=await readFile(join(root,'site/images/logo-ministere.png'));
   await mkdir(join(folder,'videos'),{recursive:true});await mkdir(join(folder,'photos'),{recursive:true});
-  const record={version:1,status:'published',title:'Programme de logement',date:'2026-10-26',topic:'Vie institutionnelle',keywords:['Vie institutionnelle'],language:'fr',translations:{fr:{title:'Programme de logement'},ar:{title:'برنامج السكن'}},videos:[{file:'videos/video.mp4',cover:'photos/miniature.png',spokenLanguage:'ar'}]};
+  const record={version:1,status:'published',title:'Programme de logement',date:'2026-10-26',topic:'Habitat et logement',keywords:['Habitat et logement'],language:'fr',translations:{fr:{title:'Programme de logement'},ar:{title:'برنامج السكن'}},videos:[{file:'videos/video.mp4',cover:'photos/miniature.png',spokenLanguage:'ar'}]};
   await writeFile(join(folder,'publication.json'),JSON.stringify(record));await writeFile(join(folder,'videos/video.mp4'),video);await writeFile(join(folder,'photos/miniature.png'),cover);
   const normalized=publicationToCatalogue(record,id);assert.equal(normalized.assets.length,2);
   const catalogue=await buildCatalogue(join(temporary,'source'),join(temporary,'output'));

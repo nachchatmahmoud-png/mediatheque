@@ -7,7 +7,7 @@ import {File} from 'node:buffer';
 
 const files=await Promise.all(['components.js','test-administration.js','local-administration.js','service-api.js','i18n.js'].map(name=>readFile(new URL('../interface/'+name,import.meta.url),'utf8')));
 const credentials={username:'  Local.Admin  ',password:'Phrase de contrôle locale 2026',confirmPassword:'Phrase de contrôle locale 2026'};
-const topic='Habitat et politique de la ville';
+const topic='Habitat et logement';
 function stores(){
  let account,items=[],assets=[];const sessions=new Map(),tab=new Map();
  return {

@@ -207,5 +207,22 @@
   "Un titre, un thème, un mot-clé…": "عنوان، موضوع، كلمة مفتاحية…",
   "Vidéos, albums photo et communiqués de presse.": "أشرطة فيديو وألبومات صور وبلاغات صحفية.",
   "Retrouvez nos vidéos, albums photo et communiqués de presse.": "اطلعوا على أشرطة الفيديو وألبومات الصور والبلاغات الصحفية.",
-  "Rechercher un titre ou un mot-clé…": "البحث عن عنوان أو كلمة مفتاحية…"
+  "Rechercher un titre ou un mot-clé…": "البحث عن عنوان أو كلمة مفتاحية…",
+  "Domaine principal": "المجال الرئيسي",
+  "Domaine principal *": "المجال الرئيسي *",
+  "Choisir le domaine…": "اختيار المجال…",
+  "Mots-clés documentaires *": "الكلمات المفتاحية الموضوعية *",
+  "Indexation documentaire": "التكشيف الموضوعي",
+  "Mots-clés sélectionnés": "الكلمات المفتاحية المختارة",
+  "Rechercher dans le référentiel": "البحث في قائمة المصطلحات",
+  "Rechercher un mot-clé documentaire": "البحث عن كلمة مفتاحية موضوعية",
+  "Mots-clés proposés": "الكلمات المفتاحية المقترحة",
+  "Voir tous les mots-clés du domaine": "عرض جميع الكلمات المفتاحية للمجال",
+  "Choisissez d’abord le domaine principal pour afficher les mots-clés adaptés.": "اختاروا أولا المجال الرئيسي لعرض الكلمات المفتاحية المناسبة.",
+  "Choisissez les sujets réellement traités. Le domaine principal ne remplace pas les mots-clés.": "اختاروا المواضيع المتناولة فعليا. لا يعوض المجال الرئيسي الكلمات المفتاحية.",
+  "Aucun terme correspondant. Essayez un synonyme ou un autre domaine.": "لا يوجد مصطلح مطابق. جربوا مرادفا أو مجالا آخر.",
+  "Tous les mots-clés proposés sont sélectionnés.": "تم اختيار جميع الكلمات المفتاحية المقترحة.",
+  "1 à 8 mots-clés, dont au moins un rattaché au domaine principal.": "من كلمة إلى ثماني كلمات مفتاحية، منها واحدة على الأقل مرتبطة بالمجال الرئيسي.",
+  "Retirer le mot-clé ": "حذف الكلمة المفتاحية ",
+  "Ajouter le mot-clé ": "إضافة الكلمة المفتاحية "
 }
