@@ -2,7 +2,7 @@
 
 Ce plan constitue un choix éditorial pour la médiathèque. Il ne se présente pas comme un thésaurus officiel ni comme la reproduction de l’organigramme du ministère.
 
-## Domaines et rubrique parlementaire
+## Domaines et rubriques transversales
 
 1. Habitat et logement.
 2. Politique de la ville et renouvellement urbain.
@@ -11,8 +11,9 @@ Ce plan constitue un choix éditorial pour la médiathèque. Il ne se présente 
 5. Architecture et patrimoine bâti.
 6. Formation et recherche dans les métiers du territoire.
 7. Interventions et questions parlementaires.
+8. Coopération et participation internationales.
 
-Le référentiel comporte 65 descripteurs français, avec un libellé arabe et des synonymes ou sigles de recherche. Sa source unique est `app/lib/keyword-catalog.ts`, réutilisée par le navigateur et le service de publication.
+Le référentiel comporte 80 descripteurs français, avec un libellé arabe et des synonymes ou sigles de recherche. Sa source unique est `app/lib/keyword-catalog.ts`, réutilisée par le navigateur et le service de publication.
 
 ## Règles d’indexation
 
@@ -20,13 +21,18 @@ Le référentiel comporte 65 descripteurs français, avec un libellé arabe et d
 - Retenir de 1 à 8 descripteurs précis, dont au moins un du domaine principal. Les sujets secondaires d’autres domaines restent accessibles par la recherche dans le référentiel.
 - Ne pas répéter le nom du domaine comme unique mot-clé.
 - La rubrique Interventions et questions parlementaires rassemble les interventions, réponses aux questions orales et écrites, travaux en commission, présentations budgétaires et examens des projets de loi. Compléter les descripteurs parlementaires par les sujets traités : par exemple Réponses aux questions orales et Aide directe au logement. Un contenu peut aussi être classé dans son domaine sectoriel et recevoir un descripteur parlementaire complémentaire.
+- La rubrique Coopération et participation internationales couvre les conférences, forums et salons internationaux, le Forum urbain mondial, les coopérations bilatérale, multilatérale et Sud-Sud, les partenariats, visites officielles à l’étranger et accords de coopération. Compléter ces descripteurs par le sujet sectoriel abordé. Une rencontre strictement nationale relève de son domaine sectoriel ; une rencontre internationale peut se tenir au Maroc ou à l’étranger.
 - Les mentions génériques de rencontre, convention ou visite ne constituent pas, à elles seules, un sujet documentaire.
 - Exclure les étiquettes sans objet précis, comme Vie institutionnelle, Gouvernance ou Réunion de coordination.
 - Conserver les noms de lieux dans les métadonnées géographiques lorsqu’elles sont disponibles, sans les confondre avec un sujet.
 - Faire sélectionner les descripteurs par la personne qui décrit le contenu. Les suggestions ne sont jamais publiées automatiquement.
 - Enregistrer les descripteurs choisis sans les remplacer par la rubrique. Employer le même identifiant de sujet pour les deux versions d’une vidéo, d’un album photo ou d’un communiqué ; afficher le libellé correspondant à la langue de consultation.
 
+Les noms de rencontres internationales et les participations vérifiées sont détaillés dans [PARTICIPATIONS_INTERNATIONALES.md](PARTICIPATIONS_INTERNATIONALES.md). Les acronymes (WUF/FUM, FUA/AUF, SENHABITAT, FOMAHDU) et les libellés arabes sont recherchables.
+
 ## Sources publiques consultées
+
+- [CDG Développement, participation au Forum urbain mondial et pavillon du ministère](https://cdgdev.ma/fr/actualites/branche-developpement-territorial-participation-au-forum-urbain-mondial).
 
 - [Portail national, programme d’aide directe au logement](https://maroc.ma/fr/actualites/aide-directe-au-logement-plus-de-114000-demandeurs-en-2024).
 - [Portail national, mise à niveau urbaine à M’rirt et participation du ministère](https://www.maroc.ma/fr/actualites/khenifra-vaste-impulsion-au-developpement-avec-le-lancement-de-grands-projets-dedies-au-renforcement).
@@ -34,4 +40,4 @@ Le référentiel comporte 65 descripteurs français, avec un libellé arabe et d
 - [INAU, statut, tutelle, formation et recherche](https://inau.ac.ma/presentation-de-linau/).
 - [INAU, offre de formations](https://inau.ac.ma/loffre-de-formations/).
 
-Les sources permettent de situer les champs et les exemples d’action publique. Le regroupement en six domaines et une rubrique parlementaire et le choix des libellés relèvent du travail éditorial de classement. Aucune référence juridique non vérifiée n’est utilisée pour leur donner une portée réglementaire.
+Les sources permettent de situer les champs et les exemples d’action publique. Le regroupement en six domaines et deux rubriques transversales et le choix des libellés relèvent du travail éditorial de classement. Aucune référence juridique non vérifiée n’est utilisée pour leur donner une portée réglementaire.

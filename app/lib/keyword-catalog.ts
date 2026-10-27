@@ -1,7 +1,7 @@
 // Editorial classification by subject. Provenance and indexing rules: docs/CLASSEMENT_DOCUMENTAIRE.md.
 export type Term={label:string;arabic:string;topic:string;aliases:string[]};
-export const documentaryTopics:string[]=["Habitat et logement", "Politique de la ville et renouvellement urbain", "Urbanisme et planification urbaine", "Aménagement et développement du territoire", "Architecture et patrimoine bâti", "Formation et recherche dans les métiers du territoire", "Interventions et questions parlementaires"];
-export const documentaryTopicTranslations:Record<string,string>={"Habitat et logement": "السكن والإسكان", "Politique de la ville et renouvellement urbain": "سياسة المدينة والتجديد الحضري", "Urbanisme et planification urbaine": "التعمير والتخطيط الحضري", "Aménagement et développement du territoire": "إعداد التراب والتنمية الترابية", "Architecture et patrimoine bâti": "الهندسة المعمارية والتراث المبني", "Formation et recherche dans les métiers du territoire": "التكوين والبحث في مهن إعداد التراب والتعمير", "Interventions et questions parlementaires": "المداخلات والأسئلة البرلمانية"};
+export const documentaryTopics:string[]=["Habitat et logement", "Politique de la ville et renouvellement urbain", "Urbanisme et planification urbaine", "Aménagement et développement du territoire", "Architecture et patrimoine bâti", "Formation et recherche dans les métiers du territoire", "Interventions et questions parlementaires", "Coopération et participation internationales"];
+export const documentaryTopicTranslations:Record<string,string>={"Habitat et logement": "السكن والإسكان", "Politique de la ville et renouvellement urbain": "سياسة المدينة والتجديد الحضري", "Urbanisme et planification urbaine": "التعمير والتخطيط الحضري", "Aménagement et développement du territoire": "إعداد التراب والتنمية الترابية", "Architecture et patrimoine bâti": "الهندسة المعمارية والتراث المبني", "Formation et recherche dans les métiers du territoire": "التكوين والبحث في مهن إعداد التراب والتعمير", "Interventions et questions parlementaires": "المداخلات والأسئلة البرلمانية", "Coopération et participation internationales": "التعاون والمشاركة الدولية"};
 export const keywordCatalog:Term[]=[
  {
   "label": "Aide directe au logement",
@@ -557,6 +557,158 @@ export const keywordCatalog:Term[]=[
   "topic": "Interventions et questions parlementaires",
   "aliases": [
    "المناقشات البرلمانية"
+  ]
+ },
+ {
+  "label": "Participation aux conférences internationales",
+  "arabic": "المشاركة في المؤتمرات الدولية",
+  "topic": "Coopération et participation internationales",
+  "aliases": [
+   "المشاركة في المؤتمرات الدولية",
+   "Conférence internationale",
+   "Conférences internationales"
+  ]
+ },
+ {
+  "label": "Participation aux forums internationaux",
+  "arabic": "المشاركة في المنتديات الدولية",
+  "topic": "Coopération et participation internationales",
+  "aliases": [
+   "المشاركة في المنتديات الدولية",
+   "Forum international",
+   "Forums internationaux"
+  ]
+ },
+ {
+  "label": "Participation aux salons internationaux",
+  "arabic": "المشاركة في المعارض الدولية",
+  "topic": "Coopération et participation internationales",
+  "aliases": [
+   "المشاركة في المعارض الدولية",
+   "Salon international",
+   "Salons internationaux"
+  ]
+ },
+ {
+  "label": "Forum urbain mondial",
+  "arabic": "المنتدى الحضري العالمي",
+  "topic": "Coopération et participation internationales",
+  "aliases": [
+   "المنتدى الحضري العالمي",
+   "WUF",
+   "World Urban Forum",
+   "FUM"
+  ]
+ },
+ {
+  "label": "Coopération bilatérale",
+  "arabic": "التعاون الثنائي",
+  "topic": "Coopération et participation internationales",
+  "aliases": [
+   "التعاون الثنائي"
+  ]
+ },
+ {
+  "label": "Coopération multilatérale",
+  "arabic": "التعاون متعدد الأطراف",
+  "topic": "Coopération et participation internationales",
+  "aliases": [
+   "التعاون متعدد الأطراف"
+  ]
+ },
+ {
+  "label": "Partenariats internationaux",
+  "arabic": "الشراكات الدولية",
+  "topic": "Coopération et participation internationales",
+  "aliases": [
+   "الشراكات الدولية",
+   "Partenariat international"
+  ]
+ },
+ {
+  "label": "Visites officielles à l’étranger",
+  "arabic": "الزيارات الرسمية إلى الخارج",
+  "topic": "Coopération et participation internationales",
+  "aliases": [
+   "الزيارات الرسمية إلى الخارج",
+   "Visite officielle à l’étranger",
+   "Déplacement officiel à l’étranger"
+  ]
+ },
+ {
+  "label": "Accords de coopération",
+  "arabic": "اتفاقيات التعاون",
+  "topic": "Coopération et participation internationales",
+  "aliases": [
+   "اتفاقيات التعاون",
+   "Accord de coopération"
+  ]
+ },
+ {
+  "label": "Forum urbain africain",
+  "arabic": "المنتدى الحضري الإفريقي",
+  "topic": "Coopération et participation internationales",
+  "aliases": [
+   "المنتدى الحضري الإفريقي",
+   "FUA",
+   "AUF",
+   "African Urban Forum",
+   "المنتدى الحضري الأفريقي"
+  ]
+ },
+ {
+  "label": "Assemblée d’ONU-Habitat",
+  "arabic": "جمعية موئل الأمم المتحدة",
+  "topic": "Coopération et participation internationales",
+  "aliases": [
+   "جمعية موئل الأمم المتحدة",
+   "Assemblée générale d’ONU-Habitat",
+   "Assemblée des Nations unies pour l’habitat",
+   "UN-Habitat Assembly",
+   "جمعية برنامج الأمم المتحدة للمستوطنات البشرية"
+  ]
+ },
+ {
+  "label": "Sommet Africités",
+  "arabic": "قمة أفريسيتي",
+  "topic": "Coopération et participation internationales",
+  "aliases": [
+   "قمة أفريسيتي",
+   "Africités",
+   "Africities Summit",
+   "أفريسيتي",
+   "قمة المدن الإفريقية"
+  ]
+ },
+ {
+  "label": "Salon international de l’habitat du Sénégal",
+  "arabic": "المعرض الدولي للسكن بالسنغال",
+  "topic": "Coopération et participation internationales",
+  "aliases": [
+   "المعرض الدولي للسكن بالسنغال",
+   "SENHABITAT",
+   "SEN HABITAT",
+   "SENHABITAT Dakar"
+  ]
+ },
+ {
+  "label": "Forum ministériel africain sur l’habitat et le développement urbain",
+  "arabic": "المنتدى الوزاري الإفريقي للإسكان والتنمية الحضرية",
+  "topic": "Coopération et participation internationales",
+  "aliases": [
+   "المنتدى الوزاري الإفريقي للإسكان والتنمية الحضرية",
+   "FOMAHDU",
+   "Forum ministériel africain"
+  ]
+ },
+ {
+  "label": "Coopération Sud-Sud",
+  "arabic": "التعاون جنوب-جنوب",
+  "topic": "Coopération et participation internationales",
+  "aliases": [
+   "التعاون جنوب-جنوب",
+   "التعاون جنوب جنوب",
+   "South-South cooperation"
   ]
  }
 ];

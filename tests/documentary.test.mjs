@@ -56,3 +56,15 @@ test('parliamentary replies retain their parliamentary form and the ministerial 
  for(const query of ['questions orales','aide au logement','الأسئلة الشفهية'])assert.equal(filterMedia(catalogue.items,{type:'all',query,year:'',topic:'',sort:'newest'}).length,1);
  assert.equal(documentaryTranslations['Réponses aux questions écrites'],'الأجوبة عن الأسئلة الكتابية');
 });
+
+test('documented international meetings have precise bilingual descriptors and searchable acronyms',async()=>{
+ const topic='Coopération et participation internationales';
+ assert.ok(documentaryTopics.includes(topic));
+ assert.equal(documentaryTranslations[topic],'التعاون والمشاركة الدولية');
+ const pairs=[['WUF','Forum urbain mondial'],['FUM','Forum urbain mondial'],['المنتدى الحضري العالمي','Forum urbain mondial'],['AUF','Forum urbain africain'],['FUA','Forum urbain africain'],['جمعية موئل الأمم المتحدة','Assemblée d’ONU-Habitat'],['أفريسيتي','Sommet Africités'],['SENHABITAT','Salon international de l’habitat du Sénégal'],['FOMAHDU','Forum ministériel africain sur l’habitat et le développement urbain']];
+ for(const [alias,label] of pairs)assert.deepEqual(validateDocumentaryKeywords(topic,[alias]),[label]);
+ const prepared=await preparePublication({...base,topic,keywords:['WUF','Renouvellement urbain'],translations:{fr:{title:'Participation au Forum urbain mondial',content:'Présentation des projets de renouvellement urbain.'},ar:{title:'المشاركة في المنتدى الحضري العالمي',content:'تقديم مشاريع التجديد الحضري.'}}},account,async()=>null);
+ const catalogue=publicationToCatalogue(prepared.record,prepared.folder);
+ for(const query of ['WUF','FUM','المنتدى الحضري العالمي','renouvellement urbain','التجديد الحضري'])assert.equal(filterMedia(catalogue.items,{type:'all',query,year:'',topic:'',sort:'newest'}).length,2);
+ assert.deepEqual(catalogue.items[0].keywords,['Forum urbain mondial','Renouvellement urbain']);
+});
