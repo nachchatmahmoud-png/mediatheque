@@ -12,7 +12,7 @@ const mxSize = bytes => new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 
 const mxPlural = (count, singular, plural = singular + 's') => count + ' ' + (MX_LOCALE==='ar'?(MX_MESSAGES[singular]||singular):(count > 1 ? plural : singular));
 function mxValidateFile(file, kind) {
   const extensions = { photo: /\.(jpe?g|png|webp)$/i, video: /\.(mp4|webm)$/i, press: /\.pdf$/i, captions: /\.vtt$/i };
-  const limits = { photo: 12, video: 25, press: 20, captions: 1 };
+  const limits = { photo: 12, video: 50, press: 20, captions: 1 };
   if (!extensions[kind].test(file.name)) throw new Error(file.name + ' : format non accepté.');
   if (!file.size || file.size > limits[kind] * 1048576) throw new Error(file.name + ' : le fichier doit contenir entre 1 octet et ' + limits[kind] + ' Mio.');
 }
@@ -236,23 +236,52 @@ function MxPublicationPreview({ type, title, date, topic, keywords=[], descripti
       h('button', { className: 'button primary', onClick: onClose }, 'Revenir au formulaire')));
 }
 
-function MxPublishedList({ items, onOpen }) {
+function MxPublishedList({ items, onOpen, onRefresh }) {
   const h = mxElement;
   const [query, setQuery] = O.useState('');
+  const [editing,setEditing]=O.useState(null);
   const [contentLanguage,setContentLanguage]=O.useState('fr');
   const published = items.filter(item => item.status === 'published'&&item.language===contentLanguage);
   const filtered = published.filter(item => Ea([item.title, item.topic, ...item.keywords].join(' ')).includes(Ea(query)));
   return h('section', { className: 'mx-published', 'aria-labelledby': 'published-heading' },
     h('div', { className: 'mx-section-title' }, h('div', null, h('div', { className: 'eyebrow' }, 'SUIVI DES CONTENUS'), h('h2', { id: 'published-heading' }, mxManagementClient().current().localMode?'Publications':MxTestAdministration?'Publications et essais locaux':'Publications en ligne')), h('span', { className: 'mx-count' }, mxPlural(published.length, 'publication'))),
     h('div',{className:'mx-management-languages',role:'group','aria-label':'Langue des publications'},h('button',{type:'button','aria-pressed':contentLanguage==='fr',onClick:()=>setContentLanguage('fr')},'Français'),h('button',{type:'button','aria-pressed':contentLanguage==='ar',onClick:()=>setContentLanguage('ar')},'العربية')),
+    editing&&h(MxPublicationCorrection,{key:editing.publicationFolder,item:editing,onClose:()=>setEditing(null),onRefresh}),
     published.length ? h(O.Fragment, null,
       h('label', { className: 'mx-management-search' }, 'Rechercher une publication', h('input', { type: 'search', value: query, onChange: event => setQuery(event.target.value), placeholder: 'Titre, thème ou mot-clé…' })),
       h('div', { className: 'mx-published-list' }, filtered.slice(0, 30).map(item => h('article', { key: item.id },
         h('div', null, h('small', null, nu[item.type], ' · ', Ya(item.date), item.localOnly?' · Ce navigateur':item.testOnly?' · Contenu de test':''), h('strong', { dir: 'auto' }, item.title)),
         h('div', null, h('button', { className: 'button secondary', onClick: () => onOpen(item) }, 'Consulter'),
-          null)))),
+          item.publicationFolder&&h('button',{className:'button secondary',onClick:()=>setEditing(item)},'Modifier'))))),
 
       !filtered.length && h('p', { role: 'status' }, 'Aucune publication ne correspond à ces termes.'),
       filtered.length > 30 && h('p', null, 'Les 30 premiers résultats sont affichés. Précisez votre recherche.'))
       : h('p', { className: 'mx-management-empty' }, 'Aucun contenu n’est encore publié. Préparez votre première publication ci-dessus.'));
+}
+
+function MxPublicationCorrection({item,onClose,onRefresh}){
+ const h=mxElement;
+ const [draft,setDraft]=O.useState(null),[revision,setRevision]=O.useState(''),[error,setError]=O.useState(''),[busy,setBusy]=O.useState(false),[saved,setSaved]=O.useState(false);
+ O.useEffect(()=>{let active=true;MxAdministration.publication(item.publicationFolder).then(result=>{if(active){setDraft(result.record);setRevision(result.revision);}}).catch(exception=>{if(active)setError(exception.message);});return()=>{active=false;};},[item.publicationFolder]);
+ const change=(field,value)=>{setDraft(previous=>({...previous,[field]:value}));setSaved(false);};
+ const text=(locale,field,value)=>{setDraft(previous=>locale?{...previous,translations:{...previous.translations,[locale]:{...previous.translations[locale],[field]:value}}}:{...previous,[field]:value});setSaved(false);};
+ const save=async event=>{event.preventDefault();if(busy)return;setBusy(true);setError('');try{MX_DOC_RUNTIME.validateDocumentaryKeywords(draft.topic,draft.keywords);await MxAdministration.updatePublication(item.publicationFolder,{revision,changes:draft});const result=await MxAdministration.publication(item.publicationFolder);setRevision(result.revision);setDraft(result.record);await onRefresh();setSaved(true);}catch(exception){setError(exception.message);}finally{setBusy(false);}};
+ const field=(label,value,update,props={})=>h('label',{className:'field'},label,h('input',{value:value||'',onChange:event=>update(event.target.value),...props}));
+ const area=(label,value,update,props={})=>h('label',{className:'field gh-wide'},label,h('textarea',{rows:3,value:value||'',onChange:event=>update(event.target.value),...props}));
+ const type=draft?.videos?.length?'video':draft?.photos?.length?'photo':'press';
+ return h('section',{className:'mx-publication-correction gh-form','aria-label':'Modifier la publication'},h('h3',null,'Modifier la publication'),h('p',null,'Corrigez les renseignements, puis enregistrez. Les fichiers déjà transférés sont conservés.'),
+ error&&h('p',{className:'gh-error',role:'alert'},error),saved&&h('p',{role:'status'},'Les modifications sont en ligne dans les pages concernées.'),
+ !draft?h('p',{role:'status'},'Chargement de la fiche…'):h('form',{onSubmit:save},h('fieldset',{disabled:busy},
+ field('Date de publication *',draft.date,value=>change('date',value),{type:'date',required:true}),
+ h('label',{className:'field'},'Domaine principal *',h('select',{value:draft.topic,required:true,onChange:event=>{change('topic',event.target.value);change('keywords',[]);}},...el.map(value=>h('option',{key:value,value},value)))),
+ h(MxDocumentaryFields,{topic:draft.topic,value:draft.keywords,onChange:value=>change('keywords',value)}),
+ ...Object.entries(draft.translations||{'':draft}).map(([locale,values])=>h('fieldset',{key:locale,lang:locale||draft.language,dir:locale==='ar'?'rtl':'ltr'},h('legend',null,locale==='ar'?'العربية':locale==='fr'?'Français':'Renseignements'),
+ field('Titre *',values.title,value=>text(locale,'title',value),{required:true,maxLength:180}),
+ area('Bref résumé',values.description,value=>text(locale,'description',value),{maxLength:1200}),
+ field(type==='photo'?'Photographe / crédit photo':type==='press'?'Service émetteur':'Crédits de la vidéo',values.credit,value=>text(locale,'credit',value),{maxLength:200}),
+ type==='photo'&&field('Lieu',values.location,value=>text(locale,'location',value),{maxLength:150}),
+ type==='photo'&&draft.photos.map((photo,index)=>field('Légende de la photo '+(index+1),values.captions?.[index]||photo.caption,value=>{const captions=[...(values.captions||draft.photos.map(photo=>photo.caption||''))];captions[index]=value;text(locale,'captions',captions);},{maxLength:300})),
+ type==='press'&&area('Texte du communiqué',values.content||(!locale?draft.press[0]?.text:''),value=>text(locale,'content',value),{maxLength:40000,rows:6})
+ )),h('button',{type:'submit',className:'button primary',disabled:busy},busy?'Enregistrement…':'Enregistrer les modifications'))),
+ h('button',{type:'button',className:'button secondary',disabled:busy,onClick:onClose},'Fermer'));
 }

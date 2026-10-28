@@ -229,3 +229,35 @@ test('one photo album or communiqué creates both language pages without copying
  const missing=await value.request('/api/publications',{method:'POST',body:{requestId:crypto.randomUUID(),type:'press',title:large.fr.title,language:'fr',date:'2026-10-27',topic:'Habitat et logement',keywords:['Aide directe au logement'],translations:{fr:large.fr,ar:{title:'بلاغ غير مكتمل'}}}});
  assert.equal(missing.status,400);
 });
+
+test('published bilingual video, album and press records can be corrected without duplication or asset replacement',async()=>{
+ const value=setup({openPublishing:true});
+ const originals=[
+ {videos:[{url:'https://www.youtube.com/watch?v=qYWIUtBJuek',title:'Vidéo',spokenLanguage:'ar'}]},
+ {photos:[{file:'photos/photo.png',caption:'Rabat'}],cover:'photos/photo.png'},
+ {press:[{file:'communiques/document.pdf'}]}
+ ];
+ for(const [index,media] of originals.entries()){
+  const folder='publication-edit-'+index,photo=!!media.photos,press=!!media.press;
+  const record={version:1,status:'published',title:'Titre initial',date:'2026-10-28',topic:'Habitat et logement',keywords:['Aide directe au logement'],language:'fr',...media,translations:{fr:{title:'Titre initial',description:'',credit:'',...(photo?{captions:['Rabat'],location:''}:{}),...(press?{file:'communiques/document.pdf',content:''}:{})},ar:{title:'العنوان الأصلي',description:'',credit:'',...(photo?{captions:['الرباط'],location:''}:{}),...(press?{file:'communiques/document.pdf',content:''}:{})}}};
+  value.sqlite.prepare('INSERT INTO publications(folder,record,assets,created_at) VALUES(?,?,?,?)').run(folder,JSON.stringify(record),'{}',new Date().toISOString());
+  const opened=await value.request('/api/publications/'+folder);assert.equal(opened.status,200);
+  const changes={...record,translations:{fr:{...record.translations.fr,title:'Titre corrigé'},ar:{...record.translations.ar,title:'العنوان المعدل'}}};
+  // Client changes to file paths or media are ignored: only descriptive fields are editable.
+  changes.videos=[{url:'https://untrusted.example/video.mp4'}];if(press)changes.translations.fr.file='communiques/replaced.pdf';
+  const result=await value.request('/api/publications/'+folder,{method:'POST',body:{revision:opened.body.revision,changes}});assert.equal(result.status,200,JSON.stringify(result.body));
+  const saved=(await value.request('/api/publications/'+folder)).body.record;assert.equal(saved.translations.fr.title,'Titre corrigé');assert.equal(saved.translations.ar.title,'العنوان المعدل');
+  for(const key of ['videos','photos','press'])assert.deepEqual(saved[key],record[key]);
+  if(press)assert.equal(saved.translations.fr.file,'communiques/document.pdf');
+  const conflict=await value.request('/api/publications/'+folder,{method:'POST',body:{revision:opened.body.revision,changes}});assert.equal(conflict.status,409);
+  assert.equal((await value.request('/api/publications/'+folder,{origin:'https://untrusted.example'})).status,403);
+ }
+ const items=(await value.request('/api/catalogue')).body.items;assert.equal(items.length,6);assert.ok(items.every(item=>item.publicationFolder&&['Titre corrigé','العنوان المعدل'].includes(item.title)));
+ assert.equal(value.sqlite.prepare('SELECT COUNT(*) AS count FROM publications').get().count,3);
+});
+
+test('video upload accepts 50 MiB and rejects any additional byte',async()=>{
+ const value=setup({openPublishing:true}),bytes=new Uint8Array(50*1048576);bytes.set(new TextEncoder().encode('ftyp'),4);
+ const accepted=await value.request('/api/uploads?name=video.mp4',{method:'POST',body:bytes});assert.equal(accepted.status,201,JSON.stringify(accepted.body));assert.equal(accepted.body.size,bytes.length);
+ const rejected=await value.request('/api/uploads?name=video.mp4',{method:'POST',body:new Uint8Array(1),headers:{'Content-Length':String(bytes.length+1)}});assert.equal(rejected.status,413);
+});

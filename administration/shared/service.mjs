@@ -1,6 +1,8 @@
 import {scryptSync,pbkdf2Sync,randomBytes,timingSafeEqual} from 'node:crypto';
 import {createAdminHandler,readBody,validateNewPassword} from '../server/service.ts';
 import {ServiceError,digest,validateUpload} from '../server/publication.ts';
+import {validateDocumentaryKeywords} from '../../app/lib/keyword-catalog.ts';
+import {validatePublicationTranslations} from '../../app/lib/model.ts';
 import {publicationToCatalogue,emptyCatalogue} from '../../github-pages/catalogue.ts';
 
 export const portalOrigin='https://nachchatmahmoud-png.github.io';
@@ -62,6 +64,29 @@ class SharedPublisher {
   return {id,published:true};
  }
 }
+export function editPublicationRecord(original,changes,folder){
+ const next=structuredClone(original);
+ for(const key of ['date','topic'])if(Object.hasOwn(changes,key))next[key]=changes[key];
+ next.keywords=validateDocumentaryKeywords(next.topic,changes.keywords);
+ const type=next.videos?.length?'video':next.photos?.length?'photo':'press';
+ if(next.translations){
+  const values={};
+  for(const locale of Object.keys(next.translations)){
+   const old=next.translations[locale],input=changes.translations?.[locale];
+   if(!input)throw new ServiceError('Renseignez les versions française et arabe existantes.');
+   values[locale]={...old};
+   for(const key of ['title','description','credit','location','captions','content'])if(Object.hasOwn(input,key))values[locale][key]=input[key];
+  }
+  next.translations=validatePublicationTranslations(values,type);
+  Object.assign(next,next.translations[next.language]);
+ }else{
+  for(const key of ['title','description','credit','location','content'])if(Object.hasOwn(changes,key))next[key]=changes[key];
+  if(type==='video')next.videos[0].title=next.title;
+  if(type==='press'&&Object.hasOwn(changes,'content'))next.press[0].text=changes.content;
+ }
+ publicationToCatalogue(next,folder);
+ return next;
+}
 async function activation(store,env,request){
  const value=request.headers.get('authorization')||'',token=/^Activation [a-f0-9]{64}$/.test(value)?value.slice(11):'';
  if(!token)return null;
@@ -73,7 +98,7 @@ async function activation(store,env,request){
 async function catalogue(store,url){
  const output=emptyCatalogue(),rows=await store.db.prepare('SELECT folder,record FROM publications ORDER BY created_at DESC LIMIT 2000').all();
  const convert=value=>typeof value==='string'&&value.startsWith('./medias/')?url.origin+'/api/media/'+value.slice(9):value;
- for(const row of rows.results){const record=publicationToCatalogue(JSON.parse(row.record),row.folder);if(!record.published)continue;output.events.push(...record.events);output.items.push(...record.items.map(item=>({...item,thumbnailUrl:convert(item.thumbnailUrl),mediaUrl:convert(item.mediaUrl),fileUrl:convert(item.fileUrl),captionsUrl:convert(item.captionsUrl),photos:item.photos.map(photo=>({...photo,url:convert(photo.url)}))})));}
+ for(const row of rows.results){const record=publicationToCatalogue(JSON.parse(row.record),row.folder);if(!record.published)continue;output.events.push(...record.events);output.items.push(...record.items.map(item=>({...item,publicationFolder:row.folder,thumbnailUrl:convert(item.thumbnailUrl),mediaUrl:convert(item.mediaUrl),fileUrl:convert(item.fileUrl),captionsUrl:convert(item.captionsUrl),photos:item.photos.map(photo=>({...photo,url:convert(photo.url)}))})));}
  return output;
 }
 async function media(store,request,url){
@@ -107,6 +132,21 @@ export function createSharedHandler(env){
    if(path.startsWith('/api/media/')&&['GET','HEAD'].includes(request.method))return await media(store,request,url);
    if(origin!==portalOrigin)return normal(request);
    if(request.method==='OPTIONS')return normal(request);
+   const editMatch=path.match(/^\/api\/publications\/([a-z0-9-]{3,80})$/);
+   if(editMatch&&['GET','POST'].includes(request.method)){
+    if(!openPublishing){const account=await store.authenticate(request);if(account.requiresPasswordChange)throw new ServiceError('Choisissez votre mot de passe personnel.',403);}
+    const folder=editMatch[1],row=await store.db.prepare('SELECT record FROM publications WHERE folder=?').bind(folder).first();
+    if(!row)throw new ServiceError('Publication introuvable.',404);
+    const revision=await hash(row.record);
+    if(request.method==='GET')return json({record:JSON.parse(row.record),revision},200,origin);
+    const input=await body(request,512000);
+    if(input.revision!==revision)throw new ServiceError('Cette publication a été modifiée ailleurs. Rechargez sa fiche avant de réessayer.',409);
+    let record;try{record=editPublicationRecord(JSON.parse(row.record),input.changes||{},folder);}catch(error){if(error instanceof ServiceError)throw error;throw new ServiceError(error.message||'Vérifiez les renseignements.');}
+    const result=await store.db.prepare('UPDATE publications SET record=? WHERE folder=? AND record=?').bind(JSON.stringify(record),folder,row.record).run();
+    if(!result.meta.changes)throw new ServiceError('Une autre modification vient d’être enregistrée. Rechargez la fiche.',409);
+    return json({published:true,id:publicationToCatalogue(record,folder).items[0].id},200,origin);
+   }
+
    if(openPublishing&&path==='/api/auth/options'&&request.method==='GET')return json({configured:true,shared:true,openPublishing:true,authenticationRequired:false,setupRequired:false,canSetup:false},200,origin);
    if(openPublishing&&path.startsWith('/api/auth/'))return json({error:'La connexion est désactivée pendant l’ajout des contenus.'},410,origin);
    if(path==='/api/auth/options'&&request.method==='GET'){const allowed=await activation(store,env,request);return json({configured:true,shared:true,setupRequired:await store.countAccounts()===0,canSetup:!!allowed,registrationUsername:allowed?.username||'',registrationDisplayName:allowed?.display_name||''},200,origin);}

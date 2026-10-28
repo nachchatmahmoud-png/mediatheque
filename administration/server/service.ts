@@ -100,7 +100,7 @@ export function createAdminHandler({store,passwords,publisher,publicationAccess}
         const {account}=await authenticate(request);
         if(!await store.allow(await hashToken('uploads:'+account.id),100))throw new ServiceError('Trop de transferts. Patientez avant de réessayer.',429);
         const name=url.searchParams.get('name')||'',ext=name.split('.').at(-1)!.toLowerCase();
-        const limits:Record<string,number>={jpg:12,jpeg:12,png:12,webp:12,mp4:25,webm:25,pdf:20,vtt:1};
+        const limits:Record<string,number>={jpg:12,jpeg:12,png:12,webp:12,mp4:50,webm:50,pdf:20,vtt:1};
         if(!name||name.length>180||/[\/\\\x00-\x1f]/.test(name)||!limits[ext])throw new ServiceError('Nom ou format de fichier non valide.');
         const bytes=await readBody(request,limits[ext]*1024*1024);
         try{validateUpload(bytes,name);}catch(error){throw new ServiceError(error instanceof Error?error.message:'Fichier non valide.');}
