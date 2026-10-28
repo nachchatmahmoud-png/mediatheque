@@ -107,10 +107,9 @@ def landscape_dimensions(data, video_id):
     player = initial_json(data, 'ytInitialPlayerResponse')
     details = player.get('videoDetails', {})
     microformat = player.get('microformat', {}).get('playerMicroformatRenderer', {})
-    status = player.get('playabilityStatus', {}).get('status')
-    if status and status != 'OK':
-        raise ValueError('La vidéo n’est pas disponible à la lecture')
-    if details.get('videoId') != video_id or details.get('channelId') != CHANNEL_ID or details.get('isLiveContent') or microformat.get('isShortsEligible') is True:
+    video_ids = [value for value in (details.get('videoId'), microformat.get('externalVideoId')) if value]
+    channel_ids = [value for value in (details.get('channelId'), microformat.get('externalChannelId')) if value]
+    if not video_ids or not channel_ids or any(value != video_id for value in video_ids) or any(value != CHANNEL_ID for value in channel_ids) or details.get('isLiveContent') or microformat.get('isShortsEligible') is True:
         raise ValueError('Vidéo classique non confirmée')
     sizes = []
     for key in ('formats', 'adaptiveFormats'):
@@ -120,13 +119,15 @@ def landscape_dimensions(data, video_id):
                 sizes.append((width, height))
     # Public player responses can omit stream URLs while still declaring the
     # video's player dimensions. Never infer the format from its thumbnail.
-    if not sizes and player.get('playabilityStatus', {}).get('status') == 'OK' and microformat.get('isShortsEligible') is False:
+    # The publishing runner does not play the video. A playback restriction on
+    # that runner must not discard otherwise complete, public video metadata.
+    if not sizes and microformat.get('isShortsEligible') is False:
         embed = microformat.get('embed', {})
         width, height = embed.get('width'), embed.get('height')
         if isinstance(width, int) and isinstance(height, int) and 0 < height <= 16384 and 0 < width <= 16384:
             sizes.append((width, height))
     if not sizes:
-        raise ValueError('Le format horizontal n’est pas confirmé')
+        raise ValueError('Le format horizontal n’est pas confirmé dans les métadonnées publiques')
     width, height = max(sizes, key=lambda size: size[0] * size[1])
     if width <= height:
         raise ValueError('La vidéo est verticale ou carrée')
@@ -139,7 +140,7 @@ def watch_video(data, video_id, candidate=None):
     microformat = player.get('microformat', {}).get('playerMicroformatRenderer', {})
     width, height = landscape_dimensions(data, video_id)
     video = record({'version': 1, 'channelId': CHANNEL_ID, 'channelUrl': CHANNEL_URL,
-                    'videoId': video_id, 'title': details.get('title') or (candidate or {}).get('title'),
+                    'videoId': video_id, 'title': details.get('title') or microformat.get('title', {}).get('simpleText') or (candidate or {}).get('title'),
                     'publishedAt': (candidate or {}).get('publishedAt') or microformat.get('publishDate'),
                     'width': width, 'height': height})
     if timestamp(video['publishedAt']) > datetime.now(timezone.utc):

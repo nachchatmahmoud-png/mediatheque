@@ -112,11 +112,15 @@ video=m.latest_landscape(fetch)
 assert video['videoId']==id and (video['width'],video['height'])==(960,720)
 assert video['publishedAt']=='2026-10-27T09:51:56+00:00'
 assert m.VIDEOS_URL not in requested
+# Runner playback permission is independent of the public metadata being indexed.
+restricted={**player,'playabilityStatus':{'status':'LOGIN_REQUIRED'}}
+assert m.landscape_dimensions(page(restricted),id)==(960,720)
+metadata_only={**restricted,'videoDetails':{},'microformat':{'playerMicroformatRenderer':{**player['microformat']['playerMicroformatRenderer'],'externalVideoId':id,'externalChannelId':m.CHANNEL_ID,'title':{'simpleText':'عنوان حديث'}}}}
+assert m.watch_video(page(metadata_only),id,{'publishedAt':'2026-10-27T09:51:56Z'})['title']=='عنوان حديث'
 for changed in [
  {**player,'videoDetails':{**player['videoDetails'],'channelId':'another-channel'}},
  {**player,'microformat':{'playerMicroformatRenderer':{'isShortsEligible':True,'embed':{'width':960,'height':720}}}},
  {**player,'microformat':{'playerMicroformatRenderer':{'embed':{'width':960,'height':720}}}},
- {**player,'playabilityStatus':{'status':'UNPLAYABLE'}},
  {**player,'streamingData':{'formats':[{'width':1080,'height':1920}]}},
 ]:
  try:m.landscape_dimensions(page(changed),id);assert False
