@@ -282,5 +282,11 @@
   "Titre *": "العنوان *",
   "Bref résumé": "ملخص موجز",
   "Date de publication *": "تاريخ النشر *",
-  "Renseignements": "المعلومات"
+  "Renseignements": "المعلومات",
+  "Médias déjà publiés": "الوسائط المنشورة",
+  "Ces fichiers sont conservés lorsque vous enregistrez vos modifications.": "يتم الاحتفاظ بهذه الملفات عند حفظ التعديلات.",
+  "Miniature actuelle de la vidéo": "الصورة المصغرة الحالية للفيديو",
+  "Ouvrir la photographie": "فتح الصورة",
+  "Photographie": "صورة",
+  "Ouvrir le PDF déjà publié": "فتح ملف PDF المنشور"
 }

@@ -273,7 +273,7 @@ function MxPublicationCorrection({item,onClose,onRefresh}){
  const type=draft?.videos?.length?'video':draft?.photos?.length?'photo':'press';
  return h('section',{className:'mx-publication-correction gh-form',ref:correctionRef,'aria-label':'Modifier la publication'},h('h3',null,'Modifier la publication'),h('p',null,'Corrigez les renseignements, puis enregistrez. Les fichiers déjà transférés sont conservés.'),
  error&&h('p',{className:'gh-error',role:'alert'},error),saved&&h('p',{role:'status'},'Les modifications sont en ligne dans les pages concernées.'),
- !draft?h('p',{role:'status'},'Chargement de la fiche…'):h('form',{onSubmit:save},h('fieldset',{disabled:busy},
+ !draft?h('p',{role:'status'},'Chargement de la fiche…'):h('form',{onSubmit:save},h(MxExistingPublicationMedia,{item}),h('fieldset',{disabled:busy},
  field('Date de publication *',draft.date,value=>change('date',value),{type:'date',required:true}),
  h('label',{className:'field'},'Domaine principal *',h('select',{value:draft.topic,required:true,onChange:event=>{change('topic',event.target.value);change('keywords',[]);}},...el.map(value=>h('option',{key:value,value},value)))),
  h(MxDocumentaryFields,{topic:draft.topic,value:draft.keywords,onChange:value=>change('keywords',value)}),
@@ -293,4 +293,13 @@ function MxEditableCard({item,...props}){
  if(!item.publicationFolder)return h(su,{item,...props});
  const url=mxManagementUrl();url.searchParams.set('edit',item.publicationFolder);
  return h('div',{className:'mx-editable-publication',style:{display:'grid',gap:'8px',alignContent:'start'}},h(su,{item,...props}),h('a',{className:'button secondary',href:url.href,style:{justifySelf:'end'},'aria-label':mxT('Modifier')+' : '+item.title},mxT('Modifier')));
+}
+
+function MxExistingPublicationMedia({item}){
+ const h=mxElement;
+ return h('section',{className:'mx-existing-media','aria-label':mxT('Médias déjà publiés'),style:{marginBlock:'20px',padding:'20px',border:'1px solid #dce4df',borderRadius:'12px'}},
+ h('h4',null,mxT('Médias déjà publiés')),h('p',null,mxT('Ces fichiers sont conservés lorsque vous enregistrez vos modifications.')),
+ item.type==='video'&&h(O.Fragment,null,item.thumbnailUrl&&h('figure',null,h('img',{src:je(item.thumbnailUrl),alt:mxT('Miniature actuelle de la vidéo'),style:{display:'block',maxWidth:'320px',width:'100%',maxHeight:'200px',objectFit:'contain'}}),h('figcaption',null,mxT('Miniature actuelle de la vidéo'))),h(MxVideoReader,{item})),
+ item.type==='photo'&&h('div',{style:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))',gap:'16px'}},...item.photos.map((photo,index)=>h('figure',{key:photo.url,style:{margin:0}},h('a',{href:je(photo.url),target:'_blank',rel:'noreferrer','aria-label':mxT('Ouvrir la photographie')+' '+(index+1)},h('img',{src:je(photo.url),alt:photo.caption||mxT('Photographie')+' '+(index+1),loading:'lazy',style:{width:'100%',height:'160px',objectFit:'contain',background:'#f5f7f3',borderRadius:'8px'}})),h('figcaption',null,(index+1)+' / '+item.photos.length,photo.caption?' · '+photo.caption:'')))),
+ item.type==='press'&&item.fileUrl&&h('a',{className:'button secondary',href:je(item.fileUrl),target:'_blank',rel:'noreferrer'},mxT('Ouvrir le PDF déjà publié')));
 }
