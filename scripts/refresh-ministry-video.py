@@ -17,6 +17,10 @@ FEED_URL = 'https://www.youtube.com/feeds/videos.xml?channel_id=' + CHANNEL_ID
 NS = {'a': 'http://www.w3.org/2005/Atom', 'yt': 'http://www.youtube.com/xml/schemas/2015'}
 
 
+class VideoExcluded(ValueError):
+    """The metadata positively identifies an ineligible video."""
+
+
 def timestamp(value):
     if not isinstance(value, str):
         raise ValueError('Date non valide')
@@ -109,8 +113,10 @@ def landscape_dimensions(data, video_id):
     microformat = player.get('microformat', {}).get('playerMicroformatRenderer', {})
     video_ids = [value for value in (details.get('videoId'), microformat.get('externalVideoId')) if value]
     channel_ids = [value for value in (details.get('channelId'), microformat.get('externalChannelId')) if value]
-    if not video_ids or not channel_ids or any(value != video_id for value in video_ids) or any(value != CHANNEL_ID for value in channel_ids) or details.get('isLiveContent') or microformat.get('isShortsEligible') is True:
+    if not video_ids or not channel_ids:
         raise ValueError('Vidéo classique non confirmée')
+    if any(value != video_id for value in video_ids) or any(value != CHANNEL_ID for value in channel_ids) or details.get('isLiveContent') or microformat.get('isShortsEligible') is True:
+        raise VideoExcluded('La vidéo appartient à une autre chaîne, est un Short ou un direct')
     sizes = []
     for key in ('formats', 'adaptiveFormats'):
         for item in player.get('streamingData', {}).get(key, []):
@@ -130,7 +136,7 @@ def landscape_dimensions(data, video_id):
         raise ValueError('Le format horizontal n’est pas confirmé dans les métadonnées publiques')
     width, height = max(sizes, key=lambda size: size[0] * size[1])
     if width <= height:
-        raise ValueError('La vidéo est verticale ou carrée')
+        raise VideoExcluded('La vidéo est verticale ou carrée')
     return width, height
 
 
@@ -144,8 +150,25 @@ def watch_video(data, video_id, candidate=None):
                     'publishedAt': (candidate or {}).get('publishedAt') or microformat.get('publishDate'),
                     'width': width, 'height': height})
     if timestamp(video['publishedAt']) > datetime.now(timezone.utc):
-        raise ValueError('La vidéo n’est pas encore publiée')
+        raise VideoExcluded('La vidéo n’est pas encore publiée')
     return video
+
+
+def oembed_video(fetch, candidate):
+    # Only called for a video also present in the channel's regular Videos tab.
+    # oEmbed is YouTube's public integration API; playback URLs are not needed.
+    video_id = candidate['videoId']
+    url = 'https://www.youtube.com/oembed?' + urllib.parse.urlencode({'url': 'https://www.youtube.com/watch?v=' + video_id, 'format': 'json'})
+    value = json.loads(fetch(url))
+    owner = urllib.parse.urlsplit(value.get('author_url', ''))
+    path = urllib.parse.unquote(owner.path).rstrip('/')
+    owner_matches = path.casefold() == '/@matnuhpv' or path == '/channel/' + CHANNEL_ID
+    if value.get('type') != 'video' or value.get('provider_name') != 'YouTube' or owner.hostname not in ('www.youtube.com', 'youtube.com') or owner.username or owner.password or not owner_matches:
+        raise ValueError('La chaîne des métadonnées d’intégration n’est pas confirmée')
+    width, height = value.get('width'), value.get('height')
+    if not isinstance(width, int) or not isinstance(height, int) or not 0 < height < width <= 16384:
+        raise VideoExcluded('Le lecteur d’intégration est vertical ou carré')
+    return record({**candidate, 'title': value.get('title'), 'width': width, 'height': height})
 
 
 def latest_landscape(fetch):
@@ -157,6 +180,16 @@ def latest_landscape(fetch):
         print('YouTube : flux officiel indisponible (' + type(error).__name__ + ')')
         candidates = []
     attempted = set()
+    channel_ids = None
+    def regular_ids():
+        nonlocal channel_ids
+        if channel_ids is None:
+            try:
+                channel_ids = regular_video_ids(fetch(VIDEOS_URL))
+            except (ValueError, KeyError, TypeError, OSError) as error:
+                print('YouTube : onglet Vidéos indisponible (' + type(error).__name__ + ')')
+                channel_ids = []
+        return channel_ids
     for video in candidates:
         video_id = video['videoId']
         attempted.add(video_id)
@@ -164,13 +197,23 @@ def latest_landscape(fetch):
             result = watch_video(fetch('https://www.youtube.com/watch?v=' + video_id), video_id, video)
             print('YouTube : vidéo vérifiée depuis le flux officiel ' + video_id)
             return result
+        except VideoExcluded as error:
+            print('YouTube : vidéo écartée ' + video_id + ' (' + str(error)[:160] + ')')
+            continue
         except (ValueError, KeyError, TypeError, OSError) as error:
+            if video_id in regular_ids():
+                try:
+                    result = oembed_video(fetch, video)
+                    print('YouTube : vidéo vérifiée depuis le flux, l’onglet Vidéos et oEmbed ' + video_id)
+                    return result
+                except (ValueError, KeyError, TypeError, OSError) as integration_error:
+                    print('YouTube : intégration non confirmée ' + video_id + ' (' + type(integration_error).__name__ + ')')
             print('YouTube : vidéo écartée ' + video_id + ' (' + type(error).__name__ + ': ' + str(error)[:160] + ')')
             continue
     # A channel's feed contains only its recent uploads. Its Videos tab also
     # covers the case where many recent Shorts have displaced regular uploads.
     videos = []
-    for video_id in regular_video_ids(fetch(VIDEOS_URL))[:12]:
+    for video_id in regular_ids()[:12]:
         if video_id in attempted:
             continue
         try:

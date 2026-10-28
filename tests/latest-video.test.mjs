@@ -145,3 +145,34 @@ video=m.latest_landscape(fetch)
 assert video['videoId']=='newer123456' and video['publishedAt']=='2026-10-27T10:00:00+00:00'
 `],{cwd:new URL('../',import.meta.url),stdio:'pipe'});
 });
+
+test('public integration metadata updates a regular video when runner playback metadata is absent, and never promotes a Short',()=>{
+ execFileSync('python3',['-c',String.raw`
+import importlib.util,json,sys
+sys.dont_write_bytecode=True
+spec=importlib.util.spec_from_file_location('refresh','scripts/refresh-ministry-video.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+video='abcdefghijk';short='shortnew123'
+entry=lambda id,date:f'<entry><yt:channelId>{m.CHANNEL_ID}</yt:channelId><yt:videoId>{id}</yt:videoId><title>عنوان حديث</title><published>{date}</published></entry>'
+feed=('<feed xmlns="http://www.w3.org/2005/Atom" xmlns:yt="http://www.youtube.com/xml/schemas/2015">'+entry(short,'2026-10-28T09:00:00Z')+entry(video,'2026-10-27T09:00:00Z')+'</feed>').encode()
+channel=('var ytInitialData='+json.dumps({'contents':[{'videoRenderer':{'videoId':video}},{'shortsLockupViewModel':{'videoId':short}}]})+';').encode()
+missing=('var ytInitialPlayerResponse='+json.dumps({'playabilityStatus':{'status':'LOGIN_REQUIRED'}})+';').encode()
+response={'type':'video','provider_name':'YouTube','author_url':'https://www.youtube.com/@Matnuhpv','title':'عنوان حديث','width':200,'height':150}
+requested=[]
+def fetch(url):
+ requested.append(url)
+ if url==m.FEED_URL:return feed
+ if url==m.VIDEOS_URL:return channel
+ if 'watch?v=' in url:return missing
+ if '/oembed?' in url:
+  from urllib.parse import parse_qs,urlsplit
+  assert parse_qs(urlsplit(url).query)['url']==['https://www.youtube.com/watch?v='+video]
+  return json.dumps(response).encode()
+ raise AssertionError(url)
+selected=m.latest_landscape(fetch)
+assert selected['videoId']==video and (selected['width'],selected['height'])==(200,150)
+assert len([url for url in requested if '/oembed?' in url])==1
+for invalid in [{**response,'author_url':'https://www.youtube.com/@another-channel'},{**response,'provider_name':'other'},{**response,'width':150,'height':200},{**response,'type':'photo'}]:
+ try:m.oembed_video(lambda url:json.dumps(invalid).encode(),selected);assert False
+ except ValueError:pass
+`],{cwd:new URL('../',import.meta.url),stdio:'pipe'});
+});
