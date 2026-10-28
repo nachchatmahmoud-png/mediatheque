@@ -162,7 +162,7 @@ function MxLatestPublications({ items, onOpen, onExplore }) {
     h('div', { className: 'mx-section-title' },
       h('div', null, h('div', { className: 'eyebrow' }, 'À DÉCOUVRIR'), h('h2', { id: 'latest-heading' }, 'Les dernières publications')),
       h('button', { className: 'button secondary', onClick: onExplore }, 'Tout consulter', h(wl, { size: 16 }))),
-    h('div', { className: 'media-grid' }, latest.map(item => h(su, { key: item.id, item, onOpen }))));
+    h('div', { className: 'media-grid' }, latest.map(item => h(MxEditableCard, { key: item.id, item, onOpen }))));
 }
 
 function MxCatalogueFilters({ query, onQuery, topic, onTopic, year, onYear, language, onLanguage, years, inputRef }) {
@@ -239,7 +239,7 @@ function MxPublicationPreview({ type, title, date, topic, keywords=[], descripti
 function MxPublishedList({ items, onOpen, onRefresh }) {
   const h = mxElement;
   const [query, setQuery] = O.useState('');
-  const [editing,setEditing]=O.useState(null);
+  const [editing,setEditing]=O.useState(()=>{const folder=new URLSearchParams(window.location.search).get('edit');return items.find(item=>item.publicationFolder===folder)||null;});
   const [contentLanguage,setContentLanguage]=O.useState('fr');
   const published = items.filter(item => item.status === 'published'&&item.language===contentLanguage);
   const filtered = published.filter(item => Ea([item.title, item.topic, ...item.keywords].join(' ')).includes(Ea(query)));
@@ -268,8 +268,10 @@ function MxPublicationCorrection({item,onClose,onRefresh}){
  const save=async event=>{event.preventDefault();if(busy)return;setBusy(true);setError('');try{MX_DOC_RUNTIME.validateDocumentaryKeywords(draft.topic,draft.keywords);await MxAdministration.updatePublication(item.publicationFolder,{revision,changes:draft});const result=await MxAdministration.publication(item.publicationFolder);setRevision(result.revision);setDraft(result.record);await onRefresh();setSaved(true);}catch(exception){setError(exception.message);}finally{setBusy(false);}};
  const field=(label,value,update,props={})=>h('label',{className:'field'},label,h('input',{value:value||'',onChange:event=>update(event.target.value),...props}));
  const area=(label,value,update,props={})=>h('label',{className:'field gh-wide'},label,h('textarea',{rows:3,value:value||'',onChange:event=>update(event.target.value),...props}));
+ const correctionRef=O.useRef(null);
+ O.useEffect(()=>{if(draft)correctionRef.current?.scrollIntoView({block:'start',behavior:'smooth'});},[!!draft]);
  const type=draft?.videos?.length?'video':draft?.photos?.length?'photo':'press';
- return h('section',{className:'mx-publication-correction gh-form','aria-label':'Modifier la publication'},h('h3',null,'Modifier la publication'),h('p',null,'Corrigez les renseignements, puis enregistrez. Les fichiers déjà transférés sont conservés.'),
+ return h('section',{className:'mx-publication-correction gh-form',ref:correctionRef,'aria-label':'Modifier la publication'},h('h3',null,'Modifier la publication'),h('p',null,'Corrigez les renseignements, puis enregistrez. Les fichiers déjà transférés sont conservés.'),
  error&&h('p',{className:'gh-error',role:'alert'},error),saved&&h('p',{role:'status'},'Les modifications sont en ligne dans les pages concernées.'),
  !draft?h('p',{role:'status'},'Chargement de la fiche…'):h('form',{onSubmit:save},h('fieldset',{disabled:busy},
  field('Date de publication *',draft.date,value=>change('date',value),{type:'date',required:true}),
@@ -284,4 +286,11 @@ function MxPublicationCorrection({item,onClose,onRefresh}){
  type==='press'&&area('Texte du communiqué',values.content||(!locale?draft.press[0]?.text:''),value=>text(locale,'content',value),{maxLength:40000,rows:6})
  )),h('button',{type:'submit',className:'button primary',disabled:busy},busy?'Enregistrement…':'Enregistrer les modifications'))),
  h('button',{type:'button',className:'button secondary',disabled:busy,onClick:onClose},'Fermer'));
+}
+
+function MxEditableCard({item,...props}){
+ const h=mxElement;
+ if(!item.publicationFolder)return h(su,{item,...props});
+ const url=mxManagementUrl();url.searchParams.set('edit',item.publicationFolder);
+ return h('div',{className:'mx-editable-publication',style:{display:'grid',gap:'8px',alignContent:'start'}},h(su,{item,...props}),h('a',{className:'button secondary',href:url.href,style:{justifySelf:'end'},'aria-label':mxT('Modifier')+' : '+item.title},mxT('Modifier')));
 }

@@ -839,6 +839,35 @@ export const keywordCatalog:Term[]=[
    "Salon du bâtiment"
   ]
  }
+,
+
+ {
+  "label": "Aménagement urbain et foncier",
+  "arabic": "التهيئة الحضرية والعقارية",
+  "topic": "Habitat et logement",
+  "aliases": [
+   "التهيئة الحضرية والعقارية",
+   "Aménagement urbain et aménagement foncier"
+  ]
+ },
+ {
+  "label": "Production de logements sociaux",
+  "arabic": "إنتاج السكن الاجتماعي",
+  "topic": "Habitat et logement",
+  "aliases": [
+   "إنتاج السكن الاجتماعي",
+   "Production du logement social"
+  ]
+ },
+ {
+  "label": "Développement du monde rural",
+  "arabic": "تنمية العالم القروي",
+  "topic": "Habitat et logement",
+  "aliases": [
+   "تنمية العالم القروي",
+   "Développement rural"
+  ]
+ }
 
 ];
 export const documentaryTranslations:Record<string,string>={...documentaryTopicTranslations,...Object.fromEntries(keywordCatalog.map(term=>[term.label,term.arabic]))};

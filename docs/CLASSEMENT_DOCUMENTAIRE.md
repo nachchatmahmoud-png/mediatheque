@@ -13,7 +13,7 @@ Ce plan constitue un choix éditorial pour la médiathèque. Il ne se présente 
 7. Interventions et questions parlementaires.
 8. Coopération et participation internationales.
 
-Le référentiel comporte 93 descripteurs français, avec un libellé arabe et des synonymes ou sigles de recherche. Sa source unique est `app/lib/keyword-catalog.ts`, réutilisée par le navigateur et le service de publication.
+Le référentiel comporte 96 descripteurs français, avec un libellé arabe et des synonymes ou sigles de recherche. Sa source unique est `app/lib/keyword-catalog.ts`, réutilisée par le navigateur et le service de publication.
 
 ## Règles d’indexation
 
@@ -51,3 +51,8 @@ Référence officielle actuelle : décret n° 2.23.751 du 21 décembre 2023, not
 https://bdj.mmsp.gov.ma/Ar/Document/10596-D%C3%A9cret-n-2-23-751-du-7-joumada-II-1445-21-d%C3%A9cemb.aspx
 
 Le mot-clé « Salon International du Bâtiment » est rattaché à « Habitat et logement », avec « SIB » et « المعرض الدولي للبناء » comme entrées de recherche. Source organisateur consultée : https://sib.ma/ . Le descripteur désigne le salon, sans attribuer une participation ou une édition à une publication.
+
+
+## Compléments Habitat et logement — 28 octobre 2026
+
+Ajout des descripteurs « Aménagement urbain et foncier » (التهيئة الحضرية والعقارية), « Production de logements sociaux » (إنتاج السكن الاجتماعي) et « Développement du monde rural » (تنمية العالم القروي). « Résorption de l’habitat insalubre » et « Promotion immobilière » étaient déjà présents dans ce domaine et sont conservés sans doublon. Les catégories voisines et les publications existantes ne sont pas renommées.
