@@ -15,7 +15,7 @@ Ce plan constitue un choix éditorial pour la médiathèque. Il ne se présente 
 9. Affaires juridiques et réglementation.
 10. Vie institutionnelle.
 
-Le référentiel comporte 106 descripteurs français, avec un libellé arabe et des synonymes ou sigles de recherche. Sa source unique est `app/lib/keyword-catalog.ts`, réutilisée par le navigateur et le service de publication.
+Le référentiel comporte 119 descripteurs français (106 sujets et 13 organismes), avec un libellé arabe et des synonymes ou sigles de recherche. Sa source unique est `app/lib/keyword-catalog.ts`, réutilisée par le navigateur et le service de publication.
 
 ## Règles d’indexation
 
@@ -78,3 +78,10 @@ Le domaine « Vie institutionnelle » (الحياة المؤسساتية) et les
 | Distinctions et hommages | التكريم والتنويه |
 
 Pour une cérémonie de passation de pouvoirs, retenir le domaine Vie institutionnelle et les mots-clés Passation de pouvoirs et Prise de fonctions lorsque le contenu les justifie.
+
+
+## Institutions et partenaires — 28 octobre 2026
+
+Treize organismes ou réseaux vérifiés sont proposés dans une section distincte « Institutions et partenaires ». Le rattachement à plusieurs domaines est documentaire. Le statut de partenaire ne signifie pas une tutelle du ministère. Le nom d’un organisme complète les sujets traités ; au moins un mot-clé de sujet du domaine principal reste requis, dans la limite commune de huit mots-clés. Aucun organisme n’est sélectionné automatiquement.
+
+Les rattachements, types d’acteurs et sources sont détaillés dans [INSTITUTIONS_ET_PARTENAIRES.md](INSTITUTIONS_ET_PARTENAIRES.md). Les sigles (ANRUR, MAJAL, INAU, ENA, FNPI, CNOA, ONIGT, FNBTP, FMC, FMCI) et les libellés arabes sont recherchables. Les domaines et les publications existantes sont conservés.

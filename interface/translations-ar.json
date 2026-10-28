@@ -301,5 +301,9 @@
   "Pagination des publications": "تصفح صفحات المنشورات",
   "Précédente": "السابقة",
   "Suivante": "التالية",
-  "Page": "الصفحة"
+  "Page": "الصفحة",
+  "Institutions et partenaires": "المؤسسات والشركاء",
+  "Sélectionnez les organismes effectivement concernés par le contenu.": "اختاروا الهيئات المعنية فعليا بالمحتوى.",
+  "1 à 8 mots-clés, dont au moins un sujet du domaine principal.": "من كلمة مفتاحية واحدة إلى 8 كلمات، على أن تتعلق إحداها على الأقل بموضوع ضمن المجال الرئيسي.",
+  "Choisissez au moins un mot-clé de sujet correspondant au domaine principal.": "اختاروا كلمة مفتاحية واحدة على الأقل تصف موضوعا ضمن المجال الرئيسي."
 }

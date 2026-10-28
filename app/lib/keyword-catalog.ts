@@ -1,5 +1,5 @@
 // Editorial classification by subject. Provenance and indexing rules: docs/CLASSEMENT_DOCUMENTAIRE.md.
-export type Term={label:string;arabic:string;topic:string;aliases:string[]};
+export type Term={label:string;arabic:string;topic:string;aliases:string[];kind?:'organization';relatedTopics?:string[]};
 export const documentaryTopics:string[]=["Habitat et logement", "Politique de la ville et renouvellement urbain", "Urbanisme et planification urbaine", "Aménagement et développement du territoire", "Architecture et patrimoine bâti", "Formation et recherche dans les métiers du territoire", "Interventions et questions parlementaires", "Coopération et participation internationales", "Affaires juridiques et réglementation", "Vie institutionnelle"];
 export const documentaryTopicTranslations:Record<string,string>={"Habitat et logement": "السكن والإسكان", "Politique de la ville et renouvellement urbain": "سياسة المدينة والتجديد الحضري", "Urbanisme et planification urbaine": "التعمير والتخطيط الحضري", "Aménagement et développement du territoire": "إعداد التراب والتنمية الترابية", "Architecture et patrimoine bâti": "الهندسة المعمارية والتراث المبني", "Formation et recherche dans les métiers du territoire": "التكوين والبحث في مهن إعداد التراب والتعمير", "Interventions et questions parlementaires": "المداخلات والأسئلة البرلمانية", "Coopération et participation internationales": "التعاون والمشاركة الدولية", "Affaires juridiques et réglementation": "الشؤون القانونية والتنظيم", "Vie institutionnelle": "الحياة المؤسساتية"};
 export const keywordCatalog:Term[]=[
@@ -958,8 +958,232 @@ export const keywordCatalog:Term[]=[
    "التكريم والتنويه"
   ]
  }
+,
+
+ {
+  "label": "Groupe Al Omrane",
+  "arabic": "مجموعة العمران",
+  "topic": "Habitat et logement",
+  "kind": "organization",
+  "relatedTopics": [
+   "Politique de la ville et renouvellement urbain",
+   "Urbanisme et planification urbaine",
+   "Aménagement et développement du territoire",
+   "Vie institutionnelle"
+  ],
+  "aliases": [
+   "مجموعة العمران",
+   "Al Omrane",
+   "Alomrane",
+   "Holding Al Omrane",
+   "HAO",
+   "العمران",
+   "هولدينغ العمران"
+  ]
+ },
+ {
+  "label": "Agence nationale de rénovation urbaine — ANRUR",
+  "arabic": "الوكالة الوطنية للتجديد الحضري وتأهيل المباني الآيلة للسقوط",
+  "topic": "Politique de la ville et renouvellement urbain",
+  "kind": "organization",
+  "relatedTopics": [
+   "Habitat et logement",
+   "Vie institutionnelle"
+  ],
+  "aliases": [
+   "الوكالة الوطنية للتجديد الحضري وتأهيل المباني الآيلة للسقوط",
+   "ANRUR",
+   "Agence nationale pour la rénovation urbaine et la réhabilitation des bâtiments menaçant ruine",
+   "التجديد الحضري وتأهيل المباني الآيلة للسقوط"
+  ]
+ },
+ {
+  "label": "Agences urbaines",
+  "arabic": "الوكالات الحضرية",
+  "topic": "Urbanisme et planification urbaine",
+  "kind": "organization",
+  "relatedTopics": [
+   "Aménagement et développement du territoire",
+   "Architecture et patrimoine bâti",
+   "Vie institutionnelle"
+  ],
+  "aliases": [
+   "الوكالات الحضرية",
+   "Agence urbaine",
+   "وكالة حضرية"
+  ]
+ },
+ {
+  "label": "Fédération des agences urbaines — MAJAL",
+  "arabic": "فيدرالية الوكالات الحضرية مجال",
+  "topic": "Urbanisme et planification urbaine",
+  "kind": "organization",
+  "relatedTopics": [
+   "Aménagement et développement du territoire",
+   "Formation et recherche dans les métiers du territoire",
+   "Vie institutionnelle"
+  ],
+  "aliases": [
+   "فيدرالية الوكالات الحضرية مجال",
+   "MAJAL",
+   "Fédération des agences urbaines du Maroc",
+   "Fédération Majal",
+   "مجال",
+   "فيدرالية الوكالات الحضرية بالمغرب"
+  ]
+ },
+ {
+  "label": "Institut national d’aménagement et d’urbanisme — INAU",
+  "arabic": "المعهد الوطني للتهيئة والتعمير",
+  "topic": "Formation et recherche dans les métiers du territoire",
+  "kind": "organization",
+  "relatedTopics": [
+   "Aménagement et développement du territoire",
+   "Urbanisme et planification urbaine",
+   "Vie institutionnelle"
+  ],
+  "aliases": [
+   "المعهد الوطني للتهيئة والتعمير",
+   "INAU",
+   "Institut national d’aménagement et d’urbanisme"
+  ]
+ },
+ {
+  "label": "Écoles nationales d’architecture — ENA",
+  "arabic": "المدارس الوطنية للهندسة المعمارية",
+  "topic": "Formation et recherche dans les métiers du territoire",
+  "kind": "organization",
+  "relatedTopics": [
+   "Architecture et patrimoine bâti",
+   "Urbanisme et planification urbaine",
+   "Vie institutionnelle"
+  ],
+  "aliases": [
+   "المدارس الوطنية للهندسة المعمارية",
+   "ENA",
+   "École nationale d’architecture",
+   "المدرسة الوطنية للهندسة المعمارية"
+  ]
+ },
+ {
+  "label": "Fédération nationale des promoteurs immobiliers — FNPI",
+  "arabic": "الفيدرالية الوطنية للمنعشين العقاريين",
+  "topic": "Habitat et logement",
+  "kind": "organization",
+  "relatedTopics": [],
+  "aliases": [
+   "الفيدرالية الوطنية للمنعشين العقاريين",
+   "FNPI",
+   "Fédération nationale des promoteurs immobiliers",
+   "الجامعة الوطنية للمنعشين العقاريين"
+  ]
+ },
+ {
+  "label": "Conseil national de l’Ordre des architectes — CNOA",
+  "arabic": "المجلس الوطني لهيئة المهندسين المعماريين",
+  "topic": "Architecture et patrimoine bâti",
+  "kind": "organization",
+  "relatedTopics": [
+   "Urbanisme et planification urbaine",
+   "Formation et recherche dans les métiers du territoire",
+   "Affaires juridiques et réglementation"
+  ],
+  "aliases": [
+   "المجلس الوطني لهيئة المهندسين المعماريين",
+   "CNOA",
+   "Conseil national de l’Ordre des architectes",
+   "Ordre national des architectes",
+   "هيئة المهندسين المعماريين"
+  ]
+ },
+ {
+  "label": "Ordre national des ingénieurs géomètres-topographes — ONIGT",
+  "arabic": "الهيئة الوطنية للمهندسين المساحين الطبوغرافيين",
+  "topic": "Aménagement et développement du territoire",
+  "kind": "organization",
+  "relatedTopics": [
+   "Urbanisme et planification urbaine",
+   "Habitat et logement",
+   "Affaires juridiques et réglementation"
+  ],
+  "aliases": [
+   "الهيئة الوطنية للمهندسين المساحين الطبوغرافيين",
+   "ONIGT",
+   "Ordre national des ingénieurs géomètres topographes"
+  ]
+ },
+ {
+  "label": "Fédération nationale du bâtiment et des travaux publics — FNBTP",
+  "arabic": "الفيدرالية الوطنية للبناء والأشغال العمومية",
+  "topic": "Habitat et logement",
+  "kind": "organization",
+  "relatedTopics": [
+   "Architecture et patrimoine bâti",
+   "Formation et recherche dans les métiers du territoire"
+  ],
+  "aliases": [
+   "الفيدرالية الوطنية للبناء والأشغال العمومية",
+   "FNBTP",
+   "Fédération nationale du bâtiment et des travaux publics",
+   "الجامعة الوطنية للبناء والأشغال العمومية"
+  ]
+ },
+ {
+  "label": "Fédération des industries des matériaux de construction — FMC",
+  "arabic": "فيدرالية صناعات مواد البناء",
+  "topic": "Habitat et logement",
+  "kind": "organization",
+  "relatedTopics": [
+   "Architecture et patrimoine bâti"
+  ],
+  "aliases": [
+   "فيدرالية صناعات مواد البناء",
+   "FMC",
+   "Fédération des matériaux de construction",
+   "Fédération des industries des matériaux de construction",
+   "فيدرالية مواد البناء"
+  ]
+ },
+ {
+  "label": "Fédération marocaine du conseil et de l’ingénierie — FMCI",
+  "arabic": "الفيدرالية المغربية للاستشارة والهندسة",
+  "topic": "Aménagement et développement du territoire",
+  "kind": "organization",
+  "relatedTopics": [
+   "Urbanisme et planification urbaine",
+   "Habitat et logement",
+   "Architecture et patrimoine bâti",
+   "Coopération et participation internationales"
+  ],
+  "aliases": [
+   "الفيدرالية المغربية للاستشارة والهندسة",
+   "FMCI",
+   "Fédération marocaine du conseil et de l’ingénierie"
+  ]
+ },
+ {
+  "label": "ONU-Habitat",
+  "arabic": "موئل الأمم المتحدة",
+  "topic": "Coopération et participation internationales",
+  "kind": "organization",
+  "relatedTopics": [
+   "Urbanisme et planification urbaine",
+   "Politique de la ville et renouvellement urbain",
+   "Habitat et logement",
+   "Aménagement et développement du territoire"
+  ],
+  "aliases": [
+   "موئل الأمم المتحدة",
+   "UN-Habitat",
+   "UN Habitat",
+   "ONU Habitat",
+   "Programme des Nations unies pour les établissements humains",
+   "برنامج الأمم المتحدة للمستوطنات البشرية"
+  ]
+ }
 
 ];
+export function keywordMatchesTopic(term:Term,topic:string){return term.topic===topic||!!term.relatedTopics?.includes(topic);}
 export const documentaryTranslations:Record<string,string>={...documentaryTopicTranslations,...Object.fromEntries(keywordCatalog.map(term=>[term.label,term.arabic]))};
 export const normalizeKeyword=(s:string)=>s.normalize('NFD').replace(/\p{M}/gu,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
 const byAlias=new Map(keywordCatalog.flatMap(t=>[t.label,...t.aliases].map(a=>[normalizeKeyword(a),t] as const)));
@@ -973,7 +1197,8 @@ export function rankKeywordTopics(values:string[]):KeywordTopicMatch[]{
  const matches=new Map<string,string[]>(),seen=new Set<string>();
  for(const raw of values){
   const label=canonicalKeyword(raw),key=normalizeKeyword(label);if(!key||seen.has(key))continue;seen.add(key);
-  const topic=byAlias.get(key)?.topic||broadTopics.get(key);if(!topic)continue;
+  const descriptor=byAlias.get(key);if(descriptor?.kind==='organization')continue;
+  const topic=descriptor?.topic||broadTopics.get(key);if(!topic)continue;
   const terms=matches.get(topic)||[];terms.push(label);matches.set(topic,terms);
  }
  return [...matches].map(([topic,keywords])=>({topic,keywords,score:keywords.length})).sort((a,b)=>b.score-a.score||topicOrder.indexOf(a.topic)-topicOrder.indexOf(b.topic));
@@ -987,7 +1212,7 @@ export function suggestKeywords({topic,text,selected=[],query=''}:{topic:string;
  return keywordCatalog.map((term,index)=>{
   const names=[term.label,...term.aliases].map(normalizeKeyword);
   const match=Math.max(...names.map(name=>{if(normalized.includes(' '+name+' '))return 30;const words=name.split(' ').filter(w=>w.length>2&&!stopWords.has(w));return words.length>1&&words.every(w=>tokens.has(w))?15:0;}));
-  return {term,index,score:match+(term.topic===topic?5:0),matchesSearch:search.every(q=>names.some(n=>n.includes(q)))};
+  return {term,index,score:match+(keywordMatchesTopic(term,topic)?5:0),matchesSearch:search.every(q=>names.some(n=>n.includes(q)))};
  }).filter(x=>!chosen.has(normalizeKeyword(x.term.label))&&x.matchesSearch&&(search.length||x.score>0)).sort((a,b)=>b.score-a.score||a.index-b.index).map(x=>x.term.label);
 }
 
@@ -1002,6 +1227,6 @@ export function validateDocumentaryKeywords(topic:string,value:unknown):string[]
   if(!term)throw new Error('Choisissez les mots-clés dans le référentiel documentaire.');
   if(!selected.includes(term.label))selected.push(term.label);
  }
- if(!selected.some(label=>byAlias.get(normalizeKeyword(label))?.topic===topic))throw new Error('Choisissez au moins un mot-clé correspondant au domaine principal.');
+ if(!selected.some(label=>{const term=byAlias.get(normalizeKeyword(label));return term&&term.kind!=='organization'&&keywordMatchesTopic(term,topic);}))throw new Error('Choisissez au moins un mot-clé de sujet correspondant au domaine principal.');
  return selected;
 }

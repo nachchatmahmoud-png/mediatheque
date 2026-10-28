@@ -24,7 +24,7 @@ export async function buildInterface(root, output) {
   bundle = bundle.replace(baseMarker, 'var $s=new URL(".",document.baseURI).pathname.replace(/\\/$/,"");');
   // One source supplies the browser, search aliases and server-side indexing.
   const vocabulary=stripTypeScriptTypes(await readFile(join(root,'app/lib/keyword-catalog.ts'),'utf8')).replace(/^export /gm,'');
-  const documentaryRuntime='var MX_DOC_RUNTIME=(()=>{'+vocabulary+';return {keywordCatalog,documentaryTopics,documentaryTranslations,normalizeKeyword,canonicalKeyword,keywordSearchText,parseKeywordText,rankKeywordTopics,preferredKeywordTopic,suggestKeywords,validateDocumentaryKeywords};})();var iu=MX_DOC_RUNTIME.canonicalKeyword,uu=MX_DOC_RUNTIME.keywordSearchText,Ro=MX_DOC_RUNTIME.parseKeywordText,Js=MX_DOC_RUNTIME.rankKeywordTopics,pg=MX_DOC_RUNTIME.preferredKeywordTopic,mg=MX_DOC_RUNTIME.suggestKeywords;';
+  const documentaryRuntime='var MX_DOC_RUNTIME=(()=>{'+vocabulary+';return {keywordCatalog,documentaryTopics,documentaryTranslations,keywordMatchesTopic,normalizeKeyword,canonicalKeyword,keywordSearchText,parseKeywordText,rankKeywordTopics,preferredKeywordTopic,suggestKeywords,validateDocumentaryKeywords};})();var iu=MX_DOC_RUNTIME.canonicalKeyword,uu=MX_DOC_RUNTIME.keywordSearchText,Ro=MX_DOC_RUNTIME.parseKeywordText,Js=MX_DOC_RUNTIME.rankKeywordTopics,pg=MX_DOC_RUNTIME.preferredKeywordTopic,mg=MX_DOC_RUNTIME.suggestKeywords;';
   const vocabularyStart=bundle.indexOf('var js='),vocabularyEnd=bundle.indexOf('var Ws=',vocabularyStart);
   if(vocabularyStart<0||vocabularyEnd<vocabularyStart)throw new Error('Limite du référentiel documentaire introuvable.');
   bundle=bundle.slice(0,vocabularyStart)+'/*__MX_DOCUMENTARY_RUNTIME__*/'+bundle.slice(vocabularyEnd);

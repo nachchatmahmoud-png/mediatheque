@@ -1,0 +1,34 @@
+# Institutions et partenaires : rattachements documentaires
+
+Référentiel éditorial vérifié le 28 octobre 2026. Il sert à décrire les acteurs effectivement concernés par une vidéo, un album ou un communiqué. Il ne constitue ni une liste exhaustive des conventions en vigueur, ni un organigramme du ministère. Un rattachement documentaire indique un champ d’intervention ; il n’établit pas une relation de tutelle.
+
+Les noms français et arabes, les sigles et les variantes sont réunis dans un même descripteur, sans doublons. Les libellés arabes sont des libellés documentaires de recherche. Une institution peut être proposée dans plusieurs domaines. Les publications existantes ne sont pas réindexées automatiquement.
+
+| Institution, organisme ou réseau | Nature de l’acteur | Domaine principal | Autres domaines de proposition | Source consultée |
+|---|---|---|---|---|
+| Groupe Al Omrane — مجموعة العمران | Opérateur public de l’habitat et de l’aménagement | Habitat et logement | Politique de la ville ; urbanisme ; aménagement du territoire ; vie institutionnelle | [Présentation du Groupe](https://www.alomrane.gov.ma/Le-groupe/A-propos) |
+| ANRUR — الوكالة الوطنية للتجديد الحضري وتأهيل المباني الآيلة للسقوط | Agence de rénovation urbaine et de réhabilitation des bâtiments menaçant ruine | Politique de la ville et renouvellement urbain | Habitat ; vie institutionnelle | [Bulletin de l’ANRUR, missions](https://anrur.gov.ma/manager/files/shares/Bulletin%20d%27information/v%201.0.pdf) ; [Agence urbaine d’Errachidia-Midelt](https://www.auer.gov.ma/fr/Actualit%C3%A9s/lorem-ipsum-dolor-sit-amet-consectetur-adipiscing-elit-0) |
+| Agences urbaines — الوكالات الحضرية | Ensemble d’organismes publics d’urbanisme | Urbanisme et planification urbaine | Aménagement du territoire ; architecture ; vie institutionnelle | [Missions de l’Agence urbaine de Rabat-Salé](https://aurs.org.ma/fr/lagence/missions/) |
+| Fédération des agences urbaines — MAJAL — فيدرالية الوكالات الحضرية مجال | Réseau fédératif des agences urbaines | Urbanisme et planification urbaine | Aménagement du territoire ; formation ; vie institutionnelle | [Objectifs de MAJAL](https://federation-majal.ma/fr/Page/objectifs) |
+| Institut national d’aménagement et d’urbanisme — INAU — المعهد الوطني للتهيئة والتعمير | Établissement de formation sous tutelle du ministère | Formation et recherche dans les métiers du territoire | Aménagement du territoire ; urbanisme ; vie institutionnelle | [Présentation de l’INAU](https://inau.ac.ma/presentation-de-linau/) |
+| Écoles nationales d’architecture — ENA — المدارس الوطنية للهندسة المعمارية | Établissements publics de formation en architecture | Formation et recherche dans les métiers du territoire | Architecture ; urbanisme ; vie institutionnelle | [ENA Rabat](https://www.enarabat.ac.ma/presentation-de-lena/) ; [ENA Agadir](https://enaagadir.ac.ma/a-propos/) |
+| Fédération nationale des promoteurs immobiliers — FNPI — الفيدرالية الوطنية للمنعشين العقاريين | Fédération professionnelle | Habitat et logement | — | [Guide de l’acquéreur de la FNPI](https://fnpimaroc.net/guide-de-lacquereur/) ; [Participation à APEX Miami 2025](https://fnpimaroc.net/participation-de-la-fnpi-a-lapex-america-property-expo-a-miami/) |
+| Conseil national de l’Ordre des architectes — CNOA — المجلس الوطني لهيئة المهندسين المعماريين | Instance ordinale partenaire | Architecture et patrimoine bâti | Urbanisme ; formation ; affaires juridiques | [39e Journée nationale de l’architecte, organisée avec le ministère](https://fafa-architectes.org/evenements/39e-journee-nationale-de-larchitecte-maroc/) |
+| Ordre national des ingénieurs géomètres-topographes — ONIGT — الهيئة الوطنية للمهندسين المساحين الطبوغرافيين | Ordre professionnel partenaire | Aménagement et développement du territoire | Urbanisme ; habitat ; affaires juridiques | [Portail national : géomatique et partenariats de l’ONIGT](https://www.maroc.ma/fr/actualites/la-geomatique-un-levier-strategique-pour-la-securite-fonciere-la-souverainete-alimentaire-et-la) |
+| Fédération nationale du bâtiment et des travaux publics — FNBTP — الفيدرالية الوطنية للبناء والأشغال العمومية | Fédération professionnelle partenaire | Habitat et logement | Architecture ; formation | [Partenaires de la FNBTP](https://fnbtp.ma/en/partners/) ; [Présentation de la FNBTP](https://fnbtp.ma/a-propos-de-la-fnbtp/) |
+| Fédération des industries des matériaux de construction — FMC — فيدرالية صناعات مواد البناء | Fédération professionnelle | Habitat et logement | Architecture | [Ministère de l’Industrie et du Commerce](https://www.mcinet.gov.ma/fr/content/presentation-construction) ; [Site de la FMC](https://fmc.org.ma/) ; déclaration commune du secteur publiée par l’Agence urbaine d’Errachidia-Midelt citée plus haut |
+| Fédération marocaine du conseil et de l’ingénierie — FMCI — الفيدرالية المغربية للاستشارة والهندسة | Fédération professionnelle partenaire | Aménagement et développement du territoire | Urbanisme ; habitat ; architecture ; coopération internationale | [Actualités et rencontres avec le ministère, FMCI](https://www.fmci.ma/actualite.php) |
+| ONU-Habitat — موئل الأمم المتحدة | Organisation internationale partenaire | Coopération et participation internationales | Urbanisme ; politique de la ville ; habitat ; aménagement du territoire | [ONU-Habitat au Maroc](https://unhabitat.org/morocco) |
+
+## Règles de description
+
+- Conserver au moins un mot-clé de sujet correspondant au domaine principal. Une institution seule ne décrit pas le sujet d’une publication.
+- Choisir les organismes réellement cités, impliqués ou concernés ; les propositions ne sont pas cochées automatiquement.
+- Les huit mots-clés maximum comprennent les sujets et les organismes sélectionnés.
+- Une réunion du conseil de surveillance d’Al Omrane peut être décrite par Vie institutionnelle, Conseils de surveillance et Groupe Al Omrane. Une opération de logement social peut être décrite par Habitat et logement, Production de logements sociaux et Groupe Al Omrane.
+- Les fédérations professionnelles et l’ONU-Habitat sont distinguées des opérateurs et établissements publics. Les organismes de formation ne sont pas assimilés à des fédérations professionnelles.
+- Le terme collectif Agences urbaines n’implique pas une tutelle uniforme : l’[Agence urbaine de Casablanca](https://www.auc.ma/l-agence/presentation/) présente un rattachement au ministère de l’Intérieur. Aucun transfert de tutelle n’est déduit d’un rattachement au domaine Urbanisme.
+
+## Vérification technique
+
+La source commune `app/lib/keyword-catalog.ts` alimente la recherche, les formulaires et la validation côté serveur. Chaque organisme possède un nom canonique, sa traduction arabe, ses sigles et des domaines associés. Les noms d’organismes ne déterminent pas à eux seuls le domaine d’un contenu.
