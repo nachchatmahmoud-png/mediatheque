@@ -802,6 +802,12 @@ function rf() {
                   ),
                 ],
               }),
+              (0, d.jsx)("div", {
+                className: "footer-contact",
+                children: (0, d.jsx)("strong", {
+                  children: "Un espace au service de l’information du public.",
+                }),
+              }),
             ],
           }),
           (0, d.jsxs)("div", {
