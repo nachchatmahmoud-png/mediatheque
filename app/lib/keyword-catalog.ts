@@ -1,7 +1,7 @@
 // Editorial classification by subject. Provenance and indexing rules: docs/CLASSEMENT_DOCUMENTAIRE.md.
 export type Term={label:string;arabic:string;topic:string;aliases:string[]};
-export const documentaryTopics:string[]=["Habitat et logement", "Politique de la ville et renouvellement urbain", "Urbanisme et planification urbaine", "Aménagement et développement du territoire", "Architecture et patrimoine bâti", "Formation et recherche dans les métiers du territoire", "Interventions et questions parlementaires", "Coopération et participation internationales"];
-export const documentaryTopicTranslations:Record<string,string>={"Habitat et logement": "السكن والإسكان", "Politique de la ville et renouvellement urbain": "سياسة المدينة والتجديد الحضري", "Urbanisme et planification urbaine": "التعمير والتخطيط الحضري", "Aménagement et développement du territoire": "إعداد التراب والتنمية الترابية", "Architecture et patrimoine bâti": "الهندسة المعمارية والتراث المبني", "Formation et recherche dans les métiers du territoire": "التكوين والبحث في مهن إعداد التراب والتعمير", "Interventions et questions parlementaires": "المداخلات والأسئلة البرلمانية", "Coopération et participation internationales": "التعاون والمشاركة الدولية"};
+export const documentaryTopics:string[]=["Habitat et logement", "Politique de la ville et renouvellement urbain", "Urbanisme et planification urbaine", "Aménagement et développement du territoire", "Architecture et patrimoine bâti", "Formation et recherche dans les métiers du territoire", "Interventions et questions parlementaires", "Coopération et participation internationales", "Affaires juridiques et réglementation"];
+export const documentaryTopicTranslations:Record<string,string>={"Habitat et logement": "السكن والإسكان", "Politique de la ville et renouvellement urbain": "سياسة المدينة والتجديد الحضري", "Urbanisme et planification urbaine": "التعمير والتخطيط الحضري", "Aménagement et développement du territoire": "إعداد التراب والتنمية الترابية", "Architecture et patrimoine bâti": "الهندسة المعمارية والتراث المبني", "Formation et recherche dans les métiers du territoire": "التكوين والبحث في مهن إعداد التراب والتعمير", "Interventions et questions parlementaires": "المداخلات والأسئلة البرلمانية", "Coopération et participation internationales": "التعاون والمشاركة الدولية", "Affaires juridiques et réglementation": "الشؤون القانونية والتنظيم"};
 export const keywordCatalog:Term[]=[
  {
   "label": "Aide directe au logement",
@@ -710,7 +710,136 @@ export const keywordCatalog:Term[]=[
    "التعاون جنوب جنوب",
    "South-South cooperation"
   ]
+ },
+
+ {
+  "label": "Élaboration des textes législatifs et réglementaires",
+  "arabic": "إعداد النصوص التشريعية والتنظيمية",
+  "topic": "Affaires juridiques et réglementation",
+  "aliases": [
+   "إعداد النصوص التشريعية والتنظيمية",
+   "Projets de loi",
+   "مشاريع القوانين",
+   "Projets de décret",
+   "مشاريع المراسيم"
+  ]
+ },
+ {
+  "label": "Législation de l’urbanisme",
+  "arabic": "تشريعات التعمير",
+  "topic": "Affaires juridiques et réglementation",
+  "aliases": [
+   "تشريعات التعمير",
+   "Droit de l’urbanisme",
+   "قانون التعمير"
+  ]
+ },
+ {
+  "label": "Réglementation de l’habitat",
+  "arabic": "تنظيم قطاع الإسكان",
+  "topic": "Affaires juridiques et réglementation",
+  "aliases": [
+   "تنظيم قطاع الإسكان",
+   "Législation de l’habitat",
+   "تشريعات الإسكان"
+  ]
+ },
+ {
+  "label": "Réglementation de la construction",
+  "arabic": "ضوابط البناء",
+  "topic": "Affaires juridiques et réglementation",
+  "aliases": [
+   "ضوابط البناء",
+   "Droit de la construction",
+   "قانون البناء"
+  ]
+ },
+ {
+  "label": "Encadrement juridique de l’aménagement du territoire",
+  "arabic": "التأطير القانوني لإعداد التراب",
+  "topic": "Affaires juridiques et réglementation",
+  "aliases": [
+   "التأطير القانوني لإعداد التراب"
+  ]
+ },
+ {
+  "label": "Réformes législatives et réglementaires",
+  "arabic": "الإصلاحات التشريعية والتنظيمية",
+  "topic": "Affaires juridiques et réglementation",
+  "aliases": [
+   "الإصلاحات التشريعية والتنظيمية",
+   "Réforme juridique",
+   "إصلاح قانوني"
+  ]
+ },
+ {
+  "label": "Consultations et avis juridiques",
+  "arabic": "الاستشارات والآراء القانونية",
+  "topic": "Affaires juridiques et réglementation",
+  "aliases": [
+   "الاستشارات والآراء القانونية",
+   "Assistance juridique",
+   "المساعدة القانونية"
+  ]
+ },
+ {
+  "label": "Études et recherches juridiques",
+  "arabic": "الدراسات والأبحاث القانونية",
+  "topic": "Affaires juridiques et réglementation",
+  "aliases": [
+   "الدراسات والأبحاث القانونية"
+  ]
+ },
+ {
+  "label": "Veille juridique",
+  "arabic": "اليقظة القانونية",
+  "topic": "Affaires juridiques et réglementation",
+  "aliases": [
+   "اليقظة القانونية"
+  ]
+ },
+ {
+  "label": "Contentieux du ministère",
+  "arabic": "منازعات الوزارة",
+  "topic": "Affaires juridiques et réglementation",
+  "aliases": [
+   "منازعات الوزارة",
+   "Contentieux administratif",
+   "المنازعات الإدارية",
+   "المنازعات القضائية"
+  ]
+ },
+ {
+  "label": "Formation juridique",
+  "arabic": "التكوين القانوني",
+  "topic": "Affaires juridiques et réglementation",
+  "aliases": [
+   "التكوين القانوني",
+   "Formation continue juridique",
+   "التكوين المستمر في المجال القانوني"
+  ]
+ },
+ {
+  "label": "Actualisation des textes juridiques",
+  "arabic": "تحيين النصوص القانونية",
+  "topic": "Affaires juridiques et réglementation",
+  "aliases": [
+   "تحيين النصوص القانونية",
+   "Mise à jour des textes juridiques"
+  ]
+ },
+ {
+  "label": "Salon International du Bâtiment",
+  "arabic": "المعرض الدولي للبناء",
+  "topic": "Habitat et logement",
+  "aliases": [
+   "المعرض الدولي للبناء",
+   "SIB",
+   "Salon international du bâtiment",
+   "Salon du bâtiment"
+  ]
  }
+
 ];
 export const documentaryTranslations:Record<string,string>={...documentaryTopicTranslations,...Object.fromEntries(keywordCatalog.map(term=>[term.label,term.arabic]))};
 export const normalizeKeyword=(s:string)=>s.normalize('NFD').replace(/\p{M}/gu,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();

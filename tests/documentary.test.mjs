@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {documentaryTopics,keywordCatalog,documentaryTranslations,validateDocumentaryKeywords,parseKeywordText,preferredKeywordTopic} from '../app/lib/keyword-catalog.ts';
+import {documentaryTopics,keywordCatalog,documentaryTranslations,validateDocumentaryKeywords,canonicalKeyword,parseKeywordText,preferredKeywordTopic} from '../app/lib/keyword-catalog.ts';
 import {preparePublication} from '../administration/server/publication.ts';
 import {publicationToCatalogue} from '../github-pages/catalogue.ts';
 import {filterMedia} from '../app/lib/model.ts';
@@ -67,4 +67,15 @@ test('documented international meetings have precise bilingual descriptors and s
  const catalogue=publicationToCatalogue(prepared.record,prepared.folder);
  for(const query of ['WUF','FUM','المنتدى الحضري العالمي','renouvellement urbain','التجديد الحضري'])assert.equal(filterMedia(catalogue.items,{type:'all',query,year:'',topic:'',sort:'newest'}).length,2);
  assert.deepEqual(catalogue.items[0].keywords,['Forum urbain mondial','Renouvellement urbain']);
+});
+
+test('legal classification and SIB are searchable in French and Arabic',()=>{
+ const topic='Affaires juridiques et réglementation';
+ assert.ok(documentaryTopics.includes(topic));
+ assert.equal(keywordCatalog.filter(term=>term.topic===topic).length,12);
+ assert.equal(canonicalKeyword('اليقظة القانونية'),'Veille juridique');
+ assert.equal(canonicalKeyword('SIB'),'Salon International du Bâtiment');
+ assert.equal(canonicalKeyword('المعرض الدولي للبناء'),'Salon International du Bâtiment');
+ assert.deepEqual(validateDocumentaryKeywords('Habitat et logement',['SIB']),['Salon International du Bâtiment']);
+ assert.deepEqual(validateDocumentaryKeywords(topic,['اليقظة القانونية']),['Veille juridique']);
 });

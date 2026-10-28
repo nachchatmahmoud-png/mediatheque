@@ -13,7 +13,7 @@ Ce plan constitue un choix éditorial pour la médiathèque. Il ne se présente 
 7. Interventions et questions parlementaires.
 8. Coopération et participation internationales.
 
-Le référentiel comporte 80 descripteurs français, avec un libellé arabe et des synonymes ou sigles de recherche. Sa source unique est `app/lib/keyword-catalog.ts`, réutilisée par le navigateur et le service de publication.
+Le référentiel comporte 93 descripteurs français, avec un libellé arabe et des synonymes ou sigles de recherche. Sa source unique est `app/lib/keyword-catalog.ts`, réutilisée par le navigateur et le service de publication.
 
 ## Règles d’indexation
 
@@ -41,3 +41,13 @@ Les noms de rencontres internationales et les participations vérifiées sont d�
 - [INAU, offre de formations](https://inau.ac.ma/loffre-de-formations/).
 
 Les sources permettent de situer les champs et les exemples d’action publique. Le regroupement en six domaines et deux rubriques transversales et le choix des libellés relèvent du travail éditorial de classement. Aucune référence juridique non vérifiée n’est utilisée pour leur donner une portée réglementaire.
+
+
+## Extension juridique et Salon International du Bâtiment — 28 octobre 2026
+
+Ajout du domaine « Affaires juridiques et réglementation » (الشؤون القانونية والتنظيم) et de douze descripteurs bilingues. Il couvre la préparation et l’actualisation des textes, les avis, les études, la veille, le contentieux et la formation juridique, appliqués aux champs du ministère. Ce classement documentaire ne constitue pas une liste de directions administratives. Les mots-clés existants ne sont pas déplacés : une publication peut associer son domaine principal à des descripteurs transversaux.
+
+Référence officielle actuelle : décret n° 2.23.751 du 21 décembre 2023, notamment articles 1 et 19, consulté dans sa version arabe publiée par la Banque de données juridiques du ministère de la Transition numérique et de la Réforme de l’administration :
+https://bdj.mmsp.gov.ma/Ar/Document/10596-D%C3%A9cret-n-2-23-751-du-7-joumada-II-1445-21-d%C3%A9cemb.aspx
+
+Le mot-clé « Salon International du Bâtiment » est rattaché à « Habitat et logement », avec « SIB » et « المعرض الدولي للبناء » comme entrées de recherche. Source organisateur consultée : https://sib.ma/ . Le descripteur désigne le salon, sans attribuer une participation ou une édition à une publication.
