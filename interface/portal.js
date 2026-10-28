@@ -806,27 +806,12 @@ function rf() {
                 className: "footer-contact",
                 children: [
                   (0, d.jsx)("strong", {
-                    children: "Communication institutionnelle",
+                    children: "Communication publique",
                   }),
                   (0, d.jsx)("p", {
                     children:
                       "Un espace au service de l’information du public.",
                   }),
-                  T.contactEmail
-                    ? (0, d.jsxs)("a", {
-                        href: "mailto:" + T.contactEmail,
-                        children: [
-                          (0, d.jsx)(Uo, { size: 15 }),
-                          "Contacter le service de communication",
-                        ],
-                      })
-                    : (0, d.jsxs)("button", {
-                        onClick: () => Ne("contact"),
-                        children: [
-                          (0, d.jsx)(Uo, { size: 15 }),
-                          "Informations de contact",
-                        ],
-                      }),
                 ],
               }),
             ],
