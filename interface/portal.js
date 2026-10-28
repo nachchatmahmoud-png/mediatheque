@@ -404,7 +404,7 @@ function rf() {
                         children: [
                           (0, d.jsx)("span", {
                             className: "collection-icon",
-                            children: (0, d.jsx)(Oo, { type: b, size: 23 }),
+                            children: (0, d.jsx)(Oo, { type: b, size: 32 }),
                           }),
                           (0, d.jsxs)("span", {
                             className: "collection-label",
