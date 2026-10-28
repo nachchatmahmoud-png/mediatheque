@@ -32,7 +32,7 @@ m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 entry=lambda id,date:f'<entry><yt:channelId>{m.CHANNEL_ID}</yt:channelId><yt:videoId>{id}</yt:videoId><title>عنوان الفيديو</title><published>{date}</published></entry>'
 feed=('<feed xmlns="http://www.w3.org/2005/Atom" xmlns:yt="http://www.youtube.com/xml/schemas/2015">'+entry('abcdefghijk','2020-01-01T00:00:00Z')+entry('0123456789a','2021-01-01T00:00:00Z')+entry('portrait123','2022-01-01T00:00:00Z')+entry('shortnew123','2023-01-01T00:00:00Z')+entry('futurevideo','2099-01-01T00:00:00Z')+'</feed>').encode()
 channel=('var ytInitialData='+json.dumps({'contents':[{'lockupViewModel':{'contentId':'0123456789a','contentType':'LOCKUP_CONTENT_TYPE_VIDEO'}}]+[{'videoRenderer':{'videoId':id}} for id in ['portrait123','futurevideo']]+[{'shortsLockupViewModel':{'videoId':'shortnew123'}}]})+';').encode()
-def watch(id,width,height):return ('var ytInitialPlayerResponse='+json.dumps({'videoDetails':{'videoId':id,'channelId':m.CHANNEL_ID,'lengthSeconds':'105'},'streamingData':{'formats':[{'width':width,'height':height}]}})+';').encode()
+def watch(id,width,height):return ('var ytInitialPlayerResponse='+json.dumps({'videoDetails':{'videoId':id,'channelId':m.CHANNEL_ID,'lengthSeconds':'105'},'microformat':{'playerMicroformatRenderer':{'isShortsEligible':id=='shortnew123'}},'streamingData':{'formats':[{'width':width,'height':height}]}})+';').encode()
 assert m.feed_videos(feed,datetime(2026,1,1,tzinfo=timezone.utc))[0]['videoId']=='shortnew123'
 assert 'shortnew123' not in m.regular_video_ids(channel)
 try:m.landscape_dimensions(watch('portrait123',1080,1920),'portrait123');assert False
@@ -54,7 +54,9 @@ with tempfile.TemporaryDirectory() as folder:
  assert (video['width'],video['height'])==(612,480)
  assert video['thumbnailUrl']=='/images/youtube-0123456789a.jpg'
  assert (Path(folder)/'images/youtube-0123456789a.jpg').read_bytes()==image
- assert not any('watch?v=shortnew123' in url or 'watch?v=futurevideo' in url for url in requested)
+ assert any('watch?v=shortnew123' in url for url in requested)
+ assert not any('watch?v=futurevideo' in url for url in requested)
+ assert m.VIDEOS_URL not in requested
  def unavailable(url):raise OSError('unavailable')
  cached,changed=m.refresh(output,fetch=unavailable)
  assert not changed and cached==video
@@ -88,5 +90,54 @@ with tempfile.TemporaryDirectory() as folder:
  video,_=m.refresh(output,fetch=missing_image)
  assert 'thumbnailUrl' not in video
  assert not (Path(folder)/'images/youtube-0123456789a.jpg').exists()
+`],{cwd:new URL('../',import.meta.url),stdio:'pipe'});
+});
+
+test('official feed refresh works when the channel layout changes and stream URLs are absent',()=>{
+ execFileSync('python3',['-c',String.raw`
+import importlib.util,json,sys
+sys.dont_write_bytecode=True
+spec=importlib.util.spec_from_file_location('refresh','scripts/refresh-ministry-video.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+id='abcdefghijk'
+feed=f'<feed xmlns="http://www.w3.org/2005/Atom" xmlns:yt="http://www.youtube.com/xml/schemas/2015"><entry><yt:channelId>{m.CHANNEL_ID}</yt:channelId><yt:videoId>{id}</yt:videoId><title>عنوان حديث</title><published>2026-10-27T09:51:56Z</published></entry></feed>'.encode()
+player={'playabilityStatus':{'status':'OK'},'videoDetails':{'videoId':id,'channelId':m.CHANNEL_ID,'title':'عنوان حديث'},'microformat':{'playerMicroformatRenderer':{'isShortsEligible':False,'embed':{'width':960,'height':720}}}}
+page=lambda value:('var ytInitialPlayerResponse='+json.dumps(value)+';').encode()
+requested=[]
+def fetch(url):
+ requested.append(url)
+ if url==m.FEED_URL:return feed
+ if url=='https://www.youtube.com/watch?v='+id:return page(player)
+ raise AssertionError('The channel page must not prevent a feed update')
+video=m.latest_landscape(fetch)
+assert video['videoId']==id and (video['width'],video['height'])==(960,720)
+assert video['publishedAt']=='2026-10-27T09:51:56+00:00'
+assert m.VIDEOS_URL not in requested
+for changed in [
+ {**player,'videoDetails':{**player['videoDetails'],'channelId':'another-channel'}},
+ {**player,'microformat':{'playerMicroformatRenderer':{'isShortsEligible':True,'embed':{'width':960,'height':720}}}},
+ {**player,'microformat':{'playerMicroformatRenderer':{'embed':{'width':960,'height':720}}}},
+ {**player,'playabilityStatus':{'status':'UNPLAYABLE'}},
+ {**player,'streamingData':{'formats':[{'width':1080,'height':1920}]}},
+]:
+ try:m.landscape_dimensions(page(changed),id);assert False
+ except ValueError:pass
+`],{cwd:new URL('../',import.meta.url),stdio:'pipe'});
+});
+
+test('the channel is a secondary source when the feed is unavailable and its videos are ordered by publication date',()=>{
+ execFileSync('python3',['-c',String.raw`
+import importlib.util,json,sys
+sys.dont_write_bytecode=True
+spec=importlib.util.spec_from_file_location('refresh','scripts/refresh-ministry-video.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+ids=['older123456','newer123456','other123456','future12345']
+channel=('var ytInitialData='+json.dumps({'contents':[{'videoRenderer':{'videoId':id}} for id in ids]})+';').encode()
+def fetch(url):
+ if url==m.FEED_URL:raise OSError('feed temporarily unavailable')
+ if url==m.VIDEOS_URL:return channel
+ id=url.split('watch?v=')[1]
+ value={'videoDetails':{'videoId':id,'channelId':'other' if id=='other123456' else m.CHANNEL_ID,'title':'عنوان الفيديو'},'microformat':{'playerMicroformatRenderer':{'publishDate':'2099-01-01T00:00:00Z' if id=='future12345' else '2026-10-27T10:00:00Z' if id=='newer123456' else '2026-01-01T00:00:00Z'}},'streamingData':{'formats':[{'width':1280,'height':720}]}}
+ return ('var ytInitialPlayerResponse='+json.dumps(value)+';').encode()
+video=m.latest_landscape(fetch)
+assert video['videoId']=='newer123456' and video['publishedAt']=='2026-10-27T10:00:00+00:00'
 `],{cwd:new URL('../',import.meta.url),stdio:'pipe'});
 });

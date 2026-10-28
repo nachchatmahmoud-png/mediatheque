@@ -79,15 +79,18 @@ def initial_json(data, name):
 def regular_video_ids(data):
     # Both generations of regular video cards on the channel's Videos tab.
     # Shorts and reels have separate renderers, regardless of their length.
-    ids = set()
+    ids = []
+    def add(video_id):
+        if isinstance(video_id, str) and re.fullmatch(r'[\w-]{11}', video_id, re.ASCII) and video_id not in ids:
+            ids.append(video_id)
     def visit(node):
         if isinstance(node, dict):
             video = node.get('videoRenderer')
             if isinstance(video, dict) and isinstance(video.get('videoId'), str):
-                ids.add(video['videoId'])
+                add(video['videoId'])
             model = node.get('lockupViewModel')
             if isinstance(model, dict) and model.get('contentType') == 'LOCKUP_CONTENT_TYPE_VIDEO' and isinstance(model.get('contentId'), str):
-                ids.add(model['contentId'])
+                add(model['contentId'])
             for key, child in node.items():
                 if key not in ('reelItemRenderer', 'shortsLockupViewModel'):
                     visit(child)
@@ -104,29 +107,79 @@ def landscape_dimensions(data, video_id):
     player = initial_json(data, 'ytInitialPlayerResponse')
     details = player.get('videoDetails', {})
     microformat = player.get('microformat', {}).get('playerMicroformatRenderer', {})
+    status = player.get('playabilityStatus', {}).get('status')
+    if status and status != 'OK':
+        raise ValueError('La vidéo n’est pas disponible à la lecture')
     if details.get('videoId') != video_id or details.get('channelId') != CHANNEL_ID or details.get('isLiveContent') or microformat.get('isShortsEligible') is True:
         raise ValueError('Vidéo classique non confirmée')
     sizes = []
     for key in ('formats', 'adaptiveFormats'):
         for item in player.get('streamingData', {}).get(key, []):
             width, height = item.get('width'), item.get('height')
-            if isinstance(width, int) and isinstance(height, int) and 0 < height < width <= 16384:
+            if isinstance(width, int) and isinstance(height, int) and 0 < height <= 16384 and 0 < width <= 16384:
                 sizes.append((width, height))
+    # Public player responses can omit stream URLs while still declaring the
+    # video's player dimensions. Never infer the format from its thumbnail.
+    if not sizes and player.get('playabilityStatus', {}).get('status') == 'OK' and microformat.get('isShortsEligible') is False:
+        embed = microformat.get('embed', {})
+        width, height = embed.get('width'), embed.get('height')
+        if isinstance(width, int) and isinstance(height, int) and 0 < height <= 16384 and 0 < width <= 16384:
+            sizes.append((width, height))
     if not sizes:
         raise ValueError('Le format horizontal n’est pas confirmé')
-    return max(sizes, key=lambda size: size[0] * size[1])
+    width, height = max(sizes, key=lambda size: size[0] * size[1])
+    if width <= height:
+        raise ValueError('La vidéo est verticale ou carrée')
+    return width, height
+
+
+def watch_video(data, video_id, candidate=None):
+    player = initial_json(data, 'ytInitialPlayerResponse')
+    details = player.get('videoDetails', {})
+    microformat = player.get('microformat', {}).get('playerMicroformatRenderer', {})
+    width, height = landscape_dimensions(data, video_id)
+    video = record({'version': 1, 'channelId': CHANNEL_ID, 'channelUrl': CHANNEL_URL,
+                    'videoId': video_id, 'title': details.get('title') or (candidate or {}).get('title'),
+                    'publishedAt': (candidate or {}).get('publishedAt') or microformat.get('publishDate'),
+                    'width': width, 'height': height})
+    if timestamp(video['publishedAt']) > datetime.now(timezone.utc):
+        raise ValueError('La vidéo n’est pas encore publiée')
+    return video
 
 
 def latest_landscape(fetch):
-    ids = regular_video_ids(fetch(VIDEOS_URL))
-    for video in feed_videos(fetch(FEED_URL)):
-        if video['videoId'] not in ids:
+    # The feed supplies publication order independently of the channel page's
+    # changing layout. The video itself confirms its channel and actual format.
+    try:
+        candidates = feed_videos(fetch(FEED_URL))
+    except (ValueError, KeyError, TypeError, OSError, ET.ParseError) as error:
+        print('YouTube : flux officiel indisponible (' + type(error).__name__ + ')')
+        candidates = []
+    attempted = set()
+    for video in candidates:
+        video_id = video['videoId']
+        attempted.add(video_id)
+        try:
+            result = watch_video(fetch('https://www.youtube.com/watch?v=' + video_id), video_id, video)
+            print('YouTube : vidéo vérifiée depuis le flux officiel ' + video_id)
+            return result
+        except (ValueError, KeyError, TypeError, OSError) as error:
+            print('YouTube : vidéo écartée ' + video_id + ' (' + type(error).__name__ + ': ' + str(error)[:160] + ')')
+            continue
+    # A channel's feed contains only its recent uploads. Its Videos tab also
+    # covers the case where many recent Shorts have displaced regular uploads.
+    videos = []
+    for video_id in regular_video_ids(fetch(VIDEOS_URL))[:12]:
+        if video_id in attempted:
             continue
         try:
-            width, height = landscape_dimensions(fetch('https://www.youtube.com/watch?v=' + video['videoId']), video['videoId'])
-            return record({**video, 'width': width, 'height': height})
-        except (ValueError, KeyError, TypeError, OSError):
-            continue
+            videos.append(watch_video(fetch('https://www.youtube.com/watch?v=' + video_id), video_id))
+        except (ValueError, KeyError, TypeError, OSError) as error:
+            print('YouTube : vidéo écartée ' + video_id + ' (' + type(error).__name__ + ': ' + str(error)[:160] + ')')
+    if videos:
+        result = max(videos, key=lambda video: timestamp(video['publishedAt']))
+        print('YouTube : vidéo vérifiée depuis la chaîne officielle ' + result['videoId'])
+        return result
     raise ValueError('Aucune vidéo classique horizontale confirmée')
 
 
@@ -165,15 +218,15 @@ def refresh(output, current_url=None, fetch=download):
         if previous and timestamp(previous['publishedAt']) > timestamp(video['publishedAt']):
             video = dict(previous)
         print('YouTube : dernière vidéo horizontale ' + video['videoId'])
-    except (ValueError, KeyError, TypeError, OSError, ET.ParseError):
+    except (ValueError, KeyError, TypeError, OSError, ET.ParseError) as error:
         if previous is None:
             raise RuntimeError('Impossible de récupérer une vidéo horizontale valide')
         video = dict(previous)
-        print('YouTube : dernière vidéo horizontale vérifiée conservée')
+        print('::warning::YouTube : synchronisation impossible ; dernière vidéo vérifiée conservée (' + type(error).__name__ + ': ' + str(error)[:160] + ')')
     thumbnail = '/images/youtube-' + video['videoId'] + '.jpg'
     destination = output.parent / thumbnail.lstrip('/')
     if not destination.is_file():
-        sources = ['https://i.ytimg.com/vi/' + video['videoId'] + '/maxresdefault.jpg', 'https://i.ytimg.com/vi/' + video['videoId'] + '/sddefault.jpg']
+        sources = ['https://i.ytimg.com/vi/' + video['videoId'] + '/' + size + '.jpg' for size in ('maxresdefault', 'sddefault', 'hqdefault')]
         if current_url and previous and previous.get('thumbnailUrl') == thumbnail:
             sources.append(urllib.parse.urljoin(current_url, '.' + thumbnail))
         for source in sources:
