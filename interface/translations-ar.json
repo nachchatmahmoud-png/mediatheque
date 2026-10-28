@@ -297,5 +297,9 @@
   "Corbeille": "سلة المحذوفات",
   "La corbeille est vide.": "سلة المحذوفات فارغة.",
   "Restaurer": "استعادة",
-  "Annuler": "إلغاء"
+  "Annuler": "إلغاء",
+  "Pagination des publications": "تصفح صفحات المنشورات",
+  "Précédente": "السابقة",
+  "Suivante": "التالية",
+  "Page": "الصفحة"
 }

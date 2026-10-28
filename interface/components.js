@@ -248,6 +248,12 @@ function MxPublishedList({ items, onOpen, onRefresh, onEditingChange }) {
   const remove=async()=>{if(!deleting||deleteBusy)return;setDeleteBusy(true);setDeleteError('');try{const current=await MxAdministration.publication(deleting.publicationFolder);await MxAdministration.updatePublication(deleting.publicationFolder,{revision:current.revision,action:'delete'});setEditing(null);setDeleting(null);await onRefresh();}catch(exception){setDeleteError(exception.message);}finally{setDeleteBusy(false);}};
   const published = items.filter(item => item.status === 'published'&&item.language===contentLanguage);
   const filtered = published.filter(item => Ea([item.title, item.topic, ...item.keywords].join(' ')).includes(Ea(query)));
+  const [page,setPage]=O.useState(1),pageSize=10;
+  const pageCount=Math.max(1,Math.ceil(filtered.length/pageSize)),currentPage=Math.min(page,pageCount);
+  O.useEffect(()=>{setPage(1);},[query,contentLanguage]);
+  const shown=filtered.slice((currentPage-1)*pageSize,currentPage*pageSize);
+  const listRef=O.useRef(null);
+  const turnPage=next=>{setPage(Math.max(1,Math.min(pageCount,next)));listRef.current?.scrollIntoView({block:'start',behavior:'smooth'});};
   return h('section', { className: 'mx-published', 'aria-labelledby': 'published-heading' },
     h('div', { className: 'mx-section-title' }, h('div', null, h('div', { className: 'eyebrow' }, 'SUIVI DES CONTENUS'), h('h2', { id: 'published-heading' }, mxManagementClient().current().localMode?'Publications':MxTestAdministration?'Publications et essais locaux':'Publications en ligne')), h('span', { className: 'mx-count' }, mxPlural(published.length, 'publication'))),
     h('div',{className:'mx-management-languages',role:'group','aria-label':'Langue des publications'},h('button',{type:'button','aria-pressed':contentLanguage==='fr',onClick:()=>setContentLanguage('fr')},'Français'),h('button',{type:'button','aria-pressed':contentLanguage==='ar',onClick:()=>setContentLanguage('ar')},'العربية')),
@@ -257,13 +263,13 @@ function MxPublishedList({ items, onOpen, onRefresh, onEditingChange }) {
     editing&&h(MxPublicationCorrection,{key:editing.publicationFolder,item:editing,onClose:()=>setEditing(null),onRefresh}),
     published.length ? h(O.Fragment, null,
       h('label', { className: 'mx-management-search' }, 'Rechercher une publication', h('input', { type: 'search', value: query, onChange: event => setQuery(event.target.value), placeholder: 'Titre, thème ou mot-clé…' })),
-      h('div', { className: 'mx-published-list' }, filtered.slice(0, 30).map(item => h('article', { key: item.id },
+      h('div', { className: 'mx-published-list',ref:listRef }, shown.map(item => h('article', { key: item.id },
         h('div', null, h('small', null, nu[item.type], ' · ', Ya(item.date), item.localOnly?' · Ce navigateur':item.testOnly?' · Contenu de test':''), h('strong', { dir: 'auto' }, item.title)),
         h('div', null, h('button', { className: 'button secondary', onClick: () => onOpen(item) }, 'Consulter'),
-          item.publicationFolder&&h('button',{className:'button secondary',onClick:()=>setEditing(item)},'Modifier'),item.publicationFolder&&h('button',{type:'button',className:'button secondary',disabled:deleteBusy,onClick:()=>{setDeleteError('');setDeleting(item);}},'Supprimer'))))),
+          item.publicationFolder&&h('button',{className:'button secondary',onClick:()=>setEditing(item)},'Modifier'),item.publicationFolder&&h('button',{type:'button',className:'button secondary',disabled:deleteBusy,onClick:()=>{setDeleteError('');setDeleting(item);}},h(MxTrashIcon,{size:16}),'Supprimer'))))),
 
       !filtered.length && h('p', { role: 'status' }, 'Aucune publication ne correspond à ces termes.'),
-      filtered.length > 30 && h('p', null, 'Les 30 premiers résultats sont affichés. Précisez votre recherche.'))
+      filtered.length>0&&h('nav',{'aria-label':mxT('Pagination des publications'),className:'mx-management-pagination',style:{display:'flex',flexWrap:'wrap',alignItems:'center',justifyContent:'center',gap:'16px',marginBlock:'24px'}},h('button',{type:'button',className:'button secondary',disabled:currentPage===1,onClick:()=>turnPage(currentPage-1)},'Précédente'),h('span',{'aria-live':'polite'},mxT('Page')+' '+currentPage+' / '+pageCount+' · '+filtered.length+' '+mxT('publications')),h('button',{type:'button',className:'button secondary',disabled:currentPage===pageCount,onClick:()=>turnPage(currentPage+1)},'Suivante')))
       : h('p', { className: 'mx-management-empty' }, 'Aucun contenu n’est encore publié. Préparez votre première publication ci-dessus.'));
 }
 
@@ -310,4 +316,8 @@ function MxPublicationTrash({onRefresh}){
  const load=async()=>{setError('');try{setItems((await MxAdministration.trash()).items);}catch(exception){setError(exception.message);}};
  const restore=async item=>{if(busy)return;setBusy(true);setError('');try{await MxAdministration.updatePublication(item.folder,{revision:item.revision,action:'restore'});await load();await onRefresh();}catch(exception){setError(exception.message);}finally{setBusy(false);}};
  return h('section',null,h('button',{type:'button',className:'button secondary','aria-expanded':open,onClick:()=>{setOpen(!open);if(!open)load();}},'Corbeille'),open&&h('div',null,error&&h('p',{role:'alert',className:'gh-error'},error),!items.length&&!error&&h('p',null,'La corbeille est vide.'),...items.map(item=>h('article',{key:item.folder},h('strong',{dir:'auto'},item.title),h('button',{type:'button',className:'button secondary',disabled:busy,onClick:()=>restore(item)},'Restaurer')))));
+}
+
+function MxTrashIcon({size=16}){
+ return mxElement('svg',{width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.8,strokeLinecap:'round',strokeLinejoin:'round','aria-hidden':true},mxElement('path',{d:'M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6'}));
 }
