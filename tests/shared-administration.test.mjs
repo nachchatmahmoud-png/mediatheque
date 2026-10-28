@@ -261,3 +261,20 @@ test('video upload accepts 50 MiB and rejects any additional byte',async()=>{
  const accepted=await value.request('/api/uploads?name=video.mp4',{method:'POST',body:bytes});assert.equal(accepted.status,201,JSON.stringify(accepted.body));assert.equal(accepted.body.size,bytes.length);
  const rejected=await value.request('/api/uploads?name=video.mp4',{method:'POST',body:new Uint8Array(1),headers:{'Content-Length':String(bytes.length+1)}});assert.equal(rejected.status,413);
 });
+
+test('deletion removes both editions, retains files and can be restored with revision checks',async()=>{
+ const value=setup({openPublishing:true}),folder='publication-trash-test';
+ const record={version:1,status:'published',title:'Album conservé',date:'2026-10-28',topic:'Habitat et logement',keywords:['Aide directe au logement'],language:'fr',photos:[{file:'photos/photo.png',caption:''}],cover:'photos/photo.png',translations:{fr:{title:'Album conservé',captions:['']},ar:{title:'ألبوم محفوظ',captions:['']}}};
+ value.sqlite.prepare('INSERT INTO publications(folder,record,assets,created_at) VALUES(?,?,?,?)').run(folder,JSON.stringify(record),'{"photos/photo.png":{"key":"retained","name":"photo.png"}}',new Date().toISOString());value.files.set('retained',new Uint8Array([1,2,3]));
+ const url='/api/publications/'+folder,opened=await value.request(url);assert.equal(opened.status,200);
+ assert.equal((await value.request('/api/catalogue')).body.items.length,2);
+ assert.equal((await value.request(url,{method:'POST',body:{action:'delete',revision:'wrong'}})).status,409);
+ const deleted=await value.request(url,{method:'POST',body:{action:'delete',revision:opened.body.revision}});assert.equal(deleted.status,200);assert.equal(deleted.body.deleted,true);
+ assert.equal((await value.request('/api/catalogue')).body.items.length,0);
+ assert.equal(value.files.has('retained'),true);assert.equal(value.sqlite.prepare('SELECT COUNT(*) AS count FROM publications').get().count,1);
+ const trash=await value.request('/api/trash');assert.equal(trash.body.items.length,1);assert.equal(trash.body.items[0].folder,folder);
+ assert.equal((await value.request('/api/trash',{origin:'https://untrusted.example'})).status,403);
+ assert.equal((await value.request(url,{method:'POST',body:{action:'restore',revision:opened.body.revision}})).status,409);
+ const restored=await value.request(url,{method:'POST',body:{action:'restore',revision:trash.body.items[0].revision}});assert.equal(restored.status,200);assert.equal(restored.body.restored,true);
+ assert.equal((await value.request('/api/catalogue')).body.items.length,2);assert.equal((await value.request('/api/trash')).body.items.length,0);
+});

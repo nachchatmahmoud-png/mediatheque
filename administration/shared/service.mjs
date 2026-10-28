@@ -132,6 +132,12 @@ export function createSharedHandler(env){
    if(path.startsWith('/api/media/')&&['GET','HEAD'].includes(request.method))return await media(store,request,url);
    if(origin!==portalOrigin)return normal(request);
    if(request.method==='OPTIONS')return normal(request);
+   if(path==='/api/trash'&&request.method==='GET'){
+    if(!openPublishing)await store.authenticate(request);
+    const rows=await store.db.prepare('SELECT folder,record FROM publications ORDER BY created_at DESC LIMIT 2000').all();
+    const items=[];for(const row of rows.results){const record=JSON.parse(row.record);if(record.deletedAt)items.push({folder:row.folder,title:record.translations?.fr?.title||record.title,revision:await hash(row.record)});}
+    return json({items},200,origin);
+   }
    const editMatch=path.match(/^\/api\/publications\/([a-z0-9-]{3,80})$/);
    if(editMatch&&['GET','POST'].includes(request.method)){
     if(!openPublishing){const account=await store.authenticate(request);if(account.requiresPasswordChange)throw new ServiceError('Choisissez votre mot de passe personnel.',403);}
@@ -141,6 +147,15 @@ export function createSharedHandler(env){
     if(request.method==='GET')return json({record:JSON.parse(row.record),revision},200,origin);
     const input=await body(request,512000);
     if(input.revision!==revision)throw new ServiceError('Cette publication a été modifiée ailleurs. Rechargez sa fiche avant de réessayer.',409);
+    if(['delete','restore'].includes(input.action)){
+     const record=JSON.parse(row.record);
+     if(input.action==='delete'){record.status='draft';record.deletedAt=new Date().toISOString();}
+     else {if(!record.deletedAt)throw new ServiceError('Ce contenu ne se trouve pas dans la corbeille.',409);record.status='published';delete record.deletedAt;publicationToCatalogue(record,folder);}
+     const result=await store.db.prepare('UPDATE publications SET record=? WHERE folder=? AND record=?').bind(JSON.stringify(record),folder,row.record).run();
+     if(!result.meta.changes)throw new ServiceError('Le contenu a changé. Actualisez avant de réessayer.',409);
+     return json({ok:true,deleted:input.action==='delete',restored:input.action==='restore'},200,origin);
+    }
+    if(JSON.parse(row.record).deletedAt)throw new ServiceError('Restaurez ce contenu depuis la corbeille avant de le modifier.',409);
     let record;try{record=editPublicationRecord(JSON.parse(row.record),input.changes||{},folder);}catch(error){if(error instanceof ServiceError)throw error;throw new ServiceError(error.message||'Vérifiez les renseignements.');}
     const result=await store.db.prepare('UPDATE publications SET record=? WHERE folder=? AND record=?').bind(JSON.stringify(record),folder,row.record).run();
     if(!result.meta.changes)throw new ServiceError('Une autre modification vient d’être enregistrée. Rechargez la fiche.',409);

@@ -137,5 +137,6 @@ const MxAdministration=(()=>{
   }
   const publication=folder=>{requireAccess();return request('/api/publications/'+encodeURIComponent(folder));};
   const updatePublication=async(folder,input)=>{requireAccess();const result=await request('/api/publications/'+encodeURIComponent(folder),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(input)});er=undefined;return result;};
-  return {current,session,register,login,logout,changePassword,requireAccess,stage,publish,catalogue,accounts,invite,publication,updatePublication};
+  const trash=()=>{requireAccess();return request('/api/trash');};
+  return {current,session,register,login,logout,changePassword,requireAccess,stage,publish,catalogue,accounts,invite,publication,updatePublication,trash};
 })();

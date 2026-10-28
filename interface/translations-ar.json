@@ -288,5 +288,14 @@
   "Miniature actuelle de la vidéo": "الصورة المصغرة الحالية للفيديو",
   "Ouvrir la photographie": "فتح الصورة",
   "Photographie": "صورة",
-  "Ouvrir le PDF déjà publié": "فتح ملف PDF المنشور"
+  "Ouvrir le PDF déjà publié": "فتح ملف PDF المنشور",
+  "Supprimer": "حذف",
+  "Supprimer ce contenu ?": "حذف هذا المحتوى؟",
+  "Confirmer la suppression": "تأكيد الحذف",
+  "Suppression…": "جار الحذف…",
+  "Le contenu sera retiré des pages française et arabe. Vous pourrez le restaurer depuis la corbeille.": "سيتم سحب المحتوى من الصفحتين الفرنسية والعربية. يمكن استعادته من سلة المحذوفات.",
+  "Corbeille": "سلة المحذوفات",
+  "La corbeille est vide.": "سلة المحذوفات فارغة.",
+  "Restaurer": "استعادة",
+  "Annuler": "إلغاء"
 }

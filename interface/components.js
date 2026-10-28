@@ -242,18 +242,25 @@ function MxPublishedList({ items, onOpen, onRefresh, onEditingChange }) {
   const [editing,setEditing]=O.useState(()=>{const folder=new URLSearchParams(window.location.search).get('edit');return items.find(item=>item.publicationFolder===folder)||null;});
   O.useEffect(()=>{onEditingChange?.(!!editing);},[!!editing,onEditingChange]);
   const [contentLanguage,setContentLanguage]=O.useState('fr');
+  const [deleting,setDeleting]=O.useState(null),[deleteBusy,setDeleteBusy]=O.useState(false),[deleteError,setDeleteError]=O.useState('');
+  const deleteDialog=O.useRef(null);
+  O.useEffect(()=>{if(deleting){deleteDialog.current?.scrollIntoView({block:'center',behavior:'smooth'});deleteDialog.current?.querySelector('button')?.focus({preventScroll:true});}},[deleting?.id]);
+  const remove=async()=>{if(!deleting||deleteBusy)return;setDeleteBusy(true);setDeleteError('');try{const current=await MxAdministration.publication(deleting.publicationFolder);await MxAdministration.updatePublication(deleting.publicationFolder,{revision:current.revision,action:'delete'});setEditing(null);setDeleting(null);await onRefresh();}catch(exception){setDeleteError(exception.message);}finally{setDeleteBusy(false);}};
   const published = items.filter(item => item.status === 'published'&&item.language===contentLanguage);
   const filtered = published.filter(item => Ea([item.title, item.topic, ...item.keywords].join(' ')).includes(Ea(query)));
   return h('section', { className: 'mx-published', 'aria-labelledby': 'published-heading' },
     h('div', { className: 'mx-section-title' }, h('div', null, h('div', { className: 'eyebrow' }, 'SUIVI DES CONTENUS'), h('h2', { id: 'published-heading' }, mxManagementClient().current().localMode?'Publications':MxTestAdministration?'Publications et essais locaux':'Publications en ligne')), h('span', { className: 'mx-count' }, mxPlural(published.length, 'publication'))),
     h('div',{className:'mx-management-languages',role:'group','aria-label':'Langue des publications'},h('button',{type:'button','aria-pressed':contentLanguage==='fr',onClick:()=>setContentLanguage('fr')},'Français'),h('button',{type:'button','aria-pressed':contentLanguage==='ar',onClick:()=>setContentLanguage('ar')},'العربية')),
+    h(MxPublicationTrash,{onRefresh}),
+    deleteError&&h('p',{className:'gh-error',role:'alert'},deleteError),
+    deleting&&h('section',{ref:deleteDialog,role:'alertdialog','aria-label':mxT('Confirmer la suppression'),className:'gh-form'},h('h3',null,'Supprimer ce contenu ?'),h('p',{dir:'auto'},deleting.title),h('p',null,'Le contenu sera retiré des pages française et arabe. Vous pourrez le restaurer depuis la corbeille.'),h('button',{type:'button',className:'button secondary',disabled:deleteBusy,onClick:()=>setDeleting(null)},'Annuler'),h('button',{type:'button',className:'button primary',disabled:deleteBusy,onClick:remove},deleteBusy?'Suppression…':'Confirmer la suppression')),
     editing&&h(MxPublicationCorrection,{key:editing.publicationFolder,item:editing,onClose:()=>setEditing(null),onRefresh}),
     published.length ? h(O.Fragment, null,
       h('label', { className: 'mx-management-search' }, 'Rechercher une publication', h('input', { type: 'search', value: query, onChange: event => setQuery(event.target.value), placeholder: 'Titre, thème ou mot-clé…' })),
       h('div', { className: 'mx-published-list' }, filtered.slice(0, 30).map(item => h('article', { key: item.id },
         h('div', null, h('small', null, nu[item.type], ' · ', Ya(item.date), item.localOnly?' · Ce navigateur':item.testOnly?' · Contenu de test':''), h('strong', { dir: 'auto' }, item.title)),
         h('div', null, h('button', { className: 'button secondary', onClick: () => onOpen(item) }, 'Consulter'),
-          item.publicationFolder&&h('button',{className:'button secondary',onClick:()=>setEditing(item)},'Modifier'))))),
+          item.publicationFolder&&h('button',{className:'button secondary',onClick:()=>setEditing(item)},'Modifier'),item.publicationFolder&&h('button',{type:'button',className:'button secondary',disabled:deleteBusy,onClick:()=>{setDeleteError('');setDeleting(item);}},'Supprimer'))))),
 
       !filtered.length && h('p', { role: 'status' }, 'Aucune publication ne correspond à ces termes.'),
       filtered.length > 30 && h('p', null, 'Les 30 premiers résultats sont affichés. Précisez votre recherche.'))
@@ -296,4 +303,11 @@ function MxExistingPublicationMedia({item}){
  item.type==='video'&&h(O.Fragment,null,item.thumbnailUrl&&h('figure',null,h('img',{src:je(item.thumbnailUrl),alt:mxT('Miniature actuelle de la vidéo'),style:{display:'block',maxWidth:'320px',width:'100%',maxHeight:'200px',objectFit:'contain'}}),h('figcaption',null,mxT('Miniature actuelle de la vidéo'))),h(MxVideoReader,{item})),
  item.type==='photo'&&h('div',{style:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))',gap:'16px'}},...item.photos.map((photo,index)=>h('figure',{key:photo.url,style:{margin:0}},h('a',{href:je(photo.url),target:'_blank',rel:'noreferrer','aria-label':mxT('Ouvrir la photographie')+' '+(index+1)},h('img',{src:je(photo.url),alt:photo.caption||mxT('Photographie')+' '+(index+1),loading:'lazy',style:{width:'100%',height:'160px',objectFit:'contain',background:'#f5f7f3',borderRadius:'8px'}})),h('figcaption',null,(index+1)+' / '+item.photos.length,photo.caption?' · '+photo.caption:'')))),
  item.type==='press'&&item.fileUrl&&h('a',{className:'button secondary',href:je(item.fileUrl),target:'_blank',rel:'noreferrer'},mxT('Ouvrir le PDF déjà publié')));
+}
+
+function MxPublicationTrash({onRefresh}){
+ const h=mxElement,[items,setItems]=O.useState([]),[error,setError]=O.useState(''),[busy,setBusy]=O.useState(false),[open,setOpen]=O.useState(false);
+ const load=async()=>{setError('');try{setItems((await MxAdministration.trash()).items);}catch(exception){setError(exception.message);}};
+ const restore=async item=>{if(busy)return;setBusy(true);setError('');try{await MxAdministration.updatePublication(item.folder,{revision:item.revision,action:'restore'});await load();await onRefresh();}catch(exception){setError(exception.message);}finally{setBusy(false);}};
+ return h('section',null,h('button',{type:'button',className:'button secondary','aria-expanded':open,onClick:()=>{setOpen(!open);if(!open)load();}},'Corbeille'),open&&h('div',null,error&&h('p',{role:'alert',className:'gh-error'},error),!items.length&&!error&&h('p',null,'La corbeille est vide.'),...items.map(item=>h('article',{key:item.folder},h('strong',{dir:'auto'},item.title),h('button',{type:'button',className:'button secondary',disabled:busy,onClick:()=>restore(item)},'Restaurer')))));
 }
