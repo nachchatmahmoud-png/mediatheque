@@ -12,8 +12,10 @@ Ce plan constitue un choix éditorial pour la médiathèque. Il ne se présente 
 6. Formation et recherche dans les métiers du territoire.
 7. Interventions et questions parlementaires.
 8. Coopération et participation internationales.
+9. Affaires juridiques et réglementation.
+10. Vie institutionnelle.
 
-Le référentiel comporte 96 descripteurs français, avec un libellé arabe et des synonymes ou sigles de recherche. Sa source unique est `app/lib/keyword-catalog.ts`, réutilisée par le navigateur et le service de publication.
+Le référentiel comporte 106 descripteurs français, avec un libellé arabe et des synonymes ou sigles de recherche. Sa source unique est `app/lib/keyword-catalog.ts`, réutilisée par le navigateur et le service de publication.
 
 ## Règles d’indexation
 
@@ -23,7 +25,7 @@ Le référentiel comporte 96 descripteurs français, avec un libellé arabe et d
 - La rubrique Interventions et questions parlementaires rassemble les interventions, réponses aux questions orales et écrites, travaux en commission, présentations budgétaires et examens des projets de loi. Compléter les descripteurs parlementaires par les sujets traités : par exemple Réponses aux questions orales et Aide directe au logement. Un contenu peut aussi être classé dans son domaine sectoriel et recevoir un descripteur parlementaire complémentaire.
 - La rubrique Coopération et participation internationales couvre les conférences, forums et salons internationaux, le Forum urbain mondial, les coopérations bilatérale, multilatérale et Sud-Sud, les partenariats, visites officielles à l’étranger et accords de coopération. Compléter ces descripteurs par le sujet sectoriel abordé. Une rencontre strictement nationale relève de son domaine sectoriel ; une rencontre internationale peut se tenir au Maroc ou à l’étranger.
 - Les mentions génériques de rencontre, convention ou visite ne constituent pas, à elles seules, un sujet documentaire.
-- Exclure les étiquettes sans objet précis, comme Vie institutionnelle, Gouvernance ou Réunion de coordination.
+- Réserver le domaine Vie institutionnelle aux contenus concernant le fonctionnement et la vie du ministère. Employer des descripteurs plus précis pour indexer ces contenus, comme Passation de pouvoirs, Prise de fonctions ou Conseils de surveillance. Le domaine ne remplace pas un mot-clé.
 - Conserver les noms de lieux dans les métadonnées géographiques lorsqu’elles sont disponibles, sans les confondre avec un sujet.
 - Faire sélectionner les descripteurs par la personne qui décrit le contenu. Les suggestions ne sont jamais publiées automatiquement.
 - Enregistrer les descripteurs choisis sans les remplacer par la rubrique. Employer le même identifiant de sujet pour les deux versions d’une vidéo, d’un album photo ou d’un communiqué ; afficher le libellé correspondant à la langue de consultation.
@@ -40,7 +42,7 @@ Les noms de rencontres internationales et les participations vérifiées sont d�
 - [INAU, statut, tutelle, formation et recherche](https://inau.ac.ma/presentation-de-linau/).
 - [INAU, offre de formations](https://inau.ac.ma/loffre-de-formations/).
 
-Les sources permettent de situer les champs et les exemples d’action publique. Le regroupement en six domaines et deux rubriques transversales et le choix des libellés relèvent du travail éditorial de classement. Aucune référence juridique non vérifiée n’est utilisée pour leur donner une portée réglementaire.
+Les sources permettent de situer les champs et les exemples d’action publique. Le regroupement en domaines et rubriques transversales et le choix des libellés relèvent du travail éditorial de classement. Aucune référence juridique non vérifiée n’est utilisée pour leur donner une portée réglementaire.
 
 
 ## Extension juridique et Salon International du Bâtiment — 28 octobre 2026
@@ -56,3 +58,23 @@ Le mot-clé « Salon International du Bâtiment » est rattaché à « Habitat e
 ## Compléments Habitat et logement — 28 octobre 2026
 
 Ajout des descripteurs « Aménagement urbain et foncier » (التهيئة الحضرية والعقارية), « Production de logements sociaux » (إنتاج السكن الاجتماعي) et « Développement du monde rural » (تنمية العالم القروي). « Résorption de l’habitat insalubre » et « Promotion immobilière » étaient déjà présents dans ce domaine et sont conservés sans doublon. Les catégories voisines et les publications existantes ne sont pas renommées.
+
+
+## Vie institutionnelle — validation éditoriale du 28 octobre 2026
+
+Le domaine « Vie institutionnelle » (الحياة المؤسساتية) et les dix descripteurs ci-dessous ont été validés par le responsable de la médiathèque. Ils sont disponibles dans le formulaire, la modification, les filtres et la recherche en français et en arabe. Cette extension ne reclassifie pas automatiquement les publications existantes.
+
+| Français | Arabe |
+|---|---|
+| Passation de pouvoirs | تسليم السلط |
+| Prise de fonctions | تولي المهام |
+| Nominations aux postes de responsabilité | التعيين في مناصب المسؤولية |
+| Conseils d’administration | مجالس الإدارة |
+| Conseils de surveillance | مجالس الرقابة |
+| Réunions de coordination | اجتماعات التنسيق |
+| Réorganisation des services | إعادة تنظيم المصالح |
+| Dialogue social | الحوار الاجتماعي |
+| Bilan de l’action ministérielle | حصيلة العمل الوزاري |
+| Distinctions et hommages | التكريم والتنويه |
+
+Pour une cérémonie de passation de pouvoirs, retenir le domaine Vie institutionnelle et les mots-clés Passation de pouvoirs et Prise de fonctions lorsque le contenu les justifie.

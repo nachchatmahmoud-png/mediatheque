@@ -1,7 +1,7 @@
 // Editorial classification by subject. Provenance and indexing rules: docs/CLASSEMENT_DOCUMENTAIRE.md.
 export type Term={label:string;arabic:string;topic:string;aliases:string[]};
-export const documentaryTopics:string[]=["Habitat et logement", "Politique de la ville et renouvellement urbain", "Urbanisme et planification urbaine", "Aménagement et développement du territoire", "Architecture et patrimoine bâti", "Formation et recherche dans les métiers du territoire", "Interventions et questions parlementaires", "Coopération et participation internationales", "Affaires juridiques et réglementation"];
-export const documentaryTopicTranslations:Record<string,string>={"Habitat et logement": "السكن والإسكان", "Politique de la ville et renouvellement urbain": "سياسة المدينة والتجديد الحضري", "Urbanisme et planification urbaine": "التعمير والتخطيط الحضري", "Aménagement et développement du territoire": "إعداد التراب والتنمية الترابية", "Architecture et patrimoine bâti": "الهندسة المعمارية والتراث المبني", "Formation et recherche dans les métiers du territoire": "التكوين والبحث في مهن إعداد التراب والتعمير", "Interventions et questions parlementaires": "المداخلات والأسئلة البرلمانية", "Coopération et participation internationales": "التعاون والمشاركة الدولية", "Affaires juridiques et réglementation": "الشؤون القانونية والتنظيم"};
+export const documentaryTopics:string[]=["Habitat et logement", "Politique de la ville et renouvellement urbain", "Urbanisme et planification urbaine", "Aménagement et développement du territoire", "Architecture et patrimoine bâti", "Formation et recherche dans les métiers du territoire", "Interventions et questions parlementaires", "Coopération et participation internationales", "Affaires juridiques et réglementation", "Vie institutionnelle"];
+export const documentaryTopicTranslations:Record<string,string>={"Habitat et logement": "السكن والإسكان", "Politique de la ville et renouvellement urbain": "سياسة المدينة والتجديد الحضري", "Urbanisme et planification urbaine": "التعمير والتخطيط الحضري", "Aménagement et développement du territoire": "إعداد التراب والتنمية الترابية", "Architecture et patrimoine bâti": "الهندسة المعمارية والتراث المبني", "Formation et recherche dans les métiers du territoire": "التكوين والبحث في مهن إعداد التراب والتعمير", "Interventions et questions parlementaires": "المداخلات والأسئلة البرلمانية", "Coopération et participation internationales": "التعاون والمشاركة الدولية", "Affaires juridiques et réglementation": "الشؤون القانونية والتنظيم", "Vie institutionnelle": "الحياة المؤسساتية"};
 export const keywordCatalog:Term[]=[
  {
   "label": "Aide directe au logement",
@@ -866,6 +866,96 @@ export const keywordCatalog:Term[]=[
   "aliases": [
    "تنمية العالم القروي",
    "Développement rural"
+  ]
+ }
+,
+
+ {
+  "label": "Passation de pouvoirs",
+  "arabic": "تسليم السلط",
+  "topic": "Vie institutionnelle",
+  "aliases": [
+   "تسليم السلط",
+   "Passation des pouvoirs",
+   "تسليم السلطات"
+  ]
+ },
+ {
+  "label": "Prise de fonctions",
+  "arabic": "تولي المهام",
+  "topic": "Vie institutionnelle",
+  "aliases": [
+   "تولي المهام",
+   "Prise de fonction",
+   "تولي المسؤوليات"
+  ]
+ },
+ {
+  "label": "Nominations aux postes de responsabilité",
+  "arabic": "التعيين في مناصب المسؤولية",
+  "topic": "Vie institutionnelle",
+  "aliases": [
+   "التعيين في مناصب المسؤولية",
+   "Nomination aux postes de responsabilité"
+  ]
+ },
+ {
+  "label": "Conseils d’administration",
+  "arabic": "مجالس الإدارة",
+  "topic": "Vie institutionnelle",
+  "aliases": [
+   "مجالس الإدارة",
+   "Conseil d’administration"
+  ]
+ },
+ {
+  "label": "Conseils de surveillance",
+  "arabic": "مجالس الرقابة",
+  "topic": "Vie institutionnelle",
+  "aliases": [
+   "مجالس الرقابة",
+   "Conseil de surveillance"
+  ]
+ },
+ {
+  "label": "Réunions de coordination",
+  "arabic": "اجتماعات التنسيق",
+  "topic": "Vie institutionnelle",
+  "aliases": [
+   "اجتماعات التنسيق",
+   "Réunion de coordination"
+  ]
+ },
+ {
+  "label": "Réorganisation des services",
+  "arabic": "إعادة تنظيم المصالح",
+  "topic": "Vie institutionnelle",
+  "aliases": [
+   "إعادة تنظيم المصالح"
+  ]
+ },
+ {
+  "label": "Dialogue social",
+  "arabic": "الحوار الاجتماعي",
+  "topic": "Vie institutionnelle",
+  "aliases": [
+   "الحوار الاجتماعي"
+  ]
+ },
+ {
+  "label": "Bilan de l’action ministérielle",
+  "arabic": "حصيلة العمل الوزاري",
+  "topic": "Vie institutionnelle",
+  "aliases": [
+   "حصيلة العمل الوزاري"
+  ]
+ },
+ {
+  "label": "Distinctions et hommages",
+  "arabic": "التكريم والتنويه",
+  "topic": "Vie institutionnelle",
+  "aliases": [
+   "التكريم والتنويه"
   ]
  }
 

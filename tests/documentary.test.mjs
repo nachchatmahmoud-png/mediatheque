@@ -10,7 +10,7 @@ const base={requestId:'12345678-1234-4234-8234-123456789abc',type:'press',title:
 const account='00000000-0000-4000-8000-000000000001';
 
 test('documentary domains describe subjects and each descriptor has an Arabic label',()=>{
- for(const context of ['Vie institutionnelle','Parlement','Coopération et partenariats'])assert.equal(documentaryTopics.includes(context),false);
+ for(const context of ['Parlement','Coopération et partenariats'])assert.equal(documentaryTopics.includes(context),false);
  for(const generic of ['Visite de terrain','Réunion de coordination','Gouvernance','Communication institutionnelle'])assert.equal(keywordCatalog.some(term=>term.label===generic),false);
  assert.equal(new Set(keywordCatalog.map(term=>term.label)).size,keywordCatalog.length);
  assert.ok(keywordCatalog.every(term=>documentaryTopics.includes(term.topic)&&/\p{Script=Arabic}/u.test(documentaryTranslations[term.label])));
@@ -22,7 +22,7 @@ test('synonyms and Arabic terms resolve to one descriptor, while broad labels ar
  assert.equal(preferredKeywordTopic(['VSB','Logement social']),housing);
  assert.throws(()=>validateDocumentaryKeywords(housing,[]),/1 à 8/);
  assert.throws(()=>validateDocumentaryKeywords(housing,[housing]),/référentiel/);
- assert.throws(()=>validateDocumentaryKeywords(housing,['Réunion de coordination']),/référentiel/);
+ assert.throws(()=>validateDocumentaryKeywords(housing,['Réunion de coordination']),/domaine principal/);
  assert.throws(()=>validateDocumentaryKeywords(housing,['SDAU']),/domaine principal/);
  assert.deepEqual(validateDocumentaryKeywords(housing,['Logement social','SDAU']),['Logement social','Schéma directeur d’aménagement urbain']);
  assert.throws(()=>validateDocumentaryKeywords(urbanism,keywordCatalog.filter(term=>term.topic===urbanism).slice(0,9).map(term=>term.label)),/1 à 8/);
@@ -78,4 +78,20 @@ test('legal classification and SIB are searchable in French and Arabic',()=>{
  assert.equal(canonicalKeyword('المعرض الدولي للبناء'),'Salon International du Bâtiment');
  assert.deepEqual(validateDocumentaryKeywords('Habitat et logement',['SIB']),['Salon International du Bâtiment']);
  assert.deepEqual(validateDocumentaryKeywords(topic,['اليقظة القانونية']),['Veille juridique']);
+});
+
+
+test('institutional life provides the approved bilingual descriptors and supports Arabic search',async()=>{
+ const topic='Vie institutionnelle';
+ assert.ok(documentaryTopics.includes(topic));
+ assert.equal(documentaryTranslations[topic],'الحياة المؤسساتية');
+ const terms=keywordCatalog.filter(term=>term.topic===topic);assert.equal(terms.length,10);
+ for(const term of terms){assert.equal(canonicalKeyword(term.arabic),term.label);assert.deepEqual(validateDocumentaryKeywords(topic,[term.arabic]),[term.label]);}
+ assert.deepEqual(validateDocumentaryKeywords(topic,['تسليم السلط','تولي المهام']),['Passation de pouvoirs','Prise de fonctions']);
+ assert.throws(()=>validateDocumentaryKeywords(topic,[topic]),/référentiel/);
+ const prepared=await preparePublication({...base,topic,keywords:['Passation de pouvoirs','Prise de fonctions'],translations:{fr:{title:'Cérémonie de passation de pouvoirs',content:'Prise de fonctions des responsables.'},ar:{title:'مراسم تسليم السلط',content:'تولي المسؤولين مهامهم.'}}},account,async()=>null);
+ const catalogue=publicationToCatalogue(prepared.record,prepared.folder);
+ assert.equal(catalogue.items.length,2);
+ for(const item of catalogue.items){assert.equal(item.topic,topic);assert.deepEqual(item.keywords,['Passation de pouvoirs','Prise de fonctions']);}
+ for(const query of ['Passation de pouvoirs','تسليم السلط','تولي المهام'])assert.equal(filterMedia(catalogue.items,{type:'all',query,year:'',topic:'',sort:'newest'}).length,2);
 });
