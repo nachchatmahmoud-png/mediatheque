@@ -236,10 +236,11 @@ function MxPublicationPreview({ type, title, date, topic, keywords=[], descripti
       h('button', { className: 'button primary', onClick: onClose }, 'Revenir au formulaire')));
 }
 
-function MxPublishedList({ items, onOpen, onRefresh }) {
+function MxPublishedList({ items, onOpen, onRefresh, onEditingChange }) {
   const h = mxElement;
   const [query, setQuery] = O.useState('');
   const [editing,setEditing]=O.useState(()=>{const folder=new URLSearchParams(window.location.search).get('edit');return items.find(item=>item.publicationFolder===folder)||null;});
+  O.useEffect(()=>{onEditingChange?.(!!editing);},[!!editing,onEditingChange]);
   const [contentLanguage,setContentLanguage]=O.useState('fr');
   const published = items.filter(item => item.status === 'published'&&item.language===contentLanguage);
   const filtered = published.filter(item => Ea([item.title, item.topic, ...item.keywords].join(' ')).includes(Ea(query)));

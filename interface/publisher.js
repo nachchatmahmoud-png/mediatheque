@@ -39,6 +39,7 @@ function MxAdminLogin({auth,onAuthenticated}) {
 function nf({auth,isAdmin,loading,error,onBack,onLogout,onRefresh,onToast,onPublished,items=[],onPreview}) {
   const h=mxElement;
   const [activeType,setActiveType]=O.useState('video');
+  const [editingExisting,setEditingExisting]=O.useState(false);
   const [busy,setBusy]=O.useState(false);
   const [resetError,setResetError]=O.useState('');
   const resetTests=async()=>{if(busy)return;setBusy(true);setResetError('');try{await Ho('/api/test/reset',{method:'POST'});await onRefresh();onToast('Les contenus de test de ce navigateur ont été effacés.');}catch(exception){setResetError(exception.message);}finally{setBusy(false);}};
@@ -52,10 +53,10 @@ function nf({auth,isAdmin,loading,error,onBack,onLogout,onRefresh,onToast,onPubl
       h('nav',{className:'mx-workspace-nav','aria-label':'Administration'},h('span',{className:'active'},h(Ta,{size:17}),'Publications'),!auth.testMode&&!auth.localMode&&!auth.sharedMode&&h('a',{href:'https://github.com/'+MX_SERVICE.repository+'/actions',target:'_blank',rel:'noreferrer'},'Suivi de la mise en ligne',h(Oe,{size:14})),auth.canManageAccess&&h('a',{href:auth.sharedMode?'#mx-shared-accounts':'https://github.com/'+MX_SERVICE.repository+'/settings/access',...(auth.sharedMode?{}:{target:'_blank',rel:'noreferrer'})},'Gérer les accès',h(Oe,{size:14}))),
       auth.sharedMode&&h(MxLocalImport,{auth,onRefresh}),
       auth.canManageAccess&&auth.sharedMode&&h(MxSharedAccounts,{}),
-      h('h2',{className:'mx-content-choice-title'},'Quel contenu souhaitez-vous ajouter ?'),
+      h('div',{hidden:editingExisting},h('h2',{className:'mx-content-choice-title'},'Quel contenu souhaitez-vous ajouter ?'),
       h('div',{className:'transfer-shortcuts gh-type-choices',role:'group','aria-label':'Type de contenu à ajouter'},...yL.map(({type,Icon})=>h('button',{key:type,type:'button',disabled:busy,className:'transfer-shortcut gh-type-card '+type+(activeType===type?' selected':''),'aria-label':MX_PUBLICATION_FORMS[type].label,'aria-pressed':activeType===type,'aria-controls':'mx-editor-'+type,onClick:()=>setActiveType(type)},h('span',{className:'transfer-shortcut-icon'},h(Icon,{size:26})),h('span',{className:'mx-content-choice-copy'},h('strong',null,MX_PUBLICATION_FORMS[type].label),h('small',null,MX_PUBLICATION_FORMS[type].hint)),activeType===type&&h(zl,{size:20})))),
-      ...['video','photo','press'].map(type=>h('div',{key:type,id:'mx-editor-'+type,className:'mx-content-editor',hidden:activeType!==type},h(MxPublicationEditor,{type,auth,busy,setBusy,onToast,onPublished}))),
-      h(MxPublishedList,{items,onOpen:onPreview,onRefresh})));
+      ...['video','photo','press'].map(type=>h('div',{key:type,id:'mx-editor-'+type,className:'mx-content-editor',hidden:activeType!==type},h(MxPublicationEditor,{type,auth,busy,setBusy,onToast,onPublished})))),
+      h(MxPublishedList,{items,onOpen:onPreview,onRefresh,onEditingChange:setEditingExisting})));
 }
 
 function MxPublicationEditor({type,auth,busy,setBusy,onToast,onPublished}) {
