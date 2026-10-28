@@ -671,7 +671,7 @@ function rf() {
                                           : "media-list",
                                       children: Ce.slice(0, Ze).map((b) =>
                                         (0, d.jsx)(
-                                          MxEditableCard,
+                                          su,
                                           {
                                             item: b,
                                             onOpen: Po,

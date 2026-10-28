@@ -162,7 +162,7 @@ function MxLatestPublications({ items, onOpen, onExplore }) {
     h('div', { className: 'mx-section-title' },
       h('div', null, h('div', { className: 'eyebrow' }, 'À DÉCOUVRIR'), h('h2', { id: 'latest-heading' }, 'Les dernières publications')),
       h('button', { className: 'button secondary', onClick: onExplore }, 'Tout consulter', h(wl, { size: 16 }))),
-    h('div', { className: 'media-grid' }, latest.map(item => h(MxEditableCard, { key: item.id, item, onOpen }))));
+    h('div', { className: 'media-grid' }, latest.map(item => h(su, { key: item.id, item, onOpen }))));
 }
 
 function MxCatalogueFilters({ query, onQuery, topic, onTopic, year, onYear, language, onLanguage, years, inputRef }) {
@@ -286,13 +286,6 @@ function MxPublicationCorrection({item,onClose,onRefresh}){
  type==='press'&&area('Texte du communiqué',values.content||(!locale?draft.press[0]?.text:''),value=>text(locale,'content',value),{maxLength:40000,rows:6})
  )),h('button',{type:'submit',className:'button primary',disabled:busy},busy?'Enregistrement…':'Enregistrer les modifications'))),
  h('button',{type:'button',className:'button secondary',disabled:busy,onClick:onClose},'Fermer'));
-}
-
-function MxEditableCard({item,...props}){
- const h=mxElement;
- if(!item.publicationFolder)return h(su,{item,...props});
- const url=mxManagementUrl();url.searchParams.set('edit',item.publicationFolder);
- return h('div',{className:'mx-editable-publication',style:{display:'grid',gap:'8px',alignContent:'start'}},h(su,{item,...props}),h('a',{className:'button secondary',href:url.href,style:{justifySelf:'end'},'aria-label':mxT('Modifier')+' : '+item.title},mxT('Modifier')));
 }
 
 function MxExistingPublicationMedia({item}){
