@@ -597,3 +597,5 @@ html[dir=rtl] .collection-link .collection-label>span{align-self:flex-start;}
 @media(prefers-reduced-motion:reduce){.collection-link,.collection-link:hover,.collection-link .collection-icon{transform:none;transition:none;}}
 
 .mx-title-count{display:block;font-size:12px;line-height:1.5;color:#607064;margin:6px 0 16px;text-align:end;}
+
+.mx-publication-guide>h2{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden;overflow-wrap:anywhere;}
