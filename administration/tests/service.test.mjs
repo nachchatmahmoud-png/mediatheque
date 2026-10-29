@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {createAdminHandler} from '../server/service.ts';
+import {createAdminHandler,readBody} from '../server/service.ts';
 import {digest} from '../server/publication.ts';
 const origin='https://nachchatmahmoud-png.github.io';
 const accountId='11111111-1111-4111-8111-111111111111';
@@ -9,6 +9,14 @@ const otherId='22222222-2222-4222-8222-222222222222';
 const initialPassword='INITIAL TEST PASSWORD NEVER VALID';
 const newPassword='NOUVEAU MOT DE PASSE DE TEST';
 const png=new Uint8Array(await readFile(new URL('../../site/images/logo-ministere.png',import.meta.url)));
+test('announced request bodies are assembled without changing bytes and retain size checks',async()=>{
+ const request=(chunks,length)=>new Request('https://service.example/upload',{method:'POST',duplex:'half',headers:length===undefined?{}:{'Content-Length':String(length)},body:new ReadableStream({start(controller){for(const chunk of chunks)controller.enqueue(new Uint8Array(chunk));controller.close();}})});
+ assert.deepEqual(await readBody(request([[1,2],[3,4]],4),4),new Uint8Array([1,2,3,4]));
+ assert.deepEqual(await readBody(request([[1,2],[3]],undefined),4),new Uint8Array([1,2,3]));
+ await assert.rejects(readBody(request([[1]],5),4),error=>error.status===413);
+ await assert.rejects(readBody(request([[1,2],[3,4,5]],undefined),4),error=>error.status===413);
+ await assert.rejects(readBody(request([[1,2,3]],2),4),/taille annoncée/);
+});
 function setup({requiresPasswordChange=false}={}){
  const profile={id:accountId,username:'admin.test',authEmail:'admin.test@mediatheque.invalid',displayName:'Test',role:'admin',enabled:true,version:1,requiresPasswordChange};
  const sessions=new Map(),uploads=new Map(),files=new Map(),limits=new Map(),calls=[];let password=initialPassword;

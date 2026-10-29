@@ -1,3 +1,4 @@
+import {createHash} from 'node:crypto';
 import {publicationToCatalogue,validateAsset,MIB} from '../../github-pages/catalogue.ts';
 import {topics,youtubeEmbed,validatePublicationTranslations} from '../../app/lib/model.ts';
 import {validateDocumentaryKeywords} from '../../app/lib/keyword-catalog.ts';
@@ -10,7 +11,7 @@ export const uuid=(value:unknown):value is string=>typeof value==='string'&&/^[a
 export type Upload={id:string;accountId:string;path:string;name:string;size:number;digest:string;createdAt:string};
 export type Asset={path:string;upload:Upload};
 export type PreparedPublication={folder:string;id:string;record:Record<string,unknown>;assets:Asset[]};
-export const digest=async(bytes:Uint8Array)=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new Uint8Array(bytes)))).map(value=>value.toString(16).padStart(2,'0')).join('');
+export const digest=async(bytes:Uint8Array)=>createHash('sha256').update(bytes).digest('hex');
 const text=(value:unknown,max:number,required=false)=>{const result=typeof value==='string'?value.trim():'';if((required&&!result)||result.length>max)throw new ServiceError('Un champ est vide ou dépasse la longueur autorisée.');return result;};
 const https=(value:unknown)=>{try{const url=new URL(text(value,2000,true));if(url.protocol!=='https:'||url.username||url.password)throw new Error();return url.href;}catch{throw new ServiceError('Utilisez un lien vidéo HTTPS valide.');}};
 const extensions={photo:['jpg','jpeg','png','webp'],video:['mp4','webm'],press:['pdf'],captions:['vtt']};

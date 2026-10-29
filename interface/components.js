@@ -12,7 +12,7 @@ const mxSize = bytes => new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 
 const mxPlural = (count, singular, plural = singular + 's') => count + ' ' + (MX_LOCALE==='ar'?(MX_MESSAGES[singular]||singular):(count > 1 ? plural : singular));
 function mxValidateFile(file, kind) {
   const extensions = { photo: /\.(jpe?g|png|webp)$/i, video: /\.(mp4|webm)$/i, press: /\.pdf$/i, captions: /\.vtt$/i };
-  const limits = { photo: 12, video: 50, press: 20, captions: 1 };
+  const limits = { photo: 12, video: 80, press: 20, captions: 1 };
   if (!extensions[kind].test(file.name)) throw new Error(file.name + ' : format non accepté.');
   if (!file.size || file.size > limits[kind] * 1048576) throw new Error(file.name + ' : le fichier doit contenir entre 1 octet et ' + limits[kind] + ' Mio.');
 }

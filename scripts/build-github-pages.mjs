@@ -19,7 +19,7 @@ export async function buildCatalogue(source,output){
    let current=folder;
    for(const segment of file.split('/')){current=join(current,segment);if((await lstat(current)).isSymbolicLink())throw new Error('Lien symbolique interdit : '+file);}
    const info=await lstat(current);if(!info.isFile())throw new Error('Fichier absent : '+file);
-   if(info.size>25*1024*1024)throw new Error('Fichier de plus de 25 Mio : '+file);
+   if(info.size>80*1024*1024)throw new Error('Fichier de plus de 80 Mio : '+file);
    const bytes=await readFile(current);validateAsset(bytes,file);
    const destination=join(output,'medias',entry.name,file);await mkdir(dirname(destination),{recursive:true});await writeFile(destination,bytes);
   }

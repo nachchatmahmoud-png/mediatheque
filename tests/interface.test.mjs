@@ -52,6 +52,10 @@ test('file selection, safe links and storage restrictions have usable outcomes',
   assert.throws(() => utilities.mxValidateFile({name: 'photo.jpg', size: 13 * 1048576}, 'photo'));
   assert.throws(() => utilities.mxValidateFile({name: 'empty.pdf', size: 0}, 'press'));
   assert.doesNotThrow(() => utilities.mxValidateFile({name: 'PHOTO.PNG', size: 1000}, 'photo'));
+  for (const name of ['video.mp4', 'video.webm']) {
+    assert.doesNotThrow(() => utilities.mxValidateFile({name, size: 80 * 1048576}, 'video'));
+    assert.throws(() => utilities.mxValidateFile({name, size: 80 * 1048576 + 1}, 'video'), /80 Mio/);
+  }
   assert.equal(utilities.mxStorage.get('media-view', 'grid'), 'grid');
   assert.doesNotThrow(() => utilities.mxStorage.set('media-view', 'list'));
   assert.match(utilities.mxPublicationSuffix(), /^[a-f0-9]{12}$/);

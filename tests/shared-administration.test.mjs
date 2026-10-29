@@ -256,10 +256,18 @@ test('published bilingual video, album and press records can be corrected withou
  assert.equal(value.sqlite.prepare('SELECT COUNT(*) AS count FROM publications').get().count,3);
 });
 
-test('video upload accepts 50 MiB and rejects any additional byte',async()=>{
- const value=setup({openPublishing:true}),bytes=new Uint8Array(50*1048576);bytes.set(new TextEncoder().encode('ftyp'),4);
- const accepted=await value.request('/api/uploads?name=video.mp4',{method:'POST',body:bytes});assert.equal(accepted.status,201,JSON.stringify(accepted.body));assert.equal(accepted.body.size,bytes.length);
- const rejected=await value.request('/api/uploads?name=video.mp4',{method:'POST',body:new Uint8Array(1),headers:{'Content-Length':String(bytes.length+1)}});assert.equal(rejected.status,413);
+test('MP4 and WebM uploads accept 80 MiB, publish and reject any additional byte',async()=>{
+ const bytes=new Uint8Array(80*1048576);
+ for(const ext of ['mp4','webm']){
+  const value=setup({openPublishing:true});bytes.fill(0,0,16);
+  if(ext==='mp4')bytes.set(new TextEncoder().encode('ftyp'),4);else bytes.set([0x1a,0x45,0xdf,0xa3]);
+  const accepted=await value.request('/api/uploads?name=video.'+ext,{method:'POST',body:bytes,headers:{'Content-Length':String(bytes.length)}});assert.equal(accepted.status,201,JSON.stringify(accepted.body));assert.equal(accepted.body.size,bytes.length);
+  const cover=(await value.request('/api/uploads?name=cover.png',{method:'POST',body:new Uint8Array(await readFile(new URL('../site/images/logo-ministere.png',import.meta.url)))})).body.url;
+  const published=await value.request('/api/publications',{method:'POST',body:{requestId:crypto.randomUUID(),type:'video',title:'Vidéo de 80 Mio',language:'fr',date:'2026-10-29',topic:'Habitat et logement',keywords:['Aide directe au logement'],mediaUrl:accepted.body.url,thumbnailUrl:cover,spokenLanguage:'fr'}});
+  assert.equal(published.status,201,JSON.stringify(published.body));assert.equal((await value.request('/api/catalogue')).body.items.length,1);
+  const rejected=await value.request('/api/uploads?name=video.'+ext,{method:'POST',body:new Uint8Array(1),headers:{'Content-Length':String(bytes.length+1)}});assert.equal(rejected.status,413);
+  value.files.clear();value.sqlite.close();
+ }
 });
 
 test('deletion removes both editions, retains files and can be restored with revision checks',async()=>{

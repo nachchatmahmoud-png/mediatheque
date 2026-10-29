@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "tsc --noEmit --strict --target ES2022 --lib ES2023,DOM --module ESNext --moduleResolution bundler --allowImportingTsExtensions server/*.ts",
+    "check": "tsc --noEmit --strict --types node --target ES2022 --lib ES2023,DOM --module ESNext --moduleResolution bundler --allowImportingTsExtensions server/*.ts",
     "provision": "node provision.mjs",
     "test": "node --experimental-strip-types --test tests/*.test.mjs"
   },
@@ -12,6 +12,7 @@
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.11",
+    "@types/node": "22.19.19",
     "typescript": "7.0.2"
   }
 }

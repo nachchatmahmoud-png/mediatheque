@@ -10,7 +10,7 @@ export function assetPath(value:unknown,kind:'photo'|'video'|'press'|'captions')
  if(typeof value!=='string'||!pattern[kind].test(value))throw new Error('Chemin du fichier '+kind+' non valide.');return value;
 }
 export function validateAsset(bytes:Uint8Array,file:string){
- const ext=file.split('.').at(-1)!.toLowerCase(),limit={jpg:12,jpeg:12,png:12,webp:12,mp4:50,webm:50,pdf:20,vtt:1}[ext];
+ const ext=file.split('.').at(-1)!.toLowerCase(),limit={jpg:12,jpeg:12,png:12,webp:12,mp4:80,webm:80,pdf:20,vtt:1}[ext];
  if(!limit||!bytes.length||bytes.length>limit*MIB)throw new Error(file+' : taille non valide ou supérieure à '+limit+' Mio.');
  const head=new TextDecoder('latin1').decode(bytes.subarray(0,16));
  const valid=ext==='jpg'||ext==='jpeg'?bytes[0]===255&&bytes[1]===216&&bytes[2]===255:ext==='png'?bytes[0]===137&&head.slice(1,4)==='PNG'&&bytes[4]===13&&bytes[5]===10&&bytes[6]===26&&bytes[7]===10:ext==='webp'?head.startsWith('RIFF')&&head.slice(8,12)==='WEBP':ext==='mp4'?head.slice(4,8)==='ftyp':ext==='webm'?bytes[0]===0x1a&&bytes[1]===0x45&&bytes[2]===0xdf&&bytes[3]===0xa3:ext==='pdf'?head.startsWith('%PDF-'):new TextDecoder().decode(bytes.subarray(0,100)).replace(/^\uFEFF/,'').startsWith('WEBVTT');

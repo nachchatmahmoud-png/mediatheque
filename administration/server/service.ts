@@ -29,8 +29,11 @@ export async function readBody(request:Request,max:number){
   const announced=Number(request.headers.get('content-length'));
   if(Number.isFinite(announced)&&announced>max)throw new ServiceError('Le fichier ou la requête dépasse la taille autorisée.',413);
   const reader=request.body?.getReader();if(!reader)return new Uint8Array();
+  // Browser file uploads announce their size: keep one buffer for large videos.
+  const destination=Number.isSafeInteger(announced)&&announced>0?new Uint8Array(announced):null;
   const chunks:Uint8Array[]=[];let size=0;
-  try{while(true){const {value,done}=await reader.read();if(done)break;size+=value.length;if(size>max){await reader.cancel();throw new ServiceError('Le fichier ou la requête dépasse la taille autorisée.',413);}chunks.push(value);}}finally{reader.releaseLock();}
+  try{while(true){const {value,done}=await reader.read();if(done)break;const offset=size;size+=value.length;if(size>max){await reader.cancel();throw new ServiceError('Le fichier ou la requête dépasse la taille autorisée.',413);}if(destination){if(size>destination.length){await reader.cancel();throw new ServiceError('Le fichier ne correspond pas à la taille annoncée.');}destination.set(value,offset);}else chunks.push(value);}}finally{reader.releaseLock();}
+  if(destination)return destination.subarray(0,size);
   const bytes=new Uint8Array(size);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.length;}return bytes;
 }
 async function bodyJSON(request:Request,max=4096){
@@ -100,7 +103,7 @@ export function createAdminHandler({store,passwords,publisher,publicationAccess}
         const {account}=await authenticate(request);
         if(!await store.allow(await hashToken('uploads:'+account.id),100))throw new ServiceError('Trop de transferts. Patientez avant de réessayer.',429);
         const name=url.searchParams.get('name')||'',ext=name.split('.').at(-1)!.toLowerCase();
-        const limits:Record<string,number>={jpg:12,jpeg:12,png:12,webp:12,mp4:50,webm:50,pdf:20,vtt:1};
+        const limits:Record<string,number>={jpg:12,jpeg:12,png:12,webp:12,mp4:80,webm:80,pdf:20,vtt:1};
         if(!name||name.length>180||/[\/\\\x00-\x1f]/.test(name)||!limits[ext])throw new ServiceError('Nom ou format de fichier non valide.');
         const bytes=await readBody(request,limits[ext]*1024*1024);
         try{validateUpload(bytes,name);}catch(error){throw new ServiceError(error instanceof Error?error.message:'Fichier non valide.');}

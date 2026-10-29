@@ -108,7 +108,7 @@ const MxAdministration=(()=>{
   const invite=username=>request('/api/accounts/invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username})});
   async function stage(file){
     requireAccess();
-    if(!file||typeof file.arrayBuffer!=='function'||!file.size||file.size>50*1048576)throw new Error('Sélectionnez un fichier valide de 50 Mio maximum.');
+    if(!file||typeof file.arrayBuffer!=='function'||!file.size||file.size>80*1048576)throw new Error('Sélectionnez un fichier valide de 80 Mio maximum.');
     const result=await request('/api/uploads?name='+encodeURIComponent(file.name),{method:'POST',headers:{'Content-Type':file.type||'application/octet-stream'},body:file});
     if(typeof result.url!=='string'||!/^admin-upload:[a-f0-9-]{36}$/.test(result.url))throw new Error('Le transfert du fichier n’a pas été confirmé.');
     return result;

@@ -48,7 +48,7 @@ La dernière vidéo classique horizontale de la chaîne officielle `@Matnuhpv` e
 ## Formats et limites
 
 - Photos : JPG, PNG ou WebP, 30 photos maximum et 12 Mio par photo.
-- Vidéo : MP4 ou WebM jusqu’à 25 Mio, ou lien HTTPS.
+- Vidéo : MP4 ou WebM jusqu’à 80 Mio, ou lien HTTPS.
 - Communiqué : PDF jusqu’à 20 Mio, texte ou les deux.
 - Sous-titres : WebVTT jusqu’à 1 Mio.
 - Publication complète : 100 Mio de fichiers maximum.

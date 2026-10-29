@@ -220,6 +220,15 @@ test('server-confirmed open publication needs no account, password, token, or lo
  assert.equal((await value.context.Ho('/api/auth/session')).canPublish,true);
 });
 
+test('shared upload client sends an 80 MiB video and refuses a larger file before transfer',async()=>{
+ const value=client({shared:true,openPublishing:true,activation:''});await value.context.Ho('/api/auth/session');
+ const video={name:'video.mp4',size:80*1048576,type:'video/mp4',arrayBuffer:async()=>{throw new Error('The upload must send the file without reading it into memory.');}};
+ await value.context.Ho('/api/uploads?name=video.mp4',{method:'POST',body:video});
+ assert.equal(value.calls.at(-1).options.body,video);const count=value.calls.length;
+ await assert.rejects(value.context.Ho('/api/uploads?name=video.mp4',{method:'POST',body:{...video,size:video.size+1}}),/80 Mio/);
+ assert.equal(value.calls.length,count);
+});
+
 test('management displays the three content forms directly when publication is open',async()=>{
  const value=client({shared:true,openPublishing:true,activation:''});
  const auth=await value.context.Ho('/api/auth/session');
