@@ -165,6 +165,14 @@ function MxLatestPublications({ items, onOpen, onExplore }) {
     h('div', { className: 'media-grid' }, latest.map(item => h(su, { key: item.id, item, onOpen }))));
 }
 
+function MxCataloguePagination({page,pageCount,total,onPageChange}){
+  const h=mxElement;
+  return h('nav',{className:'mx-catalog-pagination','aria-label':mxT('Pagination des publications')},
+    h('button',{type:'button',className:'button secondary',disabled:page===1,onClick:()=>onPageChange(page-1)},mxT('Précédente')),
+    h('span',{'aria-live':'polite'},mxT('Page')+' '+page+' / '+pageCount+' · '+mxPlural(total,'publication')),
+    h('button',{type:'button',className:'button secondary',disabled:page===pageCount,onClick:()=>onPageChange(page+1)},mxT('Suivante')));
+}
+
 function MxCatalogueFilters({ query, onQuery, topic, onTopic, year, onYear, language, onLanguage, years, inputRef }) {
   const h = mxElement;
   const [expanded, setExpanded] = O.useState(true);

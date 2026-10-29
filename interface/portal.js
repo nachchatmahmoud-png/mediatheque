@@ -17,7 +17,7 @@ function rf() {
     [Ae, Ol] = (0, O.useState)(MX_LOCALE),
     [Ja, yt] = (0, O.useState)("newest"),
     [Oa, ll] = (0, O.useState)("grid"),
-    [Ze, He] = (0, O.useState)(6),
+    [cataloguePage, setCataloguePage] = (0, O.useState)(1),
     [Wa, Ha] = (0, O.useState)(null),
     [cu, Fo] = (0, O.useState)(""),
     [ol, B] = (0, O.useState)(!1),
@@ -150,6 +150,14 @@ function rf() {
       [Se],
     ),
     or = el;
+  const cataloguePageSize=25,
+    cataloguePageCount=Math.max(1,Math.ceil(Ce.length/cataloguePageSize)),
+    currentCataloguePage=Math.min(cataloguePage,cataloguePageCount);
+  O.useEffect(()=>{setCataloguePage(1);},[k,te,ke,ye,Ae,Ja]);
+  const turnCataloguePage=next=>{
+    setCataloguePage(Math.max(1,Math.min(cataloguePageCount,next)));
+    document.getElementById('publications')?.scrollIntoView({behavior:'smooth',block:'start'});
+  };
   (0, O.useEffect)(() => {
     if (R) return;
     let b = new URLSearchParams(window.location.search).get("media");
@@ -159,7 +167,7 @@ function rf() {
     }
   }, [R, Se, St]);
   let Fe = (b, D = !0) => {
-      (_e(b), He(6), B(!1));
+      (_e(b), setCataloguePage(1), B(!1));
       let j = new URL(window.location.href);
       (j.searchParams.delete("view"),
         b === "all"
@@ -200,7 +208,7 @@ function rf() {
         Da(!0));
     },
     ff = () => {
-      (_e("all"), tl(""), ql(""), El(""), Ol(MX_LOCALE), yt("newest"), He(6));
+      (_e("all"), tl(""), ql(""), El(""), Ol(MX_LOCALE), yt("newest"), setCataloguePage(1));
     },
     xu = !!(te || ke || ye),
     cf = {
@@ -375,7 +383,7 @@ function rf() {
                                 children:
                                   "Un espace pour découvrir les vidéos, parcourir les albums photo et consulter les communiqués de presse du Ministère.",
                               }),
-                              mxElement(MxHeroSearch, { value: te, onChange: value => { tl(value); He(6); }, onSubmit: () => Fe('all') }),
+                              mxElement(MxHeroSearch, { value: te, onChange: value => { tl(value); setCataloguePage(1); }, onSubmit: () => Fe('all') }),
                               (0, d.jsxs)("div", {
                                 className: "hero-footnote",
                                 children: [
@@ -498,10 +506,10 @@ function rf() {
                       ),
                     }),
                     mxElement(MxCatalogueFilters, {
-                      query: te, onQuery: value => {tl(value); He(6);},
-                      topic: ye, onTopic: value => {El(value); He(6);},
-                      year: ke, onYear: value => {ql(value); He(6);},
-                      language: Ae, onLanguage: value => {Ol(value); He(6);},
+                      query: te, onQuery: value => {tl(value); setCataloguePage(1);},
+                      topic: ye, onTopic: value => {El(value); setCataloguePage(1);},
+                      year: ke, onYear: value => {ql(value); setCataloguePage(1);},
+                      language: Ae, onLanguage: value => {Ol(value); setCataloguePage(1);},
                       years: lr, inputRef: Na,
                     }),
                     xu &&
@@ -669,7 +677,7 @@ function rf() {
                                         Oa === "grid"
                                           ? "media-grid"
                                           : "media-list",
-                                      children: Ce.slice(0, Ze).map((b) =>
+                                      children: Ce.slice((currentCataloguePage-1)*cataloguePageSize,currentCataloguePage*cataloguePageSize).map((b) =>
                                         (0, d.jsx)(
                                           su,
                                           {
@@ -681,27 +689,7 @@ function rf() {
                                         ),
                                       ),
                                     }),
-                                    Ze < Ce.length &&
-                                      (0, d.jsxs)("div", {
-                                        className: "load-more",
-                                        children: [
-                                          (0, d.jsxs)("span", {
-                                            children: [
-                                              Math.min(Ze, Ce.length),
-                                              " publications sur ",
-                                              Ce.length,
-                                            ],
-                                          }),
-                                          (0, d.jsxs)("button", {
-                                            className: "button secondary",
-                                            onClick: () => He((b) => b + 6),
-                                            children: [
-                                              "Voir plus de publications",
-                                              (0, d.jsx)(wl, { size: 17 }),
-                                            ],
-                                          }),
-                                        ],
-                                      }),
+                                    mxElement(MxCataloguePagination,{page:currentCataloguePage,pageCount:cataloguePageCount,total:Ce.length,onPageChange:turnCataloguePage}),
                                   ],
                                 }),
                               Ce.length === 0 &&
