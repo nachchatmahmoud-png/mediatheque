@@ -108,6 +108,8 @@ test('the video editor publishes only the selected generated thumbnail with the 
  assert.equal(payload.mediaUrl,'admin-upload:1');assert.equal(payload.thumbnailUrl,'admin-upload:2');
  assert.equal(payload.translations.fr.title,'Programme de logement');assert.equal(payload.translations.ar.title,'برنامج السكن');
  assert.equal(view.published.length,1);
+ view.nodes(view.render()).find(node=>node.tag==='button'&&node.children.includes('Retirer')).props.onClick();
+ assert.equal(thumbnail().props.source,null);assert.equal(thumbnail().props.fromVideo,false);assert.equal(thumbnail().props.choices.length,0);
 });
 
 for(const type of ['photo','press'])test('the '+type+' editor uploads once and publishes the checked language editions',async()=>{
