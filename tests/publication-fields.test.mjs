@@ -91,6 +91,25 @@ function editorHarness(type){
 }
 
 const editorSource=await readFile(new URL('../interface/publisher.js',import.meta.url),'utf8');
+test('the video editor publishes only the selected generated thumbnail with the shared video',async()=>{
+ const view=editorHarness('video');vm.runInContext(source+'\n'+editorSource,view.context);
+ view.fill('Domaine principal *','Habitat et logement');
+ view.nodes(view.render()).find(node=>node.tag==='MxDocumentaryFields').props.onChange(['Aide directe au logement']);
+ view.fill('Titre en français *','Programme de logement');view.fill('Titre en arabe *','برنامج السكن');
+ const video=new File(['video-fixture'],'video.mp4',{type:'video/mp4'}),chosen=new File(['selected-frame'],'miniature-video-4200.jpg',{type:'image/jpeg'});
+ view.field('Importer la vidéo *').props.onChange({target:{files:[video],value:''}});
+ const thumbnail=()=>view.nodes(view.render()).find(node=>node.tag==='MxThumbnailField');
+ thumbnail().props.onSelect({file:chosen,time:4.2});
+ assert.equal(thumbnail().props.source,chosen);assert.equal(thumbnail().props.fromVideo,true);
+ await view.submit();
+ const uploads=view.calls.filter(call=>call.path.startsWith('/api/uploads'));
+ assert.deepEqual(uploads.map(call=>call.body),[video,chosen]);
+ const payload=JSON.parse(view.calls.find(call=>call.path==='/api/publications').body);
+ assert.equal(payload.mediaUrl,'admin-upload:1');assert.equal(payload.thumbnailUrl,'admin-upload:2');
+ assert.equal(payload.translations.fr.title,'Programme de logement');assert.equal(payload.translations.ar.title,'برنامج السكن');
+ assert.equal(view.published.length,1);
+});
+
 for(const type of ['photo','press'])test('the '+type+' editor uploads once and publishes the checked language editions',async()=>{
  const view=editorHarness(type);vm.runInContext(source+'\n'+editorSource,view.context);
  view.fill('Domaine principal *','Habitat et logement');

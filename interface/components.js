@@ -41,40 +41,50 @@ function mxUseObjectUrl(source) {
   return url;
 }
 
-// Capture a local video frame; every exit releases the decoder and object URL.
-function mxVideoThumbnail(file, signal) {
+// Sample the local video with one decoder; every exit releases its object URL.
+function mxVideoThumbnails(file, signal) {
   return new Promise((resolve, reject) => {
     const video = document.createElement('video');
     const url = URL.createObjectURL(file);
-    let settled = false;
-    const finish = (error, result) => {
+    const choices=[];
+    let settled=false,capturing=false,timer,positions=[],index=0;
+    const finish = error => {
       if (settled) return; settled = true;
       clearTimeout(timer); signal?.removeEventListener('abort', abort);
       video.onloadedmetadata = video.onloadeddata = video.onseeked = video.onerror = null;
       video.removeAttribute('src'); video.load(); URL.revokeObjectURL(url);
-      error ? reject(error) : resolve(result);
+      error ? reject(error) : resolve(choices);
     };
     const abort = () => finish(new DOMException('Opération annulée', 'AbortError'));
-    const timer = setTimeout(() => finish(new Error('Ajoutez une image pour la miniature de cette vidéo.')), 12000);
-    const capture = () => {
+    const fail=error=>finish(choices.length?null:error);
+    const arm=()=>{clearTimeout(timer);timer=setTimeout(()=>fail(new Error('Les miniatures automatiques sont indisponibles. Choisissez une image dans le lecteur ou importez une photo.')),12000);};
+    const seek=()=>{
+      arm();
+      try{if(Math.abs(video.currentTime-positions[index])>.001)video.currentTime=positions[index];else capture();}
+      catch(error){fail(error);}
+    };
+    const capture = async () => {
+      if(settled||capturing||!positions.length||video.seeking||video.readyState<2||Math.abs(video.currentTime-positions[index])>.05)return;
+      capturing=true;
       try {
-        if (!video.videoWidth || !video.videoHeight) throw new Error('Image vidéo indisponible.');
-        const canvas = document.createElement('canvas');
-        const scale = Math.min(1, 1280 / video.videoWidth, 720 / video.videoHeight);
-        canvas.width = Math.max(1, Math.round(video.videoWidth * scale));
-        canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
-        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob(blob => blob ? finish(null, new File([blob], 'miniature-video.jpg', {type: 'image/jpeg', lastModified: file.lastModified})) : finish(new Error('Ajoutez une image pour la miniature de cette vidéo.')), 'image/jpeg', .88);
-      } catch { finish(new Error('Ajoutez une image pour la miniature de cette vidéo.')); }
+        const time=video.currentTime,image=await mxCaptureVideoFrame(video);
+        if(settled)return;
+        choices.push({file:image,time});capturing=false;index++;
+        index===positions.length?finish():seek();
+      } catch(error) { fail(error); }
     };
     video.muted = true; video.playsInline = true; video.preload = 'auto';
-    video.onerror = () => finish(new Error('La miniature automatique est indisponible. Importez une image.'));
-    video.onloadedmetadata = () => { video.currentTime = Number.isFinite(video.duration) && video.duration > .2 ? Math.min(1, video.duration / 10) : 0; };
+    video.onerror = () => fail(new Error('Le navigateur ne peut pas lire cette vidéo. Vous pouvez importer une miniature.'));
+    video.onloadedmetadata = () => {
+      const duration=video.duration;
+      positions=Number.isFinite(duration)&&duration>0?[...new Set([.1,.26,.42,.58,.74,.9].map(fraction=>Number((duration*fraction).toFixed(3))))]:[0];
+      seek();
+    };
     video.onseeked = capture;
-    video.onloadeddata = () => { if (video.currentTime === 0) capture(); };
+    video.onloadeddata = capture;
     signal?.addEventListener('abort', abort, {once: true});
     if (signal?.aborted) { abort(); return; }
-    video.src = url; video.load();
+    arm();video.src = url; video.load();
   });
 }
 
@@ -112,14 +122,25 @@ function mxCaptureVideoFrame(video) {
   });
 }
 
-function MxThumbnailField({source, pending, custom, fromVideo=false, videoFile=null, onFrame, note, onChange, onReset}) {
+function MxVideoThumbnailChoice({choice,index,selected,onSelect}){
+  const h=mxElement,url=mxUseObjectUrl(choice.file),seconds=Math.floor(choice.time);
+  const time=String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');
+  return h('button',{type:'button',className:'mx-video-thumbnail-choice','aria-pressed':selected,'aria-label':mxT('Choisir la miniature')+' '+(index+1)+' · '+time,onClick:()=>onSelect(choice)},
+    h('img',{src:url,alt:'',loading:'lazy'}),h('span',null,h('span',null,mxT('Miniature')+' '+(index+1)),h('time',null,time)),
+    selected&&h('strong',null,h(zl,{size:12}),mxT('Sélectionnée')));
+}
+
+function MxThumbnailField({source, pending, generating=false, choices=[], onSelect, custom, fromVideo=false, videoFile=null, onFrame, note, onChange, onReset}) {
   const h = mxElement;
   return h('section', {className: 'mx-thumbnail-field', 'aria-labelledby': 'thumbnail-heading'},
     h('div', {className: 'mx-thumbnail-heading'}, h('div', null, h('h3', {id: 'thumbnail-heading'}, 'Miniature de la vidéo *'), h('p', null, 'L’image qui présentera votre vidéo dans la médiathèque.')), source && !pending && h('span', {className: 'mx-thumbnail-status'}, h(zl, {size: 13}), fromVideo?'Image de la vidéo':custom ? 'Personnalisée' : 'Automatique')),
     h('div', {className: 'mx-thumbnail-layout'}, h(MxThumbnailImage, {source}),
-      h('div', {className: 'mx-thumbnail-options'}, h('p', {role: pending ? 'status' : undefined}, pending ? 'Extraction d’une image de la vidéo…' : fromVideo?'L’image choisie dans la vidéo sera utilisée dans l’accueil.':custom ? 'Votre image personnalisée sera utilisée dans l’accueil.' : note || 'La miniature s’affichera ici dès la sélection de votre vidéo.'),
+      h('div', {className: 'mx-thumbnail-options'}, h('p', {role: generating ? 'status' : undefined,'aria-live':'polite'}, generating ? 'Préparation des miniatures à partir de votre vidéo…' : fromVideo?'L’image choisie dans la vidéo sera utilisée dans l’accueil.':custom ? 'Votre image personnalisée sera utilisée dans l’accueil.' : note || 'La miniature s’affichera ici dès la sélection de votre vidéo.'),
         h('label', {className: 'button secondary mx-thumbnail-upload'}, h(pa, {size: 16}), source ? 'Changer la miniature' : 'Importer une miniature', h('input', {type: 'file', accept: 'image/jpeg,image/png,image/webp', 'aria-label': 'Importer une miniature de la vidéo', onChange: event => {onChange(event.target.files?.[0]); event.target.value = '';}})),
         h('small', null, 'JPG, PNG ou WebP · 12 Mio maximum'), custom && h('button', {type: 'button', className: 'mx-thumbnail-reset', onClick: onReset}, 'Revenir à la miniature automatique'))),
+    choices.length>0&&h('div',{className:'mx-video-thumbnail-suggestions',role:'group','aria-label':mxT('Miniatures proposées')},
+      h('h4',null,mxT('Choisissez une miniature')),h('p',null,mxT('Cliquez sur l’image à afficher dans l’accueil. Ces miniatures sont extraites de différents moments de votre vidéo.')),
+      h('div',{className:'mx-video-thumbnail-grid'},...choices.map((choice,index)=>h(MxVideoThumbnailChoice,{key:choice.file.name,choice,index,selected:source===choice.file,onSelect})))),
     videoFile&&h(MxVideoFramePicker,{key:videoFile.name+'-'+videoFile.size+'-'+videoFile.lastModified,file:videoFile,onCapture:onFrame}));
 }
 

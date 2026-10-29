@@ -82,6 +82,7 @@ function MxPublicationEditor({type,auth,busy,setBusy,onToast,onPublished}) {
   const [customThumbnail,setCustomThumbnail]=O.useState(null);
   const [thumbnailOrigin,setThumbnailOrigin]=O.useState('');
   const [automaticThumbnail,setAutomaticThumbnail]=O.useState(null);
+  const [thumbnailChoices,setThumbnailChoices]=O.useState([]);
   const [thumbnailBusy,setThumbnailBusy]=O.useState(false);
   const [thumbnailNote,setThumbnailNote]=O.useState('');
   const requestId=O.useRef('');
@@ -100,10 +101,10 @@ function MxPublicationEditor({type,auth,busy,setBusy,onToast,onPublished}) {
   const thumbnailPending=type==='video'&&videoMode==='file'&&thumbnailBusy&&!customThumbnail;
   const thumbnailPreviewUrl=mxUseObjectUrl(thumbnail);
   O.useEffect(()=>{
-    setAutomaticThumbnail(null);setThumbnailNote('');
+    setAutomaticThumbnail(null);setThumbnailChoices([]);setThumbnailNote('');
     if(type!=='video'||videoMode!=='file'||!files[0]){setThumbnailBusy(false);return;}
     const controller=new AbortController();setThumbnailBusy(true);
-    mxVideoThumbnail(files[0],controller.signal).then(file=>{if(!controller.signal.aborted){setAutomaticThumbnail(file);setThumbnailNote('Miniature créée à partir de votre vidéo.');}}).catch(exception=>{if(!controller.signal.aborted)setThumbnailNote(exception.message);}).finally(()=>{if(!controller.signal.aborted)setThumbnailBusy(false);});
+    mxVideoThumbnails(files[0],controller.signal).then(choices=>{if(!controller.signal.aborted){setThumbnailChoices(choices);setAutomaticThumbnail(choices[0]?.file||null);setThumbnailNote('Choisissez l’une des miniatures proposées ci-dessous.');}}).catch(exception=>{if(!controller.signal.aborted)setThumbnailNote(exception.message);}).finally(()=>{if(!controller.signal.aborted)setThumbnailBusy(false);});
     return ()=>controller.abort();
   },[type,videoMode,files[0]]);
   O.useEffect(()=>{setCaptionsValidated(false);},[type,videoMode,videoUrl,files[0]]);
@@ -195,7 +196,7 @@ function MxPublicationEditor({type,auth,busy,setBusy,onToast,onPublished}) {
           h('p',{className:'mx-cover-help'},h(pa,{size:16}),'Choisissez la couverture commune de l’album et renseignez les légendes dans chaque langue sélectionnée.'),
           h('div',{className:'mx-photo-grid'},...files.map((file,index)=>h(MxPhotoPreview,{key:file.name+'-'+file.size+'-'+file.lastModified,file,editions:selectedTexts,index,total:files.length,cover:file===coverFile,onCover:()=>setPhotoCover(file),onCaption:(locale,value)=>updateText(locale,'captions',texts[locale].captions.map((note,position)=>position===index?value:note)),onRemove:()=>{setFiles(files.filter((_,position)=>position!==index));changePhotoCaptions(notes=>notes.filter((_,position)=>position!==index));},onMove:destination=>move(index,destination)})))):h('div',null,h('strong',null,activeFiles[0].name),h('small',null,mxSize(activeFiles[0].size)),h('button',{type:'button',className:'mx-remove',onClick:()=>setFiles([])},'Retirer'))),
         type==='video'&&h(O.Fragment,null,
-          h(MxThumbnailField,{source:thumbnail,pending:thumbnailPending,custom:!!customThumbnail,fromVideo:thumbnailOrigin==='video',videoFile:videoMode==='file'?files[0]||null:null,onFrame:chooseVideoFrame,note:videoMode==='link'&&mxYoutubeThumbnail(videoUrl)?'Miniature récupérée depuis le lien YouTube.':thumbnailNote,onChange:chooseThumbnail,onReset:()=>{setCustomThumbnail(null);setThumbnailOrigin('');}}),
+          h(MxThumbnailField,{source:thumbnail,pending:thumbnailPending,generating:videoMode==='file'&&thumbnailBusy,choices:videoMode==='file'?thumbnailChoices:[],onSelect:choice=>{setAutomaticThumbnail(choice.file);setCustomThumbnail(null);setThumbnailOrigin('video');setFormError('');},custom:!!customThumbnail,fromVideo:thumbnailOrigin==='video',videoFile:videoMode==='file'?files[0]||null:null,onFrame:chooseVideoFrame,note:videoMode==='link'&&mxYoutubeThumbnail(videoUrl)?'Miniature récupérée depuis le lien YouTube.':thumbnailNote,onChange:chooseThumbnail,onReset:()=>{setCustomThumbnail(null);setThumbnailOrigin('');}}),
           h(MxVideoLanguageFields,{spokenLanguage,onSpokenLanguage:setSpokenLanguage,captionsLanguage,onCaptionsLanguage:value=>{setCaptionsLanguage(value);setCaptionsValidated(false);},captionsFile,onCaptionsFile:chooseCaptions,validated:captionsValidated,onValidated:setCaptionsValidated,onRemove:()=>{setCaptionsFile(null);setCaptionsValidated(false);},isYoutube}),
           h('p',{className:'mx-page-language-help'},'La langue parlée et l’audio restent ceux de la vidéo d’origine. Les titres et résumés sont propres à chaque page.')),
         type==='press'&&pressSelection.needsText&&h('div',{className:'mx-video-editions'},...['ar','fr'].filter(locale=>pages.includes(locale)).map(locale=>textArea(locale==='fr'?'Texte intégral du communiqué en français *':'Texte intégral du communiqué en arabe *',texts[locale].content,value=>updateText(locale,'content',value),{key:locale,rows:8,maxLength:40000,required:true,lang:locale,dir:locale==='ar'?'rtl':'ltr'}))),
