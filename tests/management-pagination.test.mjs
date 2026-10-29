@@ -9,16 +9,20 @@ function fixture(){
  const runtime={useState(initial){const index=cursor++;if(!(index in states))states[index]=typeof initial==='function'?initial():initial;return [states[index],next=>{const value=typeof next==='function'?next(states[index]):next;if(value!==states[index]){states[index]=value;changed=true;}}];},useEffect(callback,deps){const index=cursor++;if(!dependencies[index]||deps.some((value,i)=>value!==dependencies[index][i])){dependencies[index]=deps;effects.push(callback);}},useRef(){const index=cursor++;return states[index]??=( {current:null});},Fragment:'fragment'};
  const context=vm.createContext({O:runtime,mxElement:h,URLSearchParams,window:{location:{search:''}},mxManagementClient:()=>({current:()=>({})}),MxTestAdministration:null,mxPlural:(n,word)=>n+' '+word,mxT:s=>s,Ea:s=>s.toLowerCase(),nu:{video:'Vidéo'},Ya:s=>s,MxPublicationTrash(){},MxPublicationCorrection(){}});
  vm.runInContext(source.slice(source.indexOf('function MxPublishedList('),source.indexOf('function MxPublicationCorrection(')),context);
- let items=Array.from({length:25},(_,i)=>({id:'item-'+i,title:'Publication '+String(i+1).padStart(2,'0'),date:'2026-10-28',language:'fr',status:'published',type:'video',topic:'Habitat',keywords:[]}));
+ let items=Array.from({length:56},(_,i)=>({id:'item-'+i,title:'Publication '+String(i+1).padStart(2,'0'),date:'2026-10-28',language:'fr',status:'published',type:'video',topic:'Habitat',keywords:[]}));
  const render=()=>{let tree;for(let i=0;i<4;i++){cursor=0;changed=false;tree=context.MxPublishedList({items,onOpen(){},onRefresh(){}});while(effects.length)effects.shift()();if(!changed)return tree;}throw Error('Unstable render');};
  const nodes=tree=>[tree,...tree.children.flatMap(child=>typeof child==='object'?nodes(child):[])];
  const button=(tree,label)=>nodes(tree).find(node=>node.type==='button'&&node.children.includes(label));
  return {render,nodes,button,setItems:next=>items=next};
 }
-test('management pagination reaches every result and resets when the search changes',()=>{
+test('management pagination shows 25 publications per page and resets when the search changes',()=>{
  const f=fixture();let tree=f.render();const rows=()=>f.nodes(tree).filter(node=>node.type==='article');
- assert.equal(rows().length,10);assert.equal(f.button(tree,'Précédente').props.disabled,true);
- f.button(tree,'Suivante').props.onClick();tree=f.render();assert.equal(rows().length,10);assert.equal(rows()[0].children[0].children[1].children[0],'Publication 11');
- f.button(tree,'Suivante').props.onClick();tree=f.render();assert.equal(rows().length,5);assert.equal(f.button(tree,'Suivante').props.disabled,true);
+ assert.equal(rows().length,25);assert.equal(f.button(tree,'Précédente').props.disabled,true);
+ assert.equal(rows().at(-1).children[0].children[1].children[0],'Publication 25');
+ f.button(tree,'Suivante').props.onClick();tree=f.render();assert.equal(rows().length,25);assert.equal(rows()[0].children[0].children[1].children[0],'Publication 26');
+ assert.equal(rows().at(-1).children[0].children[1].children[0],'Publication 50');
+ f.button(tree,'Suivante').props.onClick();tree=f.render();assert.equal(rows().length,6);assert.equal(rows()[0].children[0].children[1].children[0],'Publication 51');assert.equal(f.button(tree,'Suivante').props.disabled,true);
+ assert.equal(rows().at(-1).children[0].children[1].children[0],'Publication 56');
+ f.button(tree,'Précédente').props.onClick();tree=f.render();assert.equal(rows().length,25);assert.equal(rows()[0].children[0].children[1].children[0],'Publication 26');
  f.nodes(tree).find(node=>node.type==='input'&&node.props.type==='search').props.onChange({target:{value:'Publication 01'}});tree=f.render();assert.equal(rows().length,1);assert.equal(f.button(tree,'Précédente').props.disabled,true);assert.equal(f.button(tree,'Suivante').props.disabled,true);
 });

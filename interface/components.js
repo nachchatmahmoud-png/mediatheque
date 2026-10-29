@@ -248,7 +248,7 @@ function MxPublishedList({ items, onOpen, onRefresh, onEditingChange }) {
   const remove=async()=>{if(!deleting||deleteBusy)return;setDeleteBusy(true);setDeleteError('');try{const current=await MxAdministration.publication(deleting.publicationFolder);await MxAdministration.updatePublication(deleting.publicationFolder,{revision:current.revision,action:'delete'});setEditing(null);setDeleting(null);await onRefresh();}catch(exception){setDeleteError(exception.message);}finally{setDeleteBusy(false);}};
   const published = items.filter(item => item.status === 'published'&&item.language===contentLanguage);
   const filtered = published.filter(item => Ea([item.title, item.topic, ...item.keywords].join(' ')).includes(Ea(query)));
-  const [page,setPage]=O.useState(1),pageSize=10;
+  const [page,setPage]=O.useState(1),pageSize=25;
   const pageCount=Math.max(1,Math.ceil(filtered.length/pageSize)),currentPage=Math.min(page,pageCount);
   O.useEffect(()=>{setPage(1);},[query,contentLanguage]);
   const shown=filtered.slice((currentPage-1)*pageSize,currentPage*pageSize);
