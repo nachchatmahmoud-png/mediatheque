@@ -278,3 +278,32 @@ test('deletion removes both editions, retains files and can be restored with rev
  const restored=await value.request(url,{method:'POST',body:{action:'restore',revision:trash.body.items[0].revision}});assert.equal(restored.status,200);assert.equal(restored.body.restored,true);
  assert.equal((await value.request('/api/catalogue')).body.items.length,2);assert.equal((await value.request('/api/trash')).body.items.length,0);
 });
+
+
+test('shared publications and corrections preserve 500-character titles in the national partnership domain',async()=>{
+ const value=setup({openPublishing:true});
+ const png=new Uint8Array(await readFile(new URL('../site/images/logo-ministere.png',import.meta.url)));
+ const cover=(await value.request('/api/uploads?name=couverture.png',{method:'POST',body:png})).body.url;
+ const title='Présentation du partenariat national pour le logement '.repeat(12).slice(0,499)+'X';
+ const arabic='تقديم الشراكة الوطنية في مجال السكن '.repeat(20).slice(0,499)+'س';
+ const translations={fr:{title,content:'Présentation du partenariat.'},ar:{title:arabic,content:'تقديم الشراكة.'}};
+ const base={title,date:'2026-10-29',topic:'Partenariat national',keywords:['Coopération interministérielle','Groupe Al Omrane'],language:'fr',translations};
+ for(const extra of [{type:'video',mediaUrl:'https://example.test/video.mp4',thumbnailUrl:cover,spokenLanguage:'ar'},{type:'photo',photos:[{url:cover}],thumbnailUrl:cover},{type:'press'}]){
+  const response=await value.request('/api/publications',{method:'POST',body:{...base,...extra,requestId:crypto.randomUUID()}});
+  assert.equal(response.status,201,JSON.stringify(response.body));
+ }
+ const catalogue=(await value.request('/api/catalogue')).body;assert.equal(catalogue.items.length,6);
+ for(const item of catalogue.items){assert.equal(item.title,item.language==='fr'?title:arabic);assert.equal(item.topic,base.topic);}
+ for(const changes of [{title:title+'X'},{translations:{...translations,fr:{title:title+'X',content:'Texte'}}}]){
+  const rejected=await value.request('/api/publications',{method:'POST',body:{...base,type:'press',requestId:crypto.randomUUID(),...changes}});
+  assert.equal(rejected.status,400,JSON.stringify(rejected.body));
+ }
+ const item=catalogue.items.find(item=>item.type==='video'&&item.language==='fr');
+ const current=(await value.request('/api/publications/'+item.publicationFolder)).body;
+ const updatedTitle=title.slice(0,498)+'YZ';
+ const updated=await value.request('/api/publications/'+item.publicationFolder,{method:'POST',body:{revision:current.revision,changes:{...current.record,translations:{...current.record.translations,fr:{...current.record.translations.fr,title:updatedTitle}}}}});
+ assert.equal(updated.status,200,JSON.stringify(updated.body));
+ const after=(await value.request('/api/catalogue')).body.items;
+ assert.equal(after.find(entry=>entry.id===item.id).title,updatedTitle);
+ assert.equal(after.find(entry=>entry.type==='video'&&entry.language==='ar').title,arabic);
+});

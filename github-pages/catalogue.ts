@@ -49,11 +49,11 @@ export function publicationToCatalogue(raw:unknown,id:string):{event:MediaEvent;
   const thumbnailUrl=video.cover?file(video.cover,'photo'):youtubeThumbnail||photos[0]?.url||'';
   const captionsUrl=video.captions?file(video.captions,'captions'):'';
   const languages=validateVideoLanguages({...video,type:'video',mediaUrl:url,captionsUrl});
-  items.push({...common,...languages,id:id+'-video-'+(index+1),type:'video',title:text(video.title,180,'Titre vidéo')||event.title,mediaUrl:url,thumbnailUrl,transcript:text(video.transcript,60000,'Transcription'),captionsUrl});
+  items.push({...common,...languages,id:id+'-video-'+(index+1),type:'video',title:text(video.title,500,'Titre vidéo')||event.title,mediaUrl:url,thumbnailUrl,transcript:text(video.transcript,60000,'Transcription'),captionsUrl});
  });
  records(v.press,'Communiqués',10).forEach((press,index)=>{
   const content=text(press.text,40000,'Texte du communiqué'),fileUrl=press.file?file(press.file,'press'):'';if(!content&&!fileUrl)throw new Error('Ajoutez le PDF ou le texte du communiqué.');
-  items.push({...common,id:id+'-press-'+(index+1),type:'press',title:text(press.title,180,'Titre du communiqué')||event.title,content,fileUrl});
+  items.push({...common,id:id+'-press-'+(index+1),type:'press',title:text(press.title,500,'Titre du communiqué')||event.title,content,fileUrl});
  });
  if(v.status==='published'&&!items.length)throw new Error('Ajoutez au moins une vidéo, un album ou un communiqué.');
  return {event,events:[event],items,assets:[...assets],published:v.status==='published'};

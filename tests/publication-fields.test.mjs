@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import * as documentary from '../app/lib/keyword-catalog.ts';
 import {readFile} from 'node:fs/promises';
 const source=await readFile(new URL('../interface/publication-fields.js',import.meta.url),'utf8');
-const {mxPublicationPayload,mxPressSelection,mxVideoEditions}=vm.runInNewContext(source+';({mxPublicationPayload,mxPressSelection,mxVideoEditions})',{MX_DOC_RUNTIME:documentary});
+const {mxPublicationPayload,mxPressSelection,mxVideoEditions,mxPublicationEditions}=vm.runInNewContext(source+';({mxPublicationPayload,mxPressSelection,mxVideoEditions,mxPublicationEditions})',{MX_DOC_RUNTIME:documentary});
 const filled={requestId:'12345678-1234-4234-8234-123456789abc',title:'  Titre saisi  ',date:'2026-10-22',topic:'Habitat et logement',keywords:['Aide directe au logement'],language:'fr',description:'Présentation',credit:'Source du support',mediaUrl:'https://example.test/video.mp4',thumbnailUrl:'cover.jpg',spokenLanguage:'ar',captionsLanguage:'fr',captionsSource:'file',captionsValidated:true,captionsUrl:'subtitles.vtt',fileUrl:'communique.pdf',content:'Texte du communiqué',location:'Rabat',photos:[{url:'photo.jpg',caption:'Légende'}]};
 
 test('each publication carries only the fields of its medium, including the photo location',()=>{
@@ -150,4 +150,16 @@ for(const type of ['photo','press'])test('the '+type+' editor uploads once and p
   await view.submit();const pdf=JSON.parse(view.calls.at(-1).body);assert.equal(pdf.content,'');assert.equal(pdf.translations.fr.content,'');assert.equal(pdf.translations.ar.content,'');
  }
  view.checkbox('fr').props.onChange({target:{checked:false}});await view.submit();const arabic=JSON.parse(view.calls.at(-1).body);assert.deepEqual(Object.keys(arabic.translations),['ar']);
+});
+
+
+test('publication forms accept complete 500-character titles and reject longer titles in both languages',()=>{
+ const fr='Présentation du partenariat national pour le logement '.repeat(12).slice(0,499)+'X';
+ const ar='تقديم الشراكة الوطنية في مجال السكن '.repeat(20).slice(0,499)+'س';
+ for(const type of ['video','photo','press']){
+  const editions=mxPublicationEditions(type,['fr','ar'],{fr:{title:fr},ar:{title:ar}});
+  assert.equal(editions.translations.fr.title,fr);assert.equal(editions.translations.ar.title,ar);
+  assert.throws(()=>mxPublicationEditions(type,['fr'],{fr:{title:fr+'X'}}),/500 caractères/);
+  assert.throws(()=>mxPublicationEditions(type,['ar'],{ar:{title:ar+'س'}}),/500 caractères/);
+ }
 });

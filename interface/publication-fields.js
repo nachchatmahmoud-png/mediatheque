@@ -27,7 +27,7 @@ function mxPublicationEditions(type,languages,values){
   for(const language of ['fr','ar']){
     if(!languages.includes(language))continue;
     const fields=values?.[language]||{},title=typeof fields.title==='string'?fields.title.trim():'',description=typeof fields.description==='string'?fields.description.trim():'',credit=typeof fields.credit==='string'?fields.credit.trim():'';
-    if(!title||title.length>180)throw new Error(language==='fr'?'Renseignez le titre traduit en français (180 caractères maximum).':'Renseignez le titre en arabe (180 caractères maximum).');
+    if(!title||title.length>500)throw new Error(language==='fr'?'Renseignez le titre traduit en français (500 caractères maximum).':'Renseignez le titre en arabe (500 caractères maximum).');
     if(description.length>1200||credit.length>200)throw new Error('Le résumé ou les crédits dépassent la longueur autorisée.');
     const extra={};
     if(type==='photo'){

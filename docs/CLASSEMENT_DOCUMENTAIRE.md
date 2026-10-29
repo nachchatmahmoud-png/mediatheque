@@ -11,11 +11,12 @@ Ce plan constitue un choix éditorial pour la médiathèque. Il ne se présente 
 5. Architecture et patrimoine bâti.
 6. Formation et recherche dans les métiers du territoire.
 7. Interventions et questions parlementaires.
-8. Coopération et participation internationales.
-9. Affaires juridiques et réglementation.
-10. Vie institutionnelle.
+8. Partenariat national.
+9. Coopération et participation internationales.
+10. Affaires juridiques et réglementation.
+11. Vie institutionnelle.
 
-Le référentiel comporte 119 descripteurs français (106 sujets et 13 organismes), avec un libellé arabe et des synonymes ou sigles de recherche. Sa source unique est `app/lib/keyword-catalog.ts`, réutilisée par le navigateur et le service de publication.
+Le référentiel comporte 131 descripteurs français (118 sujets et 13 organismes), avec un libellé arabe et des synonymes ou sigles de recherche. Sa source unique est `app/lib/keyword-catalog.ts`, réutilisée par le navigateur et le service de publication.
 
 ## Règles d’indexation
 
@@ -23,6 +24,7 @@ Le référentiel comporte 119 descripteurs français (106 sujets et 13 organisme
 - Retenir de 1 à 8 descripteurs précis, dont au moins un du domaine principal. Les sujets secondaires d’autres domaines restent accessibles par la recherche dans le référentiel.
 - Ne pas répéter le nom du domaine comme unique mot-clé.
 - La rubrique Interventions et questions parlementaires rassemble les interventions, réponses aux questions orales et écrites, travaux en commission, présentations budgétaires et examens des projets de loi. Compléter les descripteurs parlementaires par les sujets traités : par exemple Réponses aux questions orales et Aide directe au logement. Un contenu peut aussi être classé dans son domaine sectoriel et recevoir un descripteur parlementaire complémentaire.
+- La rubrique Partenariat national décrit les partenariats entre acteurs nationaux, leurs conventions et leur mise en œuvre. Associer les descripteurs au sujet sectoriel et aux organismes effectivement concernés.
 - La rubrique Coopération et participation internationales couvre les conférences, forums et salons internationaux, le Forum urbain mondial, les coopérations bilatérale, multilatérale et Sud-Sud, les partenariats, visites officielles à l’étranger et accords de coopération. Compléter ces descripteurs par le sujet sectoriel abordé. Une rencontre strictement nationale relève de son domaine sectoriel ; une rencontre internationale peut se tenir au Maroc ou à l’étranger.
 - Les mentions génériques de rencontre, convention ou visite ne constituent pas, à elles seules, un sujet documentaire.
 - Réserver le domaine Vie institutionnelle aux contenus concernant le fonctionnement et la vie du ministère. Employer des descripteurs plus précis pour indexer ces contenus, comme Passation de pouvoirs, Prise de fonctions ou Conseils de surveillance. Le domaine ne remplace pas un mot-clé.
@@ -85,3 +87,27 @@ Pour une cérémonie de passation de pouvoirs, retenir le domaine Vie institutio
 Treize organismes ou réseaux vérifiés sont proposés dans une section distincte « Institutions et partenaires ». Le rattachement à plusieurs domaines est documentaire. Le statut de partenaire ne signifie pas une tutelle du ministère. Le nom d’un organisme complète les sujets traités ; au moins un mot-clé de sujet du domaine principal reste requis, dans la limite commune de huit mots-clés. Aucun organisme n’est sélectionné automatiquement.
 
 Les rattachements, types d’acteurs et sources sont détaillés dans [INSTITUTIONS_ET_PARTENAIRES.md](INSTITUTIONS_ET_PARTENAIRES.md). Les sigles (ANRUR, MAJAL, INAU, ENA, FNPI, CNOA, ONIGT, FNBTP, FMC, FMCI) et les libellés arabes sont recherchables. Les domaines et les publications existantes sont conservés.
+
+
+## Partenariat national — validation éditoriale du 29 octobre 2026
+
+Le domaine « Partenariat national » (الشراكة الوطنية) et les douze mots-clés ci-dessous ont été validés par le responsable de la médiathèque. Ils partagent les mêmes identifiants pour les deux langues. Les publications existantes conservent leur classement.
+
+| Français | Arabe |
+|---|---|
+| Coopération interministérielle | التعاون بين القطاعات الوزارية |
+| Partenariat avec les collectivités territoriales | الشراكة مع الجماعات الترابية |
+| Partenariat avec les établissements et entreprises publics | الشراكة مع المؤسسات والمقاولات العمومية |
+| Partenariat avec le secteur privé | الشراكة مع القطاع الخاص |
+| Partenariat avec les organisations professionnelles | الشراكة مع الهيئات المهنية |
+| Partenariat avec les universités et centres de recherche | الشراكة مع الجامعات ومراكز البحث |
+| Partenariat avec les organismes de financement | الشراكة مع هيئات التمويل |
+| Conventions-cadres de partenariat | اتفاقيات إطار للشراكة |
+| Conventions de financement | اتفاقيات التمويل |
+| Programmes et projets conjoints | البرامج والمشاريع المشتركة |
+| Assistance technique et échange d’expertises | المساعدة التقنية وتبادل الخبرات |
+| Suivi et évaluation des partenariats | تتبع الشراكات وتقييمها |
+
+Les douze organismes nationaux déjà répertoriés sont également proposés dans « Institutions et partenaires » pour ce domaine. Le sujet et les organismes restent à sélectionner par le rédacteur, dans la limite commune de huit mots-clés.
+
+Sources de la proposition documentaire, consultées le 29 octobre 2026 : [convention relative au Pass Jeunes et à l’accès au logement, 6 février 2025](https://maroc.ma/fr/actualites/acces-au-logement-signature-dune-convention-pour-le-renforcement-des-services-offerts-aux) ; [convention de coopération pour le développement rural à Tétouan, Chefchaouen et M’diq-Fnideq, 28 octobre 2025](https://maroc.ma/fr/actualites/signature-dune-convention-pour-la-promotion-du-developpement-rural-tetouan-chefchaouen-et-mdiq-fnideq). Ces exemples éclairent le classement éditorial ; les libellés ne constituent pas une nomenclature réglementaire.

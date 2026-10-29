@@ -595,3 +595,5 @@ html[dir=rtl] .collection-link .collection-label>span{align-self:flex-start;}
 @media(max-width:1100px){.collection-links{gap:14px;}.collection-link,.collection-link:first-child,.collection-link:last-child{padding:12px 14px;gap:10px;}.collection-link .collection-icon{width:34px;height:34px;border-radius:10px;}.collection-link .collection-label strong{font-size:16px;}.collection-link .collection-label>span{font-size:12px;padding:2px 7px;}.collection-link>svg{width:16px;}}
 @media(max-width:760px){.collection-links{grid-template-columns:1fr;gap:10px;padding:18px 0;}.collection-link,.collection-link:first-child,.collection-link:last-child{min-height:78px;padding:12px 16px!important;gap:12px;}.collection-link .collection-icon{width:34px;height:34px;}.collection-link .collection-label strong{font-size:16px;}.collection-link .collection-label>span{font-size:12px;}.collection-link>svg{width:16px;height:16px;}}
 @media(prefers-reduced-motion:reduce){.collection-link,.collection-link:hover,.collection-link .collection-icon{transform:none;transition:none;}}
+
+.mx-title-count{display:block;font-size:12px;line-height:1.5;color:#607064;margin:6px 0 16px;text-align:end;}

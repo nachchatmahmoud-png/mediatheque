@@ -41,7 +41,7 @@ export async function preparePublication(input:unknown,accountId:string,findUplo
   };
   let keywords:string[];
   try{keywords=validateDocumentaryKeywords(v.topic,v.keywords);}catch(error){throw new ServiceError(error instanceof Error?error.message:'Vérifiez les mots-clés documentaires.');}
-  const record:Record<string,any>={version:1,status:'published',title:text(v.title,180,true),date,topic:v.topic,language:v.language,description:text(v.description,1200),credit:text(v.credit,200),keywords};
+  const record:Record<string,any>={version:1,status:'published',title:text(v.title,500,true),date,topic:v.topic,language:v.language,description:text(v.description,1200),credit:text(v.credit,200),keywords};
   if(v.translations!==undefined){
     try{record.translations=validatePublicationTranslations(v.translations,v.type);}catch(error){throw new ServiceError(error instanceof Error?error.message:'Vérifiez les textes des pages sélectionnées.');}
     const primary=record.translations[v.language];if(!primary)throw new ServiceError('La page principale doit être sélectionnée.');

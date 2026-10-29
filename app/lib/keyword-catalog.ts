@@ -1,7 +1,7 @@
 // Editorial classification by subject. Provenance and indexing rules: docs/CLASSEMENT_DOCUMENTAIRE.md.
 export type Term={label:string;arabic:string;topic:string;aliases:string[];kind?:'organization';relatedTopics?:string[]};
-export const documentaryTopics:string[]=["Habitat et logement", "Politique de la ville et renouvellement urbain", "Urbanisme et planification urbaine", "Aménagement et développement du territoire", "Architecture et patrimoine bâti", "Formation et recherche dans les métiers du territoire", "Interventions et questions parlementaires", "Coopération et participation internationales", "Affaires juridiques et réglementation", "Vie institutionnelle"];
-export const documentaryTopicTranslations:Record<string,string>={"Habitat et logement": "السكن والإسكان", "Politique de la ville et renouvellement urbain": "سياسة المدينة والتجديد الحضري", "Urbanisme et planification urbaine": "التعمير والتخطيط الحضري", "Aménagement et développement du territoire": "إعداد التراب والتنمية الترابية", "Architecture et patrimoine bâti": "الهندسة المعمارية والتراث المبني", "Formation et recherche dans les métiers du territoire": "التكوين والبحث في مهن إعداد التراب والتعمير", "Interventions et questions parlementaires": "المداخلات والأسئلة البرلمانية", "Coopération et participation internationales": "التعاون والمشاركة الدولية", "Affaires juridiques et réglementation": "الشؤون القانونية والتنظيم", "Vie institutionnelle": "الحياة المؤسساتية"};
+export const documentaryTopics:string[]=["Habitat et logement", "Politique de la ville et renouvellement urbain", "Urbanisme et planification urbaine", "Aménagement et développement du territoire", "Architecture et patrimoine bâti", "Formation et recherche dans les métiers du territoire", "Interventions et questions parlementaires", "Partenariat national", "Coopération et participation internationales", "Affaires juridiques et réglementation", "Vie institutionnelle"];
+export const documentaryTopicTranslations:Record<string,string>={"Habitat et logement": "السكن والإسكان", "Politique de la ville et renouvellement urbain": "سياسة المدينة والتجديد الحضري", "Urbanisme et planification urbaine": "التعمير والتخطيط الحضري", "Aménagement et développement du territoire": "إعداد التراب والتنمية الترابية", "Architecture et patrimoine bâti": "الهندسة المعمارية والتراث المبني", "Formation et recherche dans les métiers du territoire": "التكوين والبحث في مهن إعداد التراب والتعمير", "Interventions et questions parlementaires": "المداخلات والأسئلة البرلمانية", "Coopération et participation internationales": "التعاون والمشاركة الدولية", "Affaires juridiques et réglementation": "الشؤون القانونية والتنظيم", "Vie institutionnelle": "الحياة المؤسساتية", "Partenariat national": "الشراكة الوطنية"};
 export const keywordCatalog:Term[]=[
  {
   "label": "Aide directe au logement",
@@ -711,7 +711,6 @@ export const keywordCatalog:Term[]=[
    "South-South cooperation"
   ]
  },
-
  {
   "label": "Élaboration des textes législatifs et réglementaires",
   "arabic": "إعداد النصوص التشريعية والتنظيمية",
@@ -838,9 +837,7 @@ export const keywordCatalog:Term[]=[
    "Salon international du bâtiment",
    "Salon du bâtiment"
   ]
- }
-,
-
+ },
  {
   "label": "Aménagement urbain et foncier",
   "arabic": "التهيئة الحضرية والعقارية",
@@ -867,9 +864,7 @@ export const keywordCatalog:Term[]=[
    "تنمية العالم القروي",
    "Développement rural"
   ]
- }
-,
-
+ },
  {
   "label": "Passation de pouvoirs",
   "arabic": "تسليم السلط",
@@ -957,9 +952,103 @@ export const keywordCatalog:Term[]=[
   "aliases": [
    "التكريم والتنويه"
   ]
- }
-,
-
+ },
+ {
+  "label": "Coopération interministérielle",
+  "arabic": "التعاون بين القطاعات الوزارية",
+  "topic": "Partenariat national",
+  "aliases": [
+   "التعاون بين القطاعات الوزارية"
+  ]
+ },
+ {
+  "label": "Partenariat avec les collectivités territoriales",
+  "arabic": "الشراكة مع الجماعات الترابية",
+  "topic": "Partenariat national",
+  "aliases": [
+   "الشراكة مع الجماعات الترابية"
+  ]
+ },
+ {
+  "label": "Partenariat avec les établissements et entreprises publics",
+  "arabic": "الشراكة مع المؤسسات والمقاولات العمومية",
+  "topic": "Partenariat national",
+  "aliases": [
+   "الشراكة مع المؤسسات والمقاولات العمومية"
+  ]
+ },
+ {
+  "label": "Partenariat avec le secteur privé",
+  "arabic": "الشراكة مع القطاع الخاص",
+  "topic": "Partenariat national",
+  "aliases": [
+   "الشراكة مع القطاع الخاص"
+  ]
+ },
+ {
+  "label": "Partenariat avec les organisations professionnelles",
+  "arabic": "الشراكة مع الهيئات المهنية",
+  "topic": "Partenariat national",
+  "aliases": [
+   "الشراكة مع الهيئات المهنية"
+  ]
+ },
+ {
+  "label": "Partenariat avec les universités et centres de recherche",
+  "arabic": "الشراكة مع الجامعات ومراكز البحث",
+  "topic": "Partenariat national",
+  "aliases": [
+   "الشراكة مع الجامعات ومراكز البحث"
+  ]
+ },
+ {
+  "label": "Partenariat avec les organismes de financement",
+  "arabic": "الشراكة مع هيئات التمويل",
+  "topic": "Partenariat national",
+  "aliases": [
+   "الشراكة مع هيئات التمويل"
+  ]
+ },
+ {
+  "label": "Conventions-cadres de partenariat",
+  "arabic": "اتفاقيات إطار للشراكة",
+  "topic": "Partenariat national",
+  "aliases": [
+   "اتفاقيات إطار للشراكة"
+  ]
+ },
+ {
+  "label": "Conventions de financement",
+  "arabic": "اتفاقيات التمويل",
+  "topic": "Partenariat national",
+  "aliases": [
+   "اتفاقيات التمويل"
+  ]
+ },
+ {
+  "label": "Programmes et projets conjoints",
+  "arabic": "البرامج والمشاريع المشتركة",
+  "topic": "Partenariat national",
+  "aliases": [
+   "البرامج والمشاريع المشتركة"
+  ]
+ },
+ {
+  "label": "Assistance technique et échange d’expertises",
+  "arabic": "المساعدة التقنية وتبادل الخبرات",
+  "topic": "Partenariat national",
+  "aliases": [
+   "المساعدة التقنية وتبادل الخبرات"
+  ]
+ },
+ {
+  "label": "Suivi et évaluation des partenariats",
+  "arabic": "تتبع الشراكات وتقييمها",
+  "topic": "Partenariat national",
+  "aliases": [
+   "تتبع الشراكات وتقييمها"
+  ]
+ },
  {
   "label": "Groupe Al Omrane",
   "arabic": "مجموعة العمران",
@@ -969,7 +1058,8 @@ export const keywordCatalog:Term[]=[
    "Politique de la ville et renouvellement urbain",
    "Urbanisme et planification urbaine",
    "Aménagement et développement du territoire",
-   "Vie institutionnelle"
+   "Vie institutionnelle",
+   "Partenariat national"
   ],
   "aliases": [
    "مجموعة العمران",
@@ -988,7 +1078,8 @@ export const keywordCatalog:Term[]=[
   "kind": "organization",
   "relatedTopics": [
    "Habitat et logement",
-   "Vie institutionnelle"
+   "Vie institutionnelle",
+   "Partenariat national"
   ],
   "aliases": [
    "الوكالة الوطنية للتجديد الحضري وتأهيل المباني الآيلة للسقوط",
@@ -1005,7 +1096,8 @@ export const keywordCatalog:Term[]=[
   "relatedTopics": [
    "Aménagement et développement du territoire",
    "Architecture et patrimoine bâti",
-   "Vie institutionnelle"
+   "Vie institutionnelle",
+   "Partenariat national"
   ],
   "aliases": [
    "الوكالات الحضرية",
@@ -1021,7 +1113,8 @@ export const keywordCatalog:Term[]=[
   "relatedTopics": [
    "Aménagement et développement du territoire",
    "Formation et recherche dans les métiers du territoire",
-   "Vie institutionnelle"
+   "Vie institutionnelle",
+   "Partenariat national"
   ],
   "aliases": [
    "فيدرالية الوكالات الحضرية مجال",
@@ -1040,7 +1133,8 @@ export const keywordCatalog:Term[]=[
   "relatedTopics": [
    "Aménagement et développement du territoire",
    "Urbanisme et planification urbaine",
-   "Vie institutionnelle"
+   "Vie institutionnelle",
+   "Partenariat national"
   ],
   "aliases": [
    "المعهد الوطني للتهيئة والتعمير",
@@ -1056,7 +1150,8 @@ export const keywordCatalog:Term[]=[
   "relatedTopics": [
    "Architecture et patrimoine bâti",
    "Urbanisme et planification urbaine",
-   "Vie institutionnelle"
+   "Vie institutionnelle",
+   "Partenariat national"
   ],
   "aliases": [
    "المدارس الوطنية للهندسة المعمارية",
@@ -1070,7 +1165,9 @@ export const keywordCatalog:Term[]=[
   "arabic": "الفيدرالية الوطنية للمنعشين العقاريين",
   "topic": "Habitat et logement",
   "kind": "organization",
-  "relatedTopics": [],
+  "relatedTopics": [
+   "Partenariat national"
+  ],
   "aliases": [
    "الفيدرالية الوطنية للمنعشين العقاريين",
    "FNPI",
@@ -1086,7 +1183,8 @@ export const keywordCatalog:Term[]=[
   "relatedTopics": [
    "Urbanisme et planification urbaine",
    "Formation et recherche dans les métiers du territoire",
-   "Affaires juridiques et réglementation"
+   "Affaires juridiques et réglementation",
+   "Partenariat national"
   ],
   "aliases": [
    "المجلس الوطني لهيئة المهندسين المعماريين",
@@ -1104,7 +1202,8 @@ export const keywordCatalog:Term[]=[
   "relatedTopics": [
    "Urbanisme et planification urbaine",
    "Habitat et logement",
-   "Affaires juridiques et réglementation"
+   "Affaires juridiques et réglementation",
+   "Partenariat national"
   ],
   "aliases": [
    "الهيئة الوطنية للمهندسين المساحين الطبوغرافيين",
@@ -1119,7 +1218,8 @@ export const keywordCatalog:Term[]=[
   "kind": "organization",
   "relatedTopics": [
    "Architecture et patrimoine bâti",
-   "Formation et recherche dans les métiers du territoire"
+   "Formation et recherche dans les métiers du territoire",
+   "Partenariat national"
   ],
   "aliases": [
    "الفيدرالية الوطنية للبناء والأشغال العمومية",
@@ -1134,7 +1234,8 @@ export const keywordCatalog:Term[]=[
   "topic": "Habitat et logement",
   "kind": "organization",
   "relatedTopics": [
-   "Architecture et patrimoine bâti"
+   "Architecture et patrimoine bâti",
+   "Partenariat national"
   ],
   "aliases": [
    "فيدرالية صناعات مواد البناء",
@@ -1153,7 +1254,8 @@ export const keywordCatalog:Term[]=[
    "Urbanisme et planification urbaine",
    "Habitat et logement",
    "Architecture et patrimoine bâti",
-   "Coopération et participation internationales"
+   "Coopération et participation internationales",
+   "Partenariat national"
   ],
   "aliases": [
    "الفيدرالية المغربية للاستشارة والهندسة",
@@ -1181,7 +1283,6 @@ export const keywordCatalog:Term[]=[
    "برنامج الأمم المتحدة للمستوطنات البشرية"
   ]
  }
-
 ];
 export function keywordMatchesTopic(term:Term,topic:string){return term.topic===topic||!!term.relatedTopics?.includes(topic);}
 export const documentaryTranslations:Record<string,string>={...documentaryTopicTranslations,...Object.fromEntries(keywordCatalog.map(term=>[term.label,term.arabic]))};

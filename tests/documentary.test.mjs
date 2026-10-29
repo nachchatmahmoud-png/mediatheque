@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {documentaryTopics,keywordCatalog,documentaryTranslations,validateDocumentaryKeywords,canonicalKeyword,parseKeywordText,preferredKeywordTopic} from '../app/lib/keyword-catalog.ts';
+import {documentaryTopics,keywordCatalog,documentaryTranslations,keywordMatchesTopic,validateDocumentaryKeywords,canonicalKeyword,parseKeywordText,preferredKeywordTopic} from '../app/lib/keyword-catalog.ts';
 import {preparePublication} from '../administration/server/publication.ts';
 import {publicationToCatalogue} from '../github-pages/catalogue.ts';
 import {filterMedia} from '../app/lib/model.ts';
@@ -94,4 +94,20 @@ test('institutional life provides the approved bilingual descriptors and support
  assert.equal(catalogue.items.length,2);
  for(const item of catalogue.items){assert.equal(item.topic,topic);assert.deepEqual(item.keywords,['Passation de pouvoirs','Prise de fonctions']);}
  for(const query of ['Passation de pouvoirs','تسليم السلط','تولي المهام'])assert.equal(filterMedia(catalogue.items,{type:'all',query,year:'',topic:'',sort:'newest'}).length,2);
+});
+
+
+test('national partnerships provide twelve bilingual subjects and retain cross-domain indexing',async()=>{
+ const topic='Partenariat national';
+ assert.ok(documentaryTopics.includes(topic));assert.equal(documentaryTranslations[topic],'الشراكة الوطنية');
+ const terms=keywordCatalog.filter(term=>term.topic===topic&&term.kind!=='organization');assert.equal(terms.length,12);
+ for(const term of terms){assert.ok(term.label.length<=80);assert.equal(canonicalKeyword(term.arabic),term.label);assert.deepEqual(validateDocumentaryKeywords(topic,[term.arabic]),[term.label]);}
+ const organizations=keywordCatalog.filter(term=>term.kind==='organization'&&keywordMatchesTopic(term,topic));
+ assert.equal(organizations.length,12);assert.equal(organizations.some(term=>term.label==='ONU-Habitat'),false);
+ assert.throws(()=>validateDocumentaryKeywords(topic,['Groupe Al Omrane']),/sujet/);
+ const keywords=['التعاون بين القطاعات الوزارية','اتفاقيات إطار للشراكة','Aide directe au logement','العمران'];
+ const prepared=await preparePublication({...base,topic,keywords,translations:{fr:{title:'Convention de partenariat pour le logement',content:'Présentation du partenariat.'},ar:{title:'اتفاقية شراكة في مجال السكن',content:'تقديم الشراكة.'}}},account,async()=>null);
+ const catalogue=publicationToCatalogue(prepared.record,prepared.folder);assert.equal(catalogue.items.length,2);
+ for(const query of ['Coopération interministérielle','التعاون بين القطاعات الوزارية','اتفاقيات إطار للشراكة','Al Omrane','العمران'])assert.equal(filterMedia(catalogue.items,{type:'all',query,year:'',topic:'',sort:'newest'}).length,2);
+ for(const item of catalogue.items){assert.equal(item.topic,topic);assert.deepEqual(item.keywords,['Coopération interministérielle','Conventions-cadres de partenariat','Aide directe au logement','Groupe Al Omrane']);}
 });

@@ -59,7 +59,7 @@ function createMxTestAdministration(storage=mxBrowserTestStorage(),{localMode=fa
       if(!local(ref)||!file||kind(file)!==expected)throw new Error('Sélectionnez à nouveau le fichier correspondant à ce support.');
       mxValidateFile(file,expected);assets.set(ref,{id:ref,blob:file,name:file.name});return ref;
     };
-    const item={id,type:input.type,title:bounded(input.title,180,true),date,topic:input.topic,language:input.language,status:'published',description:bounded(input.description,1200),credit:bounded(input.credit,200),content:'',location:'',duration:'',transcript:'',thumbnailUrl:'',mediaUrl:'',fileUrl:'',captionsUrl:'',spokenLanguage:'',captionsLanguage:'',captionsSource:'',captionsValidated:false,photos:[],keywords:[input.topic],eventId:null,...(localMode?{localOnly:true}:{testOnly:true}),createdAt:new Date().toISOString()};
+    const item={id,type:input.type,title:bounded(input.title,500,true),date,topic:input.topic,language:input.language,status:'published',description:bounded(input.description,1200),credit:bounded(input.credit,200),content:'',location:'',duration:'',transcript:'',thumbnailUrl:'',mediaUrl:'',fileUrl:'',captionsUrl:'',spokenLanguage:'',captionsLanguage:'',captionsSource:'',captionsValidated:false,photos:[],keywords:[input.topic],eventId:null,...(localMode?{localOnly:true}:{testOnly:true}),createdAt:new Date().toISOString()};
     if(input.type==='video'&&input.translations!==undefined)Object.assign(item,mxVideoEditions(Object.keys(input.translations),input.translations));
     if(item.type==='photo'){
       item.location=bounded(input.location,150);

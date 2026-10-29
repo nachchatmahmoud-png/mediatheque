@@ -59,7 +59,7 @@ export function validatePublicationTranslations(value:unknown,type:MediaType):Pa
  for(const language of ['fr','ar'] as const){
   if(!Object.hasOwn(source,language))continue;
   const entry=source[language];if(!entry||typeof entry!=='object'||Array.isArray(entry))throw new Error('Renseignez les textes de chaque page sélectionnée.');
-  const fields=entry as Record<string,unknown>,title=bounded(fields.title,language==='fr'?'Titre en français':'Titre en arabe',180,true);
+  const fields=entry as Record<string,unknown>,title=bounded(fields.title,language==='fr'?'Titre en français':'Titre en arabe',500,true);
   const description=bounded(fields.description,'Résumé',1200),credit=bounded(fields.credit,'Crédits',200);
   const extra:Pick<PublicationTranslation,'location'|'captions'|'content'|'file'>={};
   if(type==='photo'){
@@ -86,7 +86,7 @@ export function validateMedia(input:unknown,{requireDescription=true}:{requireDe
  const date=bounded(v.date,'Date',10,true);if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(Date.parse(date))||new Date(date).toISOString().slice(0,10)!==date)throw new Error('La date de publication est non valide.');
  const photos=Array.isArray(v.photos)?v.photos.map(p=>({url:safeMediaUrl(p?.url),caption:bounded(p?.caption,'Légende',300)})).filter(p=>p.url):[];
  if(photos.length>30)throw new Error('Un album peut contenir au maximum 30 photographies.');
- const item:MediaItem={id:'',type:v.type as MediaType,title:bounded(v.title,'Titre',180,true),description:bounded(v.description,'Description',1200,requireDescription),date,topic:bounded(v.topic,'Classification',100,true),language:bounded(v.language,'Langue',10,true),status:v.status as MediaItem['status'],content:bounded(v.content,'Texte du communiqué',40000),location:bounded(v.location,'Lieu',150),credit:bounded(v.credit,'Crédit',200),duration:bounded(v.duration,'Durée',20),thumbnailUrl:safeMediaUrl(v.thumbnailUrl),mediaUrl:safeMediaUrl(v.mediaUrl),fileUrl:safeMediaUrl(v.fileUrl),captionsUrl:safeMediaUrl(v.captionsUrl),photos,keywords:keywords(v.keywords),transcript:bounded(v.transcript,'Transcription',60000),eventId:bounded(v.eventId,'Événement',80)||null};
+ const item:MediaItem={id:'',type:v.type as MediaType,title:bounded(v.title,'Titre',500,true),description:bounded(v.description,'Description',1200,requireDescription),date,topic:bounded(v.topic,'Classification',100,true),language:bounded(v.language,'Langue',10,true),status:v.status as MediaItem['status'],content:bounded(v.content,'Texte du communiqué',40000),location:bounded(v.location,'Lieu',150),credit:bounded(v.credit,'Crédit',200),duration:bounded(v.duration,'Durée',20),thumbnailUrl:safeMediaUrl(v.thumbnailUrl),mediaUrl:safeMediaUrl(v.mediaUrl),fileUrl:safeMediaUrl(v.fileUrl),captionsUrl:safeMediaUrl(v.captionsUrl),photos,keywords:keywords(v.keywords),transcript:bounded(v.transcript,'Transcription',60000),eventId:bounded(v.eventId,'Événement',80)||null};
  Object.assign(item,validateVideoLanguages({...v,mediaUrl:item.mediaUrl,captionsUrl:item.captionsUrl}));
  if(!topics.includes(item.topic))throw new Error('Choisissez une rubrique de la classification.');
  if(item.status==='published'&&!item.keywords.length)throw new Error('Renseignez au moins un mot-clé avant de publier ce contenu.');
@@ -102,7 +102,7 @@ export function validateEvent(input:unknown,{requireDescription=true}:{requireDe
  const date=bounded(v.date,'Date',10,true);if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(Date.parse(date))||new Date(date).toISOString().slice(0,10)!==date)throw new Error('La date de l’événement est non valide.');
  const topic=bounded(v.topic,'Classification',100,true);if(!topics.includes(topic))throw new Error('Choisissez une rubrique de la classification.');
  const tags=keywords(v.keywords);if(!tags.length)throw new Error('Renseignez au moins un mot-clé pour l’événement.');
- return {id:'',title:bounded(v.title,'Titre',180,true),description:bounded(v.description,'Présentation de l’événement',2000,requireDescription),date,topic,location:bounded(v.location,'Lieu',150),keywords:tags};
+ return {id:'',title:bounded(v.title,'Titre',500,true),description:bounded(v.description,'Présentation de l’événement',2000,requireDescription),date,topic,location:bounded(v.location,'Lieu',150),keywords:tags};
 }
 export const formatDate=(s:string)=>new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(s+'T12:00:00Z'));
 export function parseByteRange(value:string|null,size:number):{offset:number;length:number}|null{
