@@ -10,7 +10,7 @@ function mxVideoLanguageDetails(item) {
 function MxVideoLanguage({item,compact=false}) {
   const h=mxElement,details=mxVideoLanguageDetails(item);
   if(!details)return null;
-  const showOriginal=!(compact&&MX_LOCALE==='fr'&&item.spokenLanguage==='ar');
+  const showOriginal=!(compact&&item.spokenLanguage==='ar');
   if(!showOriginal&&!details.captions)return null;
   return h('div',{className:'mx-video-language'+(compact?' compact':''),'aria-label':mxT('Langue de la vidéo')},
     showOriginal&&h('span',{className:'mx-original-language'},h(Ta,{size:compact?12:14}),details.original),
