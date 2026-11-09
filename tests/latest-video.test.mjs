@@ -7,7 +7,7 @@ import {execFileSync} from 'node:child_process';
 test('the official video uses its translated title in French and its original title in Arabic',async()=>{
  const source=await readFile(new URL('../interface/latest-video.js',import.meta.url),'utf8');
  const helpers=await readFile(new URL('../interface/video-languages.js',import.meta.url),'utf8');
- const video={videoId:'abcdefghijk',title:'فيديو الوزارة',publishedAt:'2026-10-20T12:00:00Z',channelUrl:'https://www.youtube.com/@Matnuhpv'};
+ const video={videoId:'abcdefghijk',title:'فيديو الوزارة',publishedAt:'2026-10-20T12:00:00Z',channelUrl:'https://www.youtube.com/@Matnuhpv',thumbnailUrl:'/images/youtube-abcdefghijk.jpg',thumbnailVersion:'a'.repeat(64)};
  for(const language of ['fr','ar']){
   const jsx=(type,props)=>({type,...props});
   const result=vm.runInNewContext(helpers+'\n'+source+';af()',{
@@ -18,7 +18,44 @@ test('the official video uses its translated title in French and its original ti
   assert.equal(result.className,'hero-visual ministry-video');
   const meta=result.children.find(child=>child.className==='ministry-video-meta');
   assert.equal(meta.children[0].children,language==='fr'?'Vidéo du ministère':video.title);
+  const screen=result.children.find(child=>child.className==='ministry-video-screen');
+  assert.equal(screen.children.children[0].src,video.thumbnailUrl+'?v='+video.thumbnailVersion);
  }
+});
+
+test('a thumbnail-only YouTube update republishes both language records and invalid images retain the last valid thumbnail',()=>{
+ execFileSync('python3',['-c',String.raw`
+import importlib.util,tempfile,sys
+from pathlib import Path
+sys.dont_write_bytecode=True
+spec=importlib.util.spec_from_file_location('refresh','scripts/refresh-ministry-video.py')
+m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+with tempfile.TemporaryDirectory() as folder:
+ output=Path(folder)/'latest-video.json'
+ french=Path(folder)/'latest-video-fr.json'
+ video=m.record({'version':1,'channelId':m.CHANNEL_ID,'channelUrl':m.CHANNEL_URL,'videoId':'abcdefghijk','title':'Titre du ministère','publishedAt':'2026-10-27T09:00:00Z','width':1280,'height':720})
+ m.save(output,video)
+ image=b'\xff\xd8\xffOld thumbnail'
+ def fetch(url):
+  if url.startswith('https://i.ytimg.com/vi/'):return image
+  raise OSError('metadata temporarily unavailable')
+ first,changed=m.refresh(output,fetch=fetch)
+ assert changed and len(first['thumbnailVersion'])==64
+ translated,_=m.refresh_french(first,french,{})
+ assert translated['thumbnailVersion']==first['thumbnailVersion']
+ unchanged,changed=m.refresh(output,fetch=fetch)
+ assert not changed and unchanged==first
+ image=b'\xff\xd8\xffNew thumbnail'
+ updated,changed=m.refresh(output,fetch=fetch)
+ assert changed and updated['videoId']==first['videoId'] and updated['publishedAt']==first['publishedAt'] and updated['title']==first['title']
+ assert updated['thumbnailVersion']!=first['thumbnailVersion']
+ assert (Path(folder)/updated['thumbnailUrl'].lstrip('/')).read_bytes()==image
+ translated,changed=m.refresh_french(updated,french,{})
+ assert changed and translated['thumbnailVersion']==updated['thumbnailVersion']
+ image=b'<html>unavailable</html>'
+ retained,changed=m.refresh(output,fetch=fetch)
+ assert not changed and retained==updated
+`],{cwd:new URL('../',import.meta.url),stdio:'pipe'});
 });
 
 test('refresh excludes newer Shorts and portrait videos, preserves a verified horizontal video and keeps French titles French',()=>{

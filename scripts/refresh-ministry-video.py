@@ -1,5 +1,6 @@
 """Refresh the latest regular landscape upload from the official ministry channel."""
 import argparse
+import hashlib
 import html
 import json
 import os
@@ -47,6 +48,8 @@ def record(value):
         result.update(width=width, height=height, format='landscape')
     if value.get('thumbnailUrl') == '/images/youtube-' + value['videoId'] + '.jpg':
         result['thumbnailUrl'] = value['thumbnailUrl']
+        if isinstance(value.get('thumbnailVersion'), str) and re.fullmatch(r'[a-f0-9]{64}', value['thumbnailVersion']):
+            result['thumbnailVersion'] = value['thumbnailVersion']
     if value.get('titleTranslation') == 'automatic' and isinstance(value.get('sourceTitle'), str) and len(value['sourceTitle']) <= 500:
         result.update(titleTranslation='automatic', sourceTitle=value['sourceTitle'])
     return result
@@ -269,23 +272,29 @@ def refresh(output, current_url=None, fetch=download):
         print('::warning::YouTube : synchronisation impossible ; dernière vidéo vérifiée conservée (' + type(error).__name__ + ': ' + str(error)[:160] + ')')
     thumbnail = '/images/youtube-' + video['videoId'] + '.jpg'
     destination = output.parent / thumbnail.lstrip('/')
-    if not destination.is_file():
-        sources = ['https://i.ytimg.com/vi/' + video['videoId'] + '/' + size + '.jpg' for size in ('maxresdefault', 'sddefault', 'hqdefault')]
-        if current_url and previous and previous.get('thumbnailUrl') == thumbnail:
-            sources.append(urllib.parse.urljoin(current_url, '.' + thumbnail))
-        for source in sources:
-            try:
-                image = fetch(source)
-                if not image.startswith(b'\xff\xd8\xff') or len(image) > 1024 * 1024:
-                    raise ValueError('Miniature JPEG non valide')
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                destination.write_bytes(image)
-                break
-            except (ValueError, OSError):
-                continue
+    # A thumbnail can change without a new video or title. Refresh its bytes
+    # and include their fingerprint in the publication decision and image URL.
+    sources = ['https://i.ytimg.com/vi/' + video['videoId'] + '/' + size + '.jpg' for size in ('maxresdefault', 'sddefault', 'hqdefault')]
+    if current_url and previous and previous.get('thumbnailUrl') == thumbnail:
+        current_thumbnail = urllib.parse.urljoin(current_url, '.' + thumbnail)
+        if previous.get('thumbnailVersion'):
+            current_thumbnail += '?v=' + previous['thumbnailVersion']
+        sources.append(current_thumbnail)
+    for source in sources:
+        try:
+            image = fetch(source)
+            if not image.startswith(b'\xff\xd8\xff') or len(image) > 1024 * 1024:
+                raise ValueError('Miniature JPEG non valide')
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_bytes(image)
+            break
+        except (ValueError, OSError):
+            continue
     video.pop('thumbnailUrl', None)
+    video.pop('thumbnailVersion', None)
     if destination.is_file():
         video['thumbnailUrl'] = thumbnail
+        video['thumbnailVersion'] = hashlib.sha256(destination.read_bytes()).hexdigest()
     save(output, video)
     return video, video != previous
 

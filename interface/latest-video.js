@@ -27,7 +27,7 @@ function af() {
     (0, No.useEffect)(() => { l(!1); setImageFailed(false); }, [e.videoId]));
   let o = "https://www.youtube.com/watch?v=" + e.videoId;
   const presentation=mxLatestPresentation(e),displayTitle=presentation.title;
-  const localThumbnail=typeof e.thumbnailUrl==='string'&&e.thumbnailUrl==='/images/youtube-'+e.videoId+'.jpg'?je(e.thumbnailUrl):'';
+  const localThumbnail=typeof e.thumbnailUrl==='string'&&e.thumbnailUrl==='/images/youtube-'+e.videoId+'.jpg'?je(e.thumbnailUrl)+(typeof e.thumbnailVersion==='string'&&/^[a-f0-9]{64}$/.test(e.thumbnailVersion)?'?v='+e.thumbnailVersion:''):'';
   return (0, ge.jsxs)("div", {
     className: "hero-visual ministry-video",
     "aria-label":
