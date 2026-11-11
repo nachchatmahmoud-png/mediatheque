@@ -1,7 +1,7 @@
 // Editorial classification by subject. Provenance and indexing rules: docs/CLASSEMENT_DOCUMENTAIRE.md.
 export type Term={label:string;arabic:string;topic:string;aliases:string[];kind?:'organization';relatedTopics?:string[]};
-export const documentaryTopics:string[]=["Habitat et logement", "Politique de la ville et renouvellement urbain", "Urbanisme et planification urbaine", "Aménagement et développement du territoire", "Architecture et patrimoine bâti", "Formation et recherche dans les métiers du territoire", "Interventions et questions parlementaires", "Partenariat national", "Coopération et participation internationales", "Affaires juridiques et réglementation", "Vie institutionnelle"];
-export const documentaryTopicTranslations:Record<string,string>={"Habitat et logement": "السكن والإسكان", "Politique de la ville et renouvellement urbain": "سياسة المدينة والتجديد الحضري", "Urbanisme et planification urbaine": "التعمير والتخطيط الحضري", "Aménagement et développement du territoire": "إعداد التراب والتنمية الترابية", "Architecture et patrimoine bâti": "الهندسة المعمارية والتراث المبني", "Formation et recherche dans les métiers du territoire": "التكوين والبحث في مهن إعداد التراب والتعمير", "Interventions et questions parlementaires": "المداخلات والأسئلة البرلمانية", "Coopération et participation internationales": "التعاون والمشاركة الدولية", "Affaires juridiques et réglementation": "الشؤون القانونية والتنظيم", "Vie institutionnelle": "الحياة المؤسساتية", "Partenariat national": "الشراكة الوطنية"};
+export const documentaryTopics:string[]=["Habitat et logement", "Politique de la ville et renouvellement urbain", "Urbanisme et planification urbaine", "Aménagement et développement du territoire", "Architecture et patrimoine bâti", "Formation et recherche dans les métiers du territoire", "Interventions et questions parlementaires", "Conseil de gouvernement", "Partenariat national", "Coopération et participation internationales", "Affaires juridiques et réglementation", "Vie institutionnelle"];
+export const documentaryTopicTranslations:Record<string,string>={"Habitat et logement": "السكن والإسكان", "Politique de la ville et renouvellement urbain": "سياسة المدينة والتجديد الحضري", "Urbanisme et planification urbaine": "التعمير والتخطيط الحضري", "Aménagement et développement du territoire": "إعداد التراب والتنمية الترابية", "Architecture et patrimoine bâti": "الهندسة المعمارية والتراث المبني", "Formation et recherche dans les métiers du territoire": "التكوين والبحث في مهن إعداد التراب والتعمير", "Interventions et questions parlementaires": "المداخلات والأسئلة البرلمانية", "Conseil de gouvernement": "مجلس الحكومة", "Coopération et participation internationales": "التعاون والمشاركة الدولية", "Affaires juridiques et réglementation": "الشؤون القانونية والتنظيم", "Vie institutionnelle": "الحياة المؤسساتية", "Partenariat national": "الشراكة الوطنية"};
 export const keywordCatalog:Term[]=[
  {
   "label": "Aide directe au logement",
@@ -1047,6 +1047,36 @@ export const keywordCatalog:Term[]=[
   "topic": "Partenariat national",
   "aliases": [
    "تتبع الشراكات وتقييمها"
+  ]
+ },
+ {
+  "label": "Réunions du Conseil de gouvernement",
+  "arabic": "اجتماعات مجلس الحكومة",
+  "topic": "Conseil de gouvernement",
+  "aliases": [
+   "اجتماعات مجلس الحكومة",
+   "Réunion du Conseil de gouvernement",
+   "اجتماع مجلس الحكومة"
+  ]
+ },
+ {
+  "label": "Décisions du Conseil de gouvernement",
+  "arabic": "قرارات مجلس الحكومة",
+  "topic": "Conseil de gouvernement",
+  "aliases": [
+   "قرارات مجلس الحكومة",
+   "Décision du Conseil de gouvernement",
+   "قرار مجلس الحكومة"
+  ]
+ },
+ {
+  "label": "Communiqués du Conseil de gouvernement",
+  "arabic": "بلاغات مجلس الحكومة",
+  "topic": "Conseil de gouvernement",
+  "aliases": [
+   "بلاغات مجلس الحكومة",
+   "Communiqué du Conseil de gouvernement",
+   "بلاغ مجلس الحكومة"
   ]
  },
  {

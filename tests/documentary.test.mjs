@@ -57,6 +57,19 @@ test('parliamentary replies retain their parliamentary form and the ministerial 
  assert.equal(documentaryTranslations['Réponses aux questions écrites'],'الأجوبة عن الأسئلة الكتابية');
 });
 
+test('government council press releases publish and can be found in both languages',async()=>{
+ const topic='Conseil de gouvernement';
+ assert.ok(documentaryTopics.includes(topic));
+ assert.equal(documentaryTranslations[topic],'مجلس الحكومة');
+ const keywords=['بلاغ مجلس الحكومة','قرار مجلس الحكومة'];
+ assert.deepEqual(validateDocumentaryKeywords(topic,keywords),['Communiqués du Conseil de gouvernement','Décisions du Conseil de gouvernement']);
+ const prepared=await preparePublication({...base,topic,keywords,translations:{fr:{title:'Communiqué du Conseil de gouvernement',content:'Présentation des décisions.'},ar:{title:'بلاغ مجلس الحكومة',content:'تقديم القرارات.'}}},account,async()=>null);
+ const catalogue=publicationToCatalogue(prepared.record,prepared.folder);
+ assert.equal(catalogue.items.length,2);
+ for(const item of catalogue.items){assert.equal(item.type,'press');assert.equal(item.topic,topic);}
+ for(const query of ['Conseil de gouvernement','مجلس الحكومة'])assert.equal(filterMedia(catalogue.items,{type:'press',query,year:'',topic,sort:'newest'}).length,2);
+});
+
 test('documented international meetings have precise bilingual descriptors and searchable acronyms',async()=>{
  const topic='Coopération et participation internationales';
  assert.ok(documentaryTopics.includes(topic));
